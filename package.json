@@ -9,6 +9,7 @@
     "mysql2": "^3.22.2"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^25.6.0"
   }
 }
