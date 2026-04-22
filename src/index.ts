@@ -1,10 +1,15 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { serveStatic } from 'hono/bun'
 import api from './routes/api'
 import { ApiResponse } from './core/helpers/response'
 import { BaseException } from './core/exceptions/base'
 import { config } from './config/config'
+import { dashboardCheckConnection } from './config/dashboard.db'
+import { isxCheckConnection } from './config/isx.db'
+
+// Check Database Connections
+dashboardCheckConnection()
+isxCheckConnection()
 
 const app = new Hono()
 

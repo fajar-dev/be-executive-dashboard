@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: kawan-nusa-be
+    container_name: executive-dashboard-be
     restart: always
     ports:
       - "${PORT:-4000}:4000"
@@ -16,11 +16,11 @@ services:
       db:
         condition: service_healthy
     networks:
-      - kawan-nusa-network
+      - executive-dashboard-network
 
   db:
     image: mysql:8.0
-    container_name: kawan-nusa-db
+    container_name: executive-dashboard-db
     restart: always
     env_file:
       - .env
