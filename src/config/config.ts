@@ -27,6 +27,14 @@ export const config = {
             pass: process.env.ISX_DB_PASSWORD || '',
             name: process.env.ISX_DB_NAME || 'isx',
             pool: Number(process.env.ISX_DB_POOL) || 10,
+        },
+        nusafiber: {
+            host: process.env.NUSAFIBER_DB_HOST || '127.0.0.1',
+            port: Number(process.env.NUSAFIBER_DB_PORT) || 3306,
+            user: process.env.NUSAFIBER_DB_USER || 'root',
+            pass: process.env.NUSAFIBER_DB_PASSWORD || '',
+            name: process.env.NUSAFIBER_DB_NAME || 'nusafiber',
+            pool: Number(process.env.NUSAFIBER_DB_POOL) || 10,
         }
     },
     feedback: {

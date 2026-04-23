@@ -6,10 +6,12 @@ import { BaseException } from './core/exceptions/base'
 import { config } from './config/config'
 import { dashboardCheckConnection } from './config/dashboard.db'
 import { isxCheckConnection } from './config/isx.db'
+import { nusafiberCheckConnection } from './config/nusafiber.db'
 
 // Check Database Connections
 dashboardCheckConnection()
 isxCheckConnection()
+// nusafiberCheckConnection()
 
 const app = new Hono()
 
@@ -42,4 +44,5 @@ app.onError((err, c) => {
 export default {
   port: config.app.port,
   fetch: app.fetch,
+  idleTimeout: 60, // seconds
 };
