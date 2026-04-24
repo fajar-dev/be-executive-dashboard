@@ -16,8 +16,8 @@ import { HealthSerializer } from './serializers/health.serialize'
 export class GeneralController {
     private service: GeneralService
 
-    constructor() {
-        this.service = new GeneralService()
+    constructor(service: GeneralService) {
+        this.service = service
     }
 
     /**
@@ -52,7 +52,7 @@ export class GeneralController {
      */
     async getIspStats(c: Context) {
         try {
-            const period = c.req.query('period') || DateHelper.getCurrentPeriod() // current period in YYYYMM format
+            const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getIspStats(period)
             const data = IspSerializer.single(stats)
             return ApiResponse.success(c, data, 'ISP stats retrieved')
@@ -66,7 +66,7 @@ export class GeneralController {
      */
     async getNusaWorkStats(c: Context) {
         try {
-            const period = c.req.query('period') || DateHelper.getCurrentPeriod() // current period in YYYYMM format
+            const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getNusaWorkStats(period)
             const data = NusaWorkSerializer.single(stats)
             return ApiResponse.success(c, data, 'NusaWork stats retrieved')
@@ -80,7 +80,7 @@ export class GeneralController {
      */
     async getHomeConnectStats(c: Context) {
         try {
-            const period = c.req.query('period') || DateHelper.getCurrentPeriod() // current period in YYYYMM format
+            const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getHomeConnectStats(period)
             const data = HomeConnectSerializer.single(stats)
             return ApiResponse.success(c, data, 'HomeConnect stats retrieved')
@@ -94,7 +94,7 @@ export class GeneralController {
      */
     async getRevenuePeriod(c: Context) {
         try {
-            const startPeriod = c.req.query('startPeriod') || DateHelper.getCurrentPeriod().substring(0, 4) + '01'
+            const startPeriod = c.req.query('startPeriod') || DateHelper.getCurrentPeriod().substring(0, 4) + '01' 
             const endPeriod = c.req.query('endPeriod') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getRevenuePeriod(startPeriod, endPeriod)
             const data = RevenuePeriodSerializer.list(stats)

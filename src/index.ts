@@ -7,6 +7,8 @@ import { config } from './config/config'
 import { dashboardCheckConnection } from './config/dashboard.db'
 import { isxCheckConnection } from './config/isx.db'
 import { nusafiberCheckConnection } from './config/nusafiber.db'
+import { swaggerUI } from '@hono/swagger-ui'
+import { serveStatic } from 'hono/bun'
 
 // Check Database Connections
 dashboardCheckConnection()
@@ -23,6 +25,12 @@ app.use('*', cors({
 
 // Application Routes
 app.route('/api', api)
+
+
+// Swagger UI
+app.get('/api/swagger.yaml', serveStatic({ path: './swagger.yaml' }))
+app.get('/api/docs', swaggerUI({ url: '/api/swagger.yaml' }))
+
 
 // Global Error Handler
 app.onError((err, c) => {
