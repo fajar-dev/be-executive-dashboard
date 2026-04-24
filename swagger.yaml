@@ -3,16 +3,16 @@ openapi: 3.0.3
 info:
   title: Executive Dashboard API
   description: |
-    REST API untuk Executive Dashboard Nusanet. Menyediakan data statistik operasional
-    meliputi revenue, pelanggan ISP, NusaWork, HomeConnect, alert jaringan, dan health metrics.
+    REST API for the Nusanet Executive Dashboard. Provides operational statistical data
+    including revenue, ISP customers, NusaWork, HomeConnect, network alerts, and health metrics.
 
-    ## Autentikasi
-    Endpoint login mengembalikan dua token JWT:
-    - **Access Token** — berlaku 15 menit, kirim via header `Authorization: Bearer <token>`
-    - **Refresh Token** — berlaku 7 hari, digunakan untuk memperbarui access token
+    ## Authentication
+    The login endpoint returns two JWT tokens:
+    - **Access Token** — valid for 15 minutes, send via header `Authorization: Bearer <token>`
+    - **Refresh Token** — valid for 7 days, used to renew the access token
 
-    ## Format Response
-    Semua endpoint menggunakan envelope response yang konsisten:
+    ## Response Format
+    All endpoints use a consistent response envelope:
     ```json
     {
       "success": true,
@@ -22,32 +22,28 @@ info:
     }
     ```
 
-    ## Format Periode
-    Parameter `period`, `startPeriod`, dan `endPeriod` menggunakan format **YYYYMM**
-    (contoh: `202604` = April 2026). Jika tidak diisi, sistem otomatis menggunakan periode berjalan.
+    ## Period Format
+    The `period`, `startPeriod`, and `endPeriod` parameters use the **YYYYMM** format
+    (example: `202604` = April 2026). If not provided, the system automatically uses the current period.
 
   version: 1.0.0
-  contact:
-    name: Nusanet Dev Team
-    email: dev@nusanet.id
 
 servers:
-  - url: http://localhost:3000/api
-    description: Local Development
   - url: http://localhost:4000/api
-    description: Local Development (Alt Port)
+    description: Local Development
+  - url: /api
+    description: Production
 
 tags:
   - name: Authentication
-    description: Login dan manajemen token JWT
+    description: Login and JWT token management
   - name: General
-    description: Statistik operasional — NOC, revenue, ISP, NusaWork, HomeConnect, alert, dan health metrics
+    description: Operational statistics — NOC, revenue, ISP, NusaWork, HomeConnect, alerts, and health metrics
 
 # ──────────────────────────────────────────────
 # PATHS
 # ──────────────────────────────────────────────
 paths:
-
   # ────────────────────────────────────────────
   # AUTH
   # ────────────────────────────────────────────
@@ -55,42 +51,42 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Login pengguna
+      summary: User login
       description: |
-        Autentikasi pengguna menggunakan username dan password. Mengembalikan profil user,
-        access token (berlaku 15 menit), dan refresh token (berlaku 7 hari).
+        Authenticate user using username and password. Returns user profile,
+        access token (valid for 15 minutes), and refresh token (valid for 7 days).
 
-        Password diverifikasi menggunakan Bun.password.verify (bcrypt-compatible).
+        Password is verified using Bun.password.verify (bcrypt-compatible).
       operationId: authLogin
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
             examples:
               valid:
-                summary: Kredensial valid
+                summary: Valid credentials
                 value:
                   username: "admin"
                   password: "secretpassword"
               empty_username:
-                summary: Username kosong (contoh validasi gagal)
+                summary: Empty username (validation failure example)
                 value:
                   username: ""
                   password: "secretpassword"
       responses:
-        '200':
-          description: Login berhasil
+        "200":
+          description: Login successful
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/LoginResponseData'
+                        $ref: "#/components/schemas/LoginResponseData"
               example:
                 success: true
                 statusCode: 200
@@ -107,21 +103,21 @@ paths:
                     isActive: true
                   accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMDFIWDlaS..."
                   refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMDFIWDla..."
-        '401':
-          description: Kredensial tidak valid
+        "401":
+          description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 statusCode: 401
                 message: "Invalid credentials"
                 errors: null
-        '422':
-          $ref: '#/components/responses/ValidationError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # NOC
@@ -129,45 +125,49 @@ paths:
   /general/noc:
     get:
       tags:
-        - General - NOC
-      summary: Status tiket NOC
+        - General
+      summary: NOC ticket status
       description: |
-        Mengembalikan jumlah tiket NOC dengan status `Open` saat ini beserta pesan status
-        kondisi jaringan secara keseluruhan.
+        Returns the number of NOC tickets with the current `Open` status along with a status message
+        of the overall network condition.
       operationId: getNocStatus
+      security:
+        - BearerAuth: []
       responses:
-        '200':
-          description: Status NOC berhasil diambil
+        "200":
+          description: NOC status successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/NocStatus'
+                        $ref: "#/components/schemas/NocStatus"
               examples:
                 ada_gangguan:
-                  summary: Terdapat gangguan jaringan
+                  summary: Network disruption detected
                   value:
                     success: true
                     statusCode: 200
                     message: "NOC status retrieved"
                     data:
                       openTickets: 5
-                      statusMessage: "5 area jaringan mengalami degradasi"
+                      statusMessage: "5 network areas experiencing degradation"
                 normal:
-                  summary: Jaringan normal
+                  summary: Normal network
                   value:
                     success: true
                     statusCode: 200
                     message: "NOC status retrieved"
                     data:
                       openTickets: 0
-                      statusMessage: "Semua jaringan normal"
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                      statusMessage: "All networks are normal"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # REVENUE - Summary
@@ -175,32 +175,34 @@ paths:
   /general/revenue:
     get:
       tags:
-        - General - Revenue
-      summary: Statistik revenue bulan berjalan vs bulan sebelumnya
+        - General
+      summary: Current vs previous month revenue statistics
       description: |
-        Mengembalikan perbandingan total revenue bulan berjalan dengan bulan sebelumnya,
-        beserta pertumbuhan nominal dan persentase.
+        Returns a comparison of total revenue for the current month versus the previous month,
+        along with nominal and percentage growth.
 
-        Data bersumber dari `GeneralJournal` ISX dengan kode cabang `020`,
-        akun perkiraan prefix `400` dan `401`.
+        Data is sourced from ISX `GeneralJournal` with branch code `020`,
+        estimated account prefix `400` and `401`.
       operationId: getRevenueStats
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Statistik revenue berhasil diambil
+        "200":
+          description: Revenue statistics successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/RevenueStats'
+                        $ref: "#/components/schemas/RevenueStats"
               examples:
                 naik:
-                  summary: Revenue naik dibanding bulan lalu
+                  summary: Revenue increased compared to last month
                   value:
                     success: true
                     statusCode: 200
@@ -212,7 +214,7 @@ paths:
                       revenueGrowth: 100000000
                       revenuePercentage: 5.71
                 turun:
-                  summary: Revenue turun dibanding bulan lalu
+                  summary: Revenue decreased compared to last month
                   value:
                     success: true
                     statusCode: 200
@@ -223,8 +225,10 @@ paths:
                       revenuePrevious: 1750000000
                       revenueGrowth: -100000000
                       revenuePercentage: -5.71
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # REVENUE - Period
@@ -232,20 +236,22 @@ paths:
   /general/revenue/period:
     get:
       tags:
-        - General - Revenue
-      summary: Revenue per jenis akun lintas periode
+        - General
+      summary: Revenue per account type across periods
       description: |
-        Mengembalikan breakdown revenue berdasarkan jenis akun perkiraan (`NamaPerkiraan`)
-        untuk setiap bulan dalam rentang `startPeriod` sampai `endPeriod`.
+        Returns a revenue breakdown based on the estimated account type (`NamaPerkiraan`)
+        for each month in the range `startPeriod` to `endPeriod`.
 
-        Cocok digunakan untuk membuat grafik revenue time-series.
+        Suitable for creating time-series revenue graphs.
 
-        **Default**: Januari tahun berjalan s/d periode saat ini.
+        **Default**: January of the current year up to the current period.
       operationId: getRevenuePeriod
+      security:
+        - BearerAuth: []
       parameters:
         - name: startPeriod
           in: query
-          description: Periode awal dalam format YYYYMM
+          description: Start period in YYYYMM format
           required: false
           schema:
             type: string
@@ -253,61 +259,63 @@ paths:
             example: "202601"
         - name: endPeriod
           in: query
-          description: Periode akhir dalam format YYYYMM
+          description: End period in YYYYMM format
           required: false
           schema:
             type: string
             pattern: '^\d{6}$'
             example: "202604"
       responses:
-        '200':
-          description: Revenue per periode berhasil diambil
+        "200":
+          description: Revenue by period successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/RevenuePeriodItem'
+                          $ref: "#/components/schemas/RevenuePeriodItem"
               example:
                 success: true
                 statusCode: 200
                 message: "Revenue period retrieved"
                 data:
                   - period: "2026-01"
-                    monthName: "Januari"
+                    monthName: "January"
                     data:
-                      - name: "Pendapatan Jasa Internet"
+                      - name: "Internet Service Revenue"
                         revenue: 1200000000
-                      - name: "Pendapatan Jasa Managed Service"
+                      - name: "Managed Service Revenue"
                         revenue: 350000000
                   - period: "2026-02"
-                    monthName: "Februari"
+                    monthName: "February"
                     data:
-                      - name: "Pendapatan Jasa Internet"
+                      - name: "Internet Service Revenue"
                         revenue: 1250000000
-                      - name: "Pendapatan Jasa Managed Service"
+                      - name: "Managed Service Revenue"
                         revenue: 360000000
                   - period: "2026-03"
-                    monthName: "Maret"
+                    monthName: "March"
                     data:
-                      - name: "Pendapatan Jasa Internet"
+                      - name: "Internet Service Revenue"
                         revenue: 1300000000
-                      - name: "Pendapatan Jasa Managed Service"
+                      - name: "Managed Service Revenue"
                         revenue: 380000000
                   - period: "2026-04"
                     monthName: "April"
                     data:
-                      - name: "Pendapatan Jasa Internet"
+                      - name: "Internet Service Revenue"
                         revenue: 850000000
-                      - name: "Pendapatan Jasa Managed Service"
+                      - name: "Managed Service Revenue"
                         revenue: 240000000
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # REVENUE - Monthly Breakdown
@@ -315,46 +323,50 @@ paths:
   /general/revenue/monthly:
     get:
       tags:
-        - General - Revenue
-      summary: Breakdown revenue bulanan per jenis akun
+        - General
+      summary: Monthly revenue breakdown by account type
       description: |
-        Mengembalikan daftar jenis revenue beserta nominal dan persentase kontribusinya
-        terhadap total revenue pada periode tertentu.
+        Returns a list of revenue types along with their nominal value and percentage contribution
+        to the total revenue in a given period.
 
-        Cocok untuk pie chart / donut chart komposisi revenue.
+        Suitable for revenue composition pie / donut charts.
       operationId: getRevenueMonthly
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Breakdown revenue bulanan berhasil diambil
+        "200":
+          description: Monthly revenue breakdown successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/RevenueMonthlyItem'
+                          $ref: "#/components/schemas/RevenueMonthlyItem"
               example:
                 success: true
                 statusCode: 200
                 message: "Revenue trend retrieved"
                 data:
-                  - name: "Pendapatan Jasa Internet"
+                  - name: "Internet Service Revenue"
                     revenue: 1300000000
                     percentage: 70.27
-                  - name: "Pendapatan Jasa Managed Service"
+                  - name: "Managed Service Revenue"
                     revenue: 380000000
                     percentage: 20.54
-                  - name: "Pendapatan Lainnya"
+                  - name: "Other Revenue"
                     revenue: 170000000
                     percentage: 9.19
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # ISP
@@ -362,36 +374,38 @@ paths:
   /general/isp:
     get:
       tags:
-        - General - ISP
-      summary: Metrik pelanggan ISP
+        - General
+      summary: ISP customer metrics
       description: |
-        Mengembalikan statistik pelanggan layanan Internet Service Provider (ServiceGroupTypeId = 1)
-        untuk cabang `020`, meliputi:
+        Returns customer statistics for Internet Service Provider (ServiceGroupTypeId = 1)
+        for branch `020`, including:
 
-        - **customers** — total pelanggan aktif (status `AC` atau `FR`)
-        - **newCustomers** — pelanggan baru yang aktivasi di periode ini
-        - **newCustomersPrevious** — pelanggan baru di periode sebelumnya
-        - **newCustomersGrowth** — selisih pelanggan baru
-        - **churnedCustomers** — pelanggan yang berhenti (status `NA`) di periode ini
-        - **churnedCustomersPercentage** — rasio churn terhadap total aktif (%)
+        - **customers** — total active customers (status `AC` or `FR`)
+        - **newCustomers** — new customers activated in this period
+        - **newCustomersPrevious** — new customers in the previous period
+        - **newCustomersGrowth** — difference in new customers
+        - **churnedCustomers** — customers who stopped (status `NA`) in this period
+        - **churnedCustomersPercentage** — churn ratio against total active customers (%)
       operationId: getIspStats
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Statistik ISP berhasil diambil
+        "200":
+          description: ISP statistics successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/IspStats'
+                        $ref: "#/components/schemas/IspStats"
               examples:
                 tumbuh:
-                  summary: Pertumbuhan positif
+                  summary: Positive growth
                   value:
                     success: true
                     statusCode: 200
@@ -405,7 +419,7 @@ paths:
                       churnedCustomers: 32
                       churnedCustomersPercentage: 0.26
                 stagnan:
-                  summary: Pertumbuhan negatif
+                  summary: Negative growth
                   value:
                     success: true
                     statusCode: 200
@@ -418,8 +432,10 @@ paths:
                       newCustomersGrowth: -35
                       churnedCustomers: 55
                       churnedCustomersPercentage: 0.44
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # NUSAWORK
@@ -427,32 +443,34 @@ paths:
   /general/nusawork:
     get:
       tags:
-        - General - NusaWork
-      summary: Metrik layanan NusaWork
+        - General
+      summary: NusaWork service metrics
       description: |
-        Mengembalikan statistik pengguna layanan NusaWork (ServiceGroup = `NW`), meliputi:
+        Returns statistics for NusaWork service users (ServiceGroup = `NW`), including:
 
-        - **users** — total pengguna aktif (status subscription `AC`)
-        - **usersPrevious** — estimasi pengguna periode sebelumnya (users - growth)
-        - **usersGrowth** — pengguna baru yang registrasi di periode ini
-        - **usersPercentage** — persentase pertumbuhan pengguna
-        - **stableCompanies** — perusahaan yang sudah berlangganan sebelum periode berjalan
-        - **totalCompanies** — total perusahaan aktif (status `AC` atau `FR`)
+        - **users** — total active users (subscription status `AC`)
+        - **usersPrevious** — estimated users from the previous period (users - growth)
+        - **usersGrowth** — new users registered in this period
+        - **usersPercentage** — percentage of user growth
+        - **stableCompanies** — companies already subscribed before the current period
+        - **totalCompanies** — total active companies (status `AC` or `FR`)
       operationId: getNusaWorkStats
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Statistik NusaWork berhasil diambil
+        "200":
+          description: NusaWork statistics successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/NusaWorkStats'
+                        $ref: "#/components/schemas/NusaWorkStats"
               example:
                 success: true
                 statusCode: 200
@@ -465,8 +483,10 @@ paths:
                   usersPercentage: 4.64
                   stableCompanies: 210
                   totalCompanies: 245
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # HOMECONNECT
@@ -474,35 +494,37 @@ paths:
   /general/homeconnect:
     get:
       tags:
-        - General - HomeConnect
-      summary: Metrik layanan HomeConnect (FBP)
+        - General
+      summary: HomeConnect service metrics (FBP)
       description: |
-        Mengembalikan statistik layanan HomeConnect dengan ServiceGroup `FBP`, meliputi:
+        Returns statistics for HomeConnect services with ServiceGroup `FBP`, including:
 
-        - **active** — total pelanggan aktif bulan ini (status `AC` + `FR`)
-        - **activePrevious** — total pelanggan aktif bulan sebelumnya
-        - **activeGrowth** — selisih total aktif bulan ini vs bulan lalu
-        - **paid** — jumlah pelanggan berstatus `AC` (sudah bayar / berlangganan penuh)
-        - **paidPercentage** — persentase pelanggan `AC` dari total aktif (konversi free → paid)
-        - **trend** — `up` jika total aktif naik, `down` jika turun
+        - **active** — total active customers this month (status `AC` + `FR`)
+        - **activePrevious** — total active customers last month
+        - **activeGrowth** — difference in total active customers this month vs last month
+        - **paid** — number of customers with status `AC` (paid / fully subscribed)
+        - **paidPercentage** — percentage of `AC` customers out of total active (free → paid conversion)
+        - **trend** — `up` if total active increased, `down` if decreased
       operationId: getHomeConnectStats
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Statistik HomeConnect berhasil diambil
+        "200":
+          description: HomeConnect statistics successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/HomeConnectStats'
+                        $ref: "#/components/schemas/HomeConnectStats"
               examples:
                 naik:
-                  summary: Pertumbuhan positif dengan konversi tinggi
+                  summary: Positive growth dengan konversi tinggi
                   value:
                     success: true
                     statusCode: 200
@@ -515,7 +537,7 @@ paths:
                       paid: 680
                       paidPercentage: 77.71
                 turun:
-                  summary: Penurunan pelanggan
+                  summary: Customer decline
                   value:
                     success: true
                     statusCode: 200
@@ -527,8 +549,10 @@ paths:
                       activeGrowth: -20
                       paid: 620
                       paidPercentage: 75.61
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # ALERTS
@@ -536,37 +560,39 @@ paths:
   /general/alerts:
     get:
       tags:
-        - General - Alerts
-      summary: Alert aktif — gangguan, invoice jatuh tempo, dan renewal
+        - General
+      summary: Active alerts — disruptions, overdue invoices, and renewals
       description: |
-        Mengembalikan tiga kategori alert operasional:
+        Returns three categories of operational alerts:
 
         ### issues
-        Gangguan jaringan NOC dengan status `Open`, `Under Investigate`, atau `Scheduled`,
-        dikelompokkan per cabang dan status. Menampilkan jumlah insiden, pelanggan terdampak,
-        dan waktu mulai insiden terakhir.
+        NOC network disruptions with `Open`, `Under Investigate`, or `Scheduled` status,
+        grouped by branch and status. Displays the number of incidents, affected customers,
+        and the start time of the latest incident.
 
         ### overdue
-        Invoice internet yang sudah jatuh tempo (exp date < hari ini) dan belum dibatch.
-        Dikelompokkan per jenis layanan dan jumlah hari keterlambatan.
+        Internet invoices that are overdue (exp date < today) and have not been batched.
+        Grouped by service type and number of days late.
 
         ### renewals
-        Invoice renewal yang sudah diproses dalam batch bulan berjalan,
-        dikelompokkan per service group. Membedakan antara renewal (pelanggan lama) dan
-        new subscription (pelanggan baru).
+        Renewal invoices processed in the current month's batch,
+        grouped by service group. Differentiates between renewals (existing customers) and
+        new subscriptions (new customers).
       operationId: getAlerts
+      security:
+        - BearerAuth: []
       responses:
-        '200':
-          description: Alert berhasil diambil
+        "200":
+          description: Alerts successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/AlertsData'
+                        $ref: "#/components/schemas/AlertsData"
               example:
                 success: true
                 statusCode: 200
@@ -614,8 +640,10 @@ paths:
                       totalInvoices: 85
                       totalRenewal: 70
                       totalNewSubscription: 15
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
   # HEALTH
@@ -623,38 +651,40 @@ paths:
   /general/health:
     get:
       tags:
-        - General - Health
-      summary: Indikator kesehatan bisnis
+        - General
+      summary: Business health indicators
       description: |
-        Mengembalikan lima indikator kesehatan bisnis (KPI) untuk periode tertentu:
+        Returns five business health indicators (KPIs) for a given period:
 
-        | KPI | Deskripsi | Sumber Data |
-        |-----|-----------|-------------|
-        | **churnRate** | Rasio pelanggan berhenti (status `NA`) terhadap total aktif | CustomerServices |
-        | **sla** | Rasio downtime terhadap uptime tertimbang (weighted by customer) | NOC + CustomerServices |
-        | **collectionRate** | Rasio pembayaran masuk terhadap piutang (akun `103*`) | GeneralJournal |
-        | **tickets** | Rasio tiket TTS selesai/tutup terhadap total tiket (non-cancel) | TTS |
-        | **arpu** | Average Revenue Per User — rata-rata subscription bersih per pelanggan ISP | CustomerServices |
+        | KPI | Description | Data Source |
+        |-----|-------------|-------------|
+        | **churnRate** | Ratio of stopped customers (status `NA`) against total active | CustomerServices |
+        | **sla** | Downtime ratio against weighted uptime (weighted by customer) | NOC + CustomerServices |
+        | **collectionRate** | Ratio of incoming payments against receivables (`103*` accounts) | GeneralJournal |
+        | **tickets** | Ratio of completed/closed TTS tickets against total tickets (non-cancel) | TTS |
+        | **arpu** | Average Revenue Per User — average net subscription per active ISP customer | CustomerServices |
 
-        Semua nilai kecuali `arpu` adalah rasio dalam rentang 0–1 (belum dikonversi ke persen).
+        All values except `arpu` are ratios in the range of 0–1 (not converted to percentage).
       operationId: getHealthMetrics
+      security:
+        - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: "#/components/parameters/PeriodParam"
       responses:
-        '200':
-          description: Health metrics berhasil diambil
+        "200":
+          description: Health metrics successfully retrieved
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ApiResponse'
+                  - $ref: "#/components/schemas/ApiResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/HealthMetrics'
+                        $ref: "#/components/schemas/HealthMetrics"
               examples:
                 sehat:
-                  summary: Kondisi bisnis sehat
+                  summary: Business condition is healthy
                   value:
                     success: true
                     statusCode: 200
@@ -666,7 +696,7 @@ paths:
                       tickets: 0.9210
                       arpu: 285000
                 perlu_perhatian:
-                  summary: Beberapa KPI perlu perhatian
+                  summary: Some KPIs need attention
                   value:
                     success: true
                     statusCode: 200
@@ -677,14 +707,15 @@ paths:
                       collectionRate: 0.8230
                       tickets: 0.7650
                       arpu: 260000
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 # ──────────────────────────────────────────────
 # COMPONENTS
 # ──────────────────────────────────────────────
 components:
-
   # ──────────────────────
   # PARAMETERS
   # ──────────────────────
@@ -693,8 +724,8 @@ components:
       name: period
       in: query
       description: |
-        Periode dalam format **YYYYMM** (contoh: `202604` = April 2026).
-        Jika tidak diisi, sistem menggunakan periode bulan berjalan.
+        Period in **YYYYMM** format (example: `202604` = April 2026).
+        If not provided, the system uses the current month's period.
       required: false
       schema:
         type: string
@@ -709,18 +740,18 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Access token JWT yang diperoleh dari endpoint `/auth/login`. Berlaku selama 15 menit.
+      description: JWT access token obtained from the `/auth/login` endpoint. Valid for 15 minutes.
 
   # ──────────────────────
   # REUSABLE RESPONSES
   # ──────────────────────
   responses:
     ValidationError:
-      description: Data request tidak valid (gagal validasi Zod)
+      description: Invalid request data (Zod validation failed)
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ValidationErrorResponse'
+            $ref: "#/components/schemas/ValidationErrorResponse"
           example:
             success: false
             statusCode: 422
@@ -732,11 +763,11 @@ components:
                 message: "Password is required"
 
     UnauthorizedError:
-      description: Token tidak valid atau sudah kedaluwarsa
+      description: Token is invalid or expired
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             statusCode: 401
@@ -744,11 +775,11 @@ components:
             errors: null
 
     NotFoundError:
-      description: Resource tidak ditemukan
+      description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             success: false
             statusCode: 404
@@ -756,21 +787,21 @@ components:
             errors: null
 
     InternalServerError:
-      description: Terjadi kesalahan pada server (database error, dll.)
+      description: Server error occurred (database error, etc.)
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           examples:
             production:
-              summary: Response di environment production
+              summary: Response in production environment
               value:
                 success: false
                 statusCode: 500
                 message: "Internal Server Error"
                 errors: null
             development:
-              summary: Response di environment development (menyertakan stack trace)
+              summary: Response in development environment (includes stack trace)
               value:
                 success: false
                 statusCode: 500
@@ -783,11 +814,10 @@ components:
   # SCHEMAS
   # ──────────────────────
   schemas:
-
     # ── GENERIC RESPONSE WRAPPERS ──────────────
     ApiResponse:
       type: object
-      description: Envelope standar untuk semua response sukses
+      description: Standard envelope for all successful responses
       required:
         - success
         - statusCode
@@ -804,14 +834,14 @@ components:
           type: string
           example: "Operation successful"
         data:
-          description: Payload response, bentuk bergantung pada endpoint
+          description: Response payload, shape depends on the endpoint
           oneOf:
             - type: object
             - type: array
 
     ErrorResponse:
       type: object
-      description: Envelope standar untuk semua response error
+      description: Standard envelope for all error responses
       required:
         - success
         - statusCode
@@ -828,12 +858,12 @@ components:
           example: "Bad Request"
         errors:
           nullable: true
-          description: Detail error, bisa null atau objek/array tergantung jenis error
+          description: Error details, can be null or object/array depending on the error type
           example: null
 
     ValidationErrorResponse:
       type: object
-      description: Response untuk error validasi Zod (HTTP 422)
+      description: Response for Zod validation error (HTTP 422)
       required:
         - success
         - statusCode
@@ -852,19 +882,19 @@ components:
         errors:
           type: array
           items:
-            $ref: '#/components/schemas/ValidationErrorItem'
+            $ref: "#/components/schemas/ValidationErrorItem"
 
     ValidationErrorItem:
       type: object
-      description: Detail satu kesalahan validasi
+      description: Details of a single validation error
       properties:
         field:
           type: string
-          description: Nama field yang gagal validasi (dot-notation untuk nested)
+          description: Name of the field that failed validation (dot-notation for nested)
           example: "username"
         message:
           type: string
-          description: Pesan kesalahan validasi
+          description: Validation error message
           example: "Username is required"
 
     # ── AUTH ──────────────────────────────────
@@ -877,68 +907,68 @@ components:
         username:
           type: string
           minLength: 1
-          description: Username pengguna
+          description: User's username
           example: "admin"
         password:
           type: string
           minLength: 1
-          description: Password pengguna (plain text, diverifikasi dengan bcrypt)
+          description: User password (plain text, verified with bcrypt)
           example: "secretpassword"
 
     LoginResponseData:
       type: object
       properties:
         user:
-          $ref: '#/components/schemas/UserProfile'
+          $ref: "#/components/schemas/UserProfile"
         accessToken:
           type: string
-          description: 'JWT access token, berlaku 15 menit. Kirim via header Authorization: Bearer {token}'
+          description: "JWT access token, berlaku 15 menit. Kirim via header Authorization: Bearer {token}"
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         refreshToken:
           type: string
-          description: JWT refresh token, berlaku 7 hari. Gunakan untuk mendapatkan access token baru
+          description: JWT refresh token, valid for 7 days. Use to obtain a new access token
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
     UserProfile:
       type: object
-      description: Profil pengguna (tanpa data sensitif seperti password)
+      description: User profile (without sensitive data like password)
       properties:
         id:
           type: string
-          description: ID unik pengguna
+          description: Unique user ID
           example: "usr_01HX9ZK4ABCDEF"
         name:
           type: string
-          description: Nama lengkap pengguna
+          description: User's full name
           example: "Budi Santoso"
         email:
           type: string
           format: email
-          description: Alamat email pengguna
+          description: User's email address
           example: "budi@nusanet.id"
         avatar:
           type: string
           nullable: true
-          description: URL foto profil pengguna, bisa null
+          description: User's profile photo URL, can be null
           example: "https://cdn.nusanet.id/avatars/budi.jpg"
         role:
           type: string
-          description: Role/peran pengguna dalam sistem
+          description: User's role in the system
           example: "admin"
         lastLoginAt:
           type: string
           format: date-time
           nullable: true
-          description: Waktu login terakhir (ISO 8601), null jika belum pernah login
+          description: Last login time (ISO 8601), null if never logged in
           example: "2026-04-23T08:30:00.000Z"
         lastLoginIp:
           type: string
           nullable: true
-          description: IP address saat login terakhir, null jika belum pernah login
+          description: IP address at the last login, null if never logged in
           example: "192.168.1.10"
         isActive:
           type: boolean
-          description: Status aktif akun pengguna
+          description: User account active status
           example: true
 
     # ── NOC ──────────────────────────────────
@@ -947,12 +977,12 @@ components:
       properties:
         openTickets:
           type: integer
-          description: Jumlah tiket NOC dengan status Open saat ini
+          description: Number of NOC tickets currently with Open status
           example: 5
         statusMessage:
           type: string
-          description: Pesan status ringkas kondisi jaringan
-          example: "5 area jaringan mengalami degradasi"
+          description: Brief network condition status message
+          example: "5 network areas experiencing degradation"
 
     # ── REVENUE ──────────────────────────────
     RevenueStats:
@@ -961,54 +991,54 @@ components:
         trend:
           type: string
           enum: [up, down]
-          description: Arah tren revenue dibanding bulan sebelumnya
+          description: Trend direction of revenue compared to the previous month
           example: "up"
         revenueCurrent:
           type: number
-          description: Total revenue bulan berjalan (dalam Rupiah)
+          description: Total revenue for the current month (in Rupiah)
           example: 1850000000
         revenuePrevious:
           type: number
-          description: Total revenue bulan sebelumnya (dalam Rupiah)
+          description: Total revenue for the previous month (in Rupiah)
           example: 1750000000
         revenueGrowth:
           type: number
-          description: Selisih revenue (current - previous), bisa negatif
+          description: Difference in revenue (current - previous), can be negative
           example: 100000000
         revenuePercentage:
           type: number
           format: float
-          description: Persentase pertumbuhan revenue (bisa negatif)
+          description: Revenue growth percentage (can be negative)
           example: 5.71
 
     RevenuePeriodItem:
       type: object
-      description: Data revenue untuk satu periode
+      description: Revenue data for one period
       properties:
         period:
           type: string
-          description: Periode dalam format YYYY-MM
+          description: Period in YYYY-MM format
           example: "2026-04"
         monthName:
           type: string
-          description: Nama bulan dalam Bahasa Indonesia
+          description: Month name in Indonesian
           example: "April"
         data:
           type: array
-          description: Daftar jenis revenue pada periode ini
+          description: List of revenue types for this period
           items:
-            $ref: '#/components/schemas/RevenueByAccount'
+            $ref: "#/components/schemas/RevenueByAccount"
 
     RevenueByAccount:
       type: object
       properties:
         name:
           type: string
-          description: Nama akun perkiraan / jenis revenue
-          example: "Pendapatan Jasa Internet"
+          description: Estimated account name / revenue type
+          example: "Internet Service Revenue"
         revenue:
           type: number
-          description: Nominal revenue (dalam Rupiah)
+          description: Nominal revenue (in Rupiah)
           example: 1300000000
 
     RevenueMonthlyItem:
@@ -1016,16 +1046,16 @@ components:
       properties:
         name:
           type: string
-          description: Nama akun perkiraan / jenis revenue
-          example: "Pendapatan Jasa Internet"
+          description: Estimated account name / revenue type
+          example: "Internet Service Revenue"
         revenue:
           type: number
-          description: Nominal revenue (dalam Rupiah)
+          description: Nominal revenue (in Rupiah)
           example: 1300000000
         percentage:
           type: number
           format: float
-          description: Persentase kontribusi terhadap total revenue bulan ini
+          description: Percentage contribution to total revenue this month
           example: 70.27
 
     # ── ISP ──────────────────────────────────
@@ -1035,32 +1065,32 @@ components:
         trend:
           type: string
           enum: [up, down]
-          description: Tren pelanggan baru dibanding bulan sebelumnya
+          description: Trend of new customers compared to the previous month
           example: "up"
         customers:
           type: integer
-          description: Total pelanggan ISP aktif (status AC atau FR)
+          description: Total active ISP customers (status AC or FR)
           example: 12450
         newCustomers:
           type: integer
-          description: Pelanggan baru yang aktivasi di periode ini
+          description: New customers activated in this period
           example: 180
         newCustomersPrevious:
           type: integer
-          description: Pelanggan baru yang aktivasi di periode sebelumnya
+          description: New customers activated in the previous period
           example: 155
         newCustomersGrowth:
           type: integer
-          description: Selisih pelanggan baru (bisa negatif)
+          description: Difference in new customers (can be negative)
           example: 25
         churnedCustomers:
           type: integer
-          description: Pelanggan yang berhenti (unregistered) di periode ini
+          description: Customers who stopped (unregistered) in this period
           example: 32
         churnedCustomersPercentage:
           type: number
           format: float
-          description: Persentase churn terhadap total pelanggan aktif
+          description: Churn percentage against total active customers
           example: 0.26
 
     # ── NUSAWORK ──────────────────────────────
@@ -1070,32 +1100,32 @@ components:
         trend:
           type: string
           enum: [up, down]
-          description: Tren pertumbuhan pengguna NusaWork
+          description: NusaWork user growth trend
           example: "up"
         users:
           type: integer
-          description: Total pengguna NusaWork aktif (status subscription AC)
+          description: Total active NusaWork users (subscription status AC)
           example: 1240
         usersPrevious:
           type: integer
-          description: Estimasi pengguna periode sebelumnya (users - growth)
+          description: Estimated previous period users (users - growth)
           example: 1185
         usersGrowth:
           type: integer
-          description: Pengguna baru yang registrasi di periode ini
+          description: New users registered in this period
           example: 55
         usersPercentage:
           type: number
           format: float
-          description: Persentase pertumbuhan pengguna
+          description: User growth percentage
           example: 4.64
         stableCompanies:
           type: integer
-          description: Perusahaan yang sudah berlangganan sebelum periode berjalan
+          description: Companies already subscribed before the current period
           example: 210
         totalCompanies:
           type: integer
-          description: Total perusahaan aktif (status AC atau FR)
+          description: Total active companies (status AC or FR)
           example: 245
 
     # ── HOMECONNECT ───────────────────────────
@@ -1105,28 +1135,28 @@ components:
         trend:
           type: string
           enum: [up, down]
-          description: Tren total pelanggan aktif dibanding bulan lalu
+          description: Total active customer trend compared to last month
           example: "up"
         active:
           type: integer
-          description: Total pelanggan aktif bulan ini (AC + FR)
+          description: Total active customers this month (AC + FR)
           example: 875
         activePrevious:
           type: integer
-          description: Total pelanggan aktif bulan sebelumnya
+          description: Total active customers last month
           example: 840
         activeGrowth:
           type: integer
-          description: Selisih total aktif (bisa negatif)
+          description: Difference in total active (can be negative)
           example: 35
         paid:
           type: integer
-          description: Jumlah pelanggan berstatus AC (berlangganan berbayar)
+          description: Number of customers with AC status (paid subscription)
           example: 680
         paidPercentage:
           type: number
           format: float
-          description: Persentase pelanggan paid (AC) dari total aktif — tingkat konversi free ke paid
+          description: Percentage of paid (AC) customers out of total active — free to paid conversion rate
           example: 77.71
 
     # ── ALERTS ───────────────────────────────
@@ -1135,45 +1165,45 @@ components:
       properties:
         issues:
           type: array
-          description: Gangguan jaringan NOC yang masih aktif
+          description: NOC network disruptions currently active
           items:
-            $ref: '#/components/schemas/NocIssue'
+            $ref: "#/components/schemas/NocIssue"
         overdue:
           type: array
-          description: Invoice internet yang sudah jatuh tempo dan belum dibayar
+          description: Internet invoices that are overdue and unpaid
           items:
-            $ref: '#/components/schemas/OverdueInvoice'
+            $ref: "#/components/schemas/OverdueInvoice"
         renewals:
           type: array
-          description: Invoice renewal yang diproses dalam batch bulan berjalan
+          description: Renewal invoices processed in the current month's batch
           items:
-            $ref: '#/components/schemas/RenewalSummary'
+            $ref: "#/components/schemas/RenewalSummary"
 
     NocIssue:
       type: object
       properties:
         branch:
           type: string
-          description: Nama kota cabang yang mengalami gangguan
+          description: Branch city name experiencing disruption
           example: "Makassar"
         status:
           type: string
           enum: [Open, "Under Investigate", Scheduled]
-          description: Status penanganan insiden
+          description: Incident handling status
           example: "Open"
         totalIssues:
           type: integer
-          description: Jumlah insiden NOC yang aktif di cabang ini
+          description: Number of active NOC incidents in this branch
           example: 3
         totalEffectedCustomers:
           type: integer
-          description: Jumlah pelanggan terdampak (dari noc_customer_service)
+          description: Number of affected customers (from noc_customer_service)
           example: 87
         lastStartedAt:
           type: string
           format: date-time
           nullable: true
-          description: Waktu mulai insiden terbaru (ISO 8601)
+          description: Start time of the latest incident (ISO 8601)
           example: "2026-04-24T07:15:00.000Z"
 
     OverdueInvoice:
@@ -1181,19 +1211,19 @@ components:
       properties:
         type:
           type: string
-          description: 'Jenis layanan dari kolom BusinessOperation (contoh: Internet)'
+          description: "Service type from the BusinessOperation column (example: Internet)"
           example: "Internet"
         totalExpDays:
           type: integer
-          description: Jumlah hari keterlambatan (DATEDIFF dari exp date ke hari ini)
+          description: Number of late days (DATEDIFF from exp date to today)
           example: 30
         totalInvoices:
           type: integer
-          description: Jumlah invoice yang jatuh tempo dengan keterlambatan ini
+          description: Number of overdue invoices with this lateness
           example: 12
         amount:
           type: number
-          description: Total nilai invoice yang jatuh tempo (dalam Rupiah)
+          description: Total value of overdue invoices (in Rupiah)
           example: 6800000
 
     RenewalSummary:
@@ -1201,71 +1231,71 @@ components:
       properties:
         serviceGroup:
           type: string
-          description: Nama service group (dari tabel ServiceGroup.Description)
+          description: Service group name (from ServiceGroup.Description table)
           example: "Internet"
         totalServices:
           type: integer
-          description: Jumlah layanan unik dalam batch renewal ini
+          description: Number of unique services in this renewal batch
           example: 320
         amount:
           type: number
-          description: Total nilai renewal (dalam Rupiah)
+          description: Total renewal value (in Rupiah)
           example: 160000000
         totalInvoices:
           type: integer
-          description: Jumlah invoice renewal
+          description: Number of renewal invoices
           example: 320
         totalRenewal:
           type: integer
-          description: Jumlah renewal dari pelanggan lama (bukan invoice pertama)
+          description: Number of renewals from existing customers (not the first invoice)
           example: 285
         totalNewSubscription:
           type: integer
-          description: Jumlah invoice dari pelanggan baru (invoice pertama)
+          description: Number of invoices from new customers (first invoice)
           example: 35
 
     # ── HEALTH ───────────────────────────────
     HealthMetrics:
       type: object
       description: |
-        Lima KPI kesehatan bisnis. Nilai churnRate, sla, collectionRate, dan tickets
-        adalah rasio (0–1), bukan persentase. Kalikan 100 untuk mendapatkan persen.
+        Five business health KPIs. The values for churnRate, sla, collectionRate, and tickets
+        are ratios (0–1), not percentages. Multiply by 100 to get percentages.
       properties:
         churnRate:
           type: number
           format: float
           description: |
-            Rasio pelanggan berhenti terhadap total aktif.
-            Rumus: count(NA di periode ini) / count(semua non-NA)
-            Nilai rendah = baik (target < 2%)
+            Ratio of stopped customers to total active.
+            Formula: count(NA in this period) / count(all non-NA)
+            Lower value = better (target < 2%)
           example: 0.0023
         sla:
           type: number
           format: float
           description: |
-            Rasio downtime terhadap total uptime tertimbang (per pelanggan-jam).
-            Rumus: total_downtime_hours / (jumlah_cs * 24 * active_days)
-            Nilai rendah = lebih banyak downtime. Nilai 0 = tidak ada downtime.
+            Downtime ratio against weighted total uptime (per customer-hour).
+            Formula: total_downtime_hours / (total_cs * 24 * active_days)
+            Lower value = more downtime. 0 value = no downtime.
           example: 0.0013
         collectionRate:
           type: number
           format: float
           description: |
-            Rasio pembayaran yang diterima terhadap total piutang (akun 103*).
-            Rumus: SUM(Kredit) / SUM(Debet) dari GeneralJournal bulan ini.
-            Nilai mendekati 1 = baik.
+            Ratio of received payments against total receivables (accounts 103*).
+            Formula: SUM(Credit) / SUM(Debit) from this month's GeneralJournal.
+            Value closer to 1 = good.
           example: 0.9654
         tickets:
           type: number
           format: float
           description: |
-            Rasio tiket TTS yang diselesaikan (status Call atau Closed)
-            terhadap total tiket (non-Cancel) yang dibuka di periode ini.
-            Nilai mendekati 1 = baik.
+            Ratio of resolved TTS tickets (status Call or Closed)
+            against total tickets (non-Cancel) opened in this period.
+            Value closer to 1 = good.
           example: 0.9210
         arpu:
           type: number
           description: |
-            Average Revenue Per User — rata-rata subscription bersih (setelah diskon)
-            per bulan per pelanggan ISP aktif (status AC). Dalam satuan Rupiah.
+            Average Revenue Per User — average net subscription (after discount)
+            per month per active ISP customer (status AC). In Rupiah.
           example: 285000

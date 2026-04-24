@@ -8,7 +8,7 @@ export class UserService {
         this.dashboardDb = dashboardDb;
     }
 
-    async getById(id: string) {
+    async getById(id: number) {
         const [[user]] = await this.dashboardDb.query<any[]>(
             'SELECT * FROM users WHERE id = ? LIMIT 1',
             [id]

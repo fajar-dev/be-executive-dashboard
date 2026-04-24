@@ -60,7 +60,7 @@ export class AuthService {
         try {
             const decoded = await verify(data.refreshToken, config.app.jwtRefreshSecret, "HS256") as { sub: string }
             
-            const user = await this.userService.getById(decoded.sub)
+            const user = await this.userService.getById(Number(decoded.sub))
             
             if (!user) {
                 throw new UnauthorizedException("User not found")

@@ -10,6 +10,7 @@ import { GeneralController } from '../modules/general/general.controller'
 import { AuthController } from '../modules/auth/auth.controller'
 import { validationHook } from '../core/helpers/validator'
 import { LoginSchema } from '../modules/auth/validators/auth.validator'
+import { authMiddleware } from '../core/middlewares/auth.middleware'
 
 const routes = new Hono()
 
@@ -22,14 +23,17 @@ const auth = new AuthController(authService)
 
 routes.post('/auth/login', zValidator('json', LoginSchema, validationHook), (c) => auth.login(c))
 
-routes.get('/general/noc', (c) => general.getNocStatus(c))
-routes.get('/general/revenue', (c) => general.getRevenueStats(c))
-routes.get('/general/revenue/period', (c) => general.getRevenuePeriod(c))
-routes.get('/general/revenue/monthly', (c) => general.getRevenueMonthly(c))
-routes.get('/general/isp', (c) => general.getIspStats(c))
-routes.get('/general/nusawork', (c) => general.getNusaWorkStats(c))
-routes.get('/general/homeconnect', (c) => general.getHomeConnectStats(c))
-routes.get('/general/alerts', (c) => general.getAlerts(c))
-routes.get('/general/health', (c) => general.getHealthMetrics(c))
+// Protected Routes
+const authMid = authMiddleware(userService)
+
+routes.get('/general/noc', authMid, (c) => general.getNocStatus(c))
+routes.get('/general/revenue', authMid, (c) => general.getRevenueStats(c))
+routes.get('/general/revenue/period', authMid, (c) => general.getRevenuePeriod(c))
+routes.get('/general/revenue/monthly', authMid, (c) => general.getRevenueMonthly(c))
+routes.get('/general/isp', authMid, (c) => general.getIspStats(c))
+routes.get('/general/nusawork', authMid, (c) => general.getNusaWorkStats(c))
+routes.get('/general/homeconnect', authMid, (c) => general.getHomeConnectStats(c))
+routes.get('/general/alerts', authMid, (c) => general.getAlerts(c))
+routes.get('/general/health', authMid, (c) => general.getHealthMetrics(c))
 
 export default routes
