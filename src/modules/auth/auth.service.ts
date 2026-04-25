@@ -4,14 +4,18 @@ import { config } from '../../config/config'
 import { UnauthorizedException } from '../../core/exceptions/base'
 import { LoginValidator, RefreshTokenValidator } from './validators/auth.validator'
 import { UserService } from '../user/user.service'
+import { Is5Service } from '../is5/is5.service'
 
 export class AuthService {
     private dashboardDb: Pool;
     private userService: UserService;
+    private is5Service: Is5Service;
 
-    constructor(dashboardDb: Pool, userService: UserService) {
+    constructor(dashboardDb: Pool, userService: UserService, is5Service: Is5Service) {
         this.dashboardDb = dashboardDb;
         this.userService = userService;
+        this.is5Service = is5Service;
+
     }
 
     private async generateTokens(user: any) {
@@ -38,20 +42,14 @@ export class AuthService {
     }
 
     async login(data: LoginValidator) {
-        const [[user]] = await this.dashboardDb.query<any[]>(
-            'SELECT * FROM users WHERE username = ? LIMIT 1',
-            [data.username]
-        )
+        const user = await this.userService.getByEmId(data.employeeId)
+        if (!user) throw new UnauthorizedException('User not found')
 
-        if (!user) throw new UnauthorizedException('Invalid credentials')
-
-        const valid = await Bun.password.verify(data.password, user.password)
-        if (!valid) throw new UnauthorizedException('Invalid credentials')
+        const is5User = await this.is5Service.auth(data.employeeId, data.password)
+        if (!is5User) throw new UnauthorizedException('Invalid credentials')
 
         const { accessToken, refreshToken } = await this.generateTokens(user)
-
         const { password, resetPasswordToken, resetPasswordExpires, ...userWithoutSensitiveData } = user
-
         return { user: userWithoutSensitiveData, accessToken, refreshToken }
     }
 
@@ -59,15 +57,10 @@ export class AuthService {
     async refreshToken(data: RefreshTokenValidator) {
         try {
             const decoded = await verify(data.refreshToken, config.app.jwtRefreshSecret, "HS256") as { sub: string }
-            
             const user = await this.userService.getById(Number(decoded.sub))
-            
-            if (!user) {
-                throw new UnauthorizedException("User not found")
-            }
+            if (!user) throw new UnauthorizedException("User not found")
 
             const { accessToken, refreshToken } = await this.generateTokens(user)
-
             const { password, resetPasswordToken, resetPasswordExpires, ...userWithoutSensitiveData } = user
 
             return { user: userWithoutSensitiveData, accessToken, refreshToken }

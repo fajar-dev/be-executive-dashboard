@@ -11,12 +11,14 @@ import { AuthController } from '../modules/auth/auth.controller'
 import { validationHook } from '../core/helpers/validator'
 import { LoginSchema } from '../modules/auth/validators/auth.validator'
 import { authMiddleware } from '../core/middlewares/auth.middleware'
+import { Is5Service } from '../modules/is5/is5.service'
 
 const routes = new Hono()
 
 // Dependency Injection Setup
 const userService = new UserService(dashboardPool)
-const authService = new AuthService(dashboardPool, userService)
+const is5Service = new Is5Service()
+const authService = new AuthService(dashboardPool, userService, is5Service)
 const generalService = new GeneralService(isxPool, nusafiberPool)
 const general = new GeneralController(generalService)
 const auth = new AuthController(authService)

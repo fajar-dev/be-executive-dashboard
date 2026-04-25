@@ -17,4 +17,14 @@ export class UserService {
 
         return user
     }
+
+    async getByEmId(employeeId: string) {
+        const [[user]] = await this.dashboardDb.query<any[]>(
+            'SELECT * FROM users WHERE employee_id = ? LIMIT 1',
+            [employeeId]
+        )
+        if (!user) throw new NotFoundException("User not found")
+
+        return user
+    }
 }

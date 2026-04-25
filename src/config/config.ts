@@ -37,6 +37,9 @@ export const config = {
             pool: Number(process.env.NUSAFIBER_DB_POOL) || 10,
         }
     },
+    is5: {
+        authUrl: process.env.IS5_AUTH_URL || '',
+    },
     feedback: {
         scriptUrl: process.env.FEEDBACK_URL || '',
     }

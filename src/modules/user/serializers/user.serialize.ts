@@ -5,7 +5,6 @@ export class UserSerializer {
             name: user.name,
             email: user.email,
             avatar: user.avatar,
-            role: user.role,
             lastLoginAt: user.lastLoginAt,
             lastLoginIp: user.lastLoginIp,
             isActive: user.isActive,
