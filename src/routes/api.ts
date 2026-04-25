@@ -9,7 +9,7 @@ import { GeneralService } from '../modules/general/general.service'
 import { GeneralController } from '../modules/general/general.controller'
 import { AuthController } from '../modules/auth/auth.controller'
 import { validationHook } from '../core/helpers/validator'
-import { LoginSchema } from '../modules/auth/validators/auth.validator'
+import { GoogleLoginSchema, LoginSchema, RefreshTokenSchema } from '../modules/auth/validators/auth.validator'
 import { authMiddleware } from '../core/middlewares/auth.middleware'
 import { Is5Service } from '../modules/is5/is5.service'
 
@@ -23,10 +23,13 @@ const generalService = new GeneralService(isxPool, nusafiberPool)
 const general = new GeneralController(generalService)
 const auth = new AuthController(authService)
 
-routes.post('/auth/login', zValidator('json', LoginSchema, validationHook), (c) => auth.login(c))
-
 // Protected Routes
 const authMid = authMiddleware(userService)
+
+routes.post('/auth/login', zValidator('json', LoginSchema, validationHook), (c) => auth.login(c))
+routes.post('/auth/google', zValidator('json', GoogleLoginSchema, validationHook), (c) => auth.google(c))
+routes.post('/auth/refresh', zValidator('json', RefreshTokenSchema, validationHook), (c) => auth.refreshToken(c))
+routes.get('/auth/me', authMid, (c) => auth.me(c))
 
 routes.get('/general/noc', authMid, (c) => general.getNocStatus(c))
 routes.get('/general/revenue', authMid, (c) => general.getRevenueStats(c))
