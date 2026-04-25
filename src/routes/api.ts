@@ -18,7 +18,7 @@ const routes = new Hono()
 // Dependency Injection Setup
 const userService = new UserService(dashboardPool)
 const is5Service = new Is5Service()
-const authService = new AuthService(dashboardPool, userService, is5Service)
+const authService = new AuthService(userService, is5Service)
 const generalService = new GeneralService(isxPool, nusafiberPool)
 const general = new GeneralController(generalService)
 const auth = new AuthController(authService)

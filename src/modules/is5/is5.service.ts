@@ -5,12 +5,12 @@ export class Is5Service {
     async auth(employeeId: string, password: string) {
         try {
             const response = await axios.post(config.is5.authUrl, {
-                employeeId,
+                username: employeeId,
                 password,
             }, {
                 validateStatus: () => true
             })
-            return response.status === 200
+            return response.status === 201
         } catch (error) {
             return false
         }

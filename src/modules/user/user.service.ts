@@ -27,4 +27,14 @@ export class UserService {
 
         return user
     }
+
+    async getByEmail(email: string) {
+        const [[user]] = await this.dashboardDb.query<any[]>(
+            'SELECT * FROM users WHERE email = ? LIMIT 1',
+            [email]
+        )
+        if (!user) throw new NotFoundException("User not found")
+
+        return user
+    }
 }

@@ -37,6 +37,10 @@ export const config = {
             pool: Number(process.env.NUSAFIBER_DB_POOL) || 10,
         }
     },
+    google: {
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
     is5: {
         authUrl: process.env.IS5_AUTH_URL || '',
     },

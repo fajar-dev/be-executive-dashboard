@@ -2,12 +2,11 @@ export class UserSerializer {
     static single(user: any) {
         return {
             id: user.id,
+            employeeId: user.employee_id,
             name: user.name,
             email: user.email,
-            avatar: user.avatar,
-            lastLoginAt: user.lastLoginAt,
-            lastLoginIp: user.lastLoginIp,
-            isActive: user.isActive,
+            photo: user.photo,
+            isActive: user.is_active,
         }
     }
 
