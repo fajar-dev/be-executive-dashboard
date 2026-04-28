@@ -2,11 +2,11 @@ import { type Pool } from 'mysql2/promise'
 import { DateHelper } from '../../core/helpers/date'
 
 export class GeneralService {
-    private isxDb: Pool;
+    private nisDb: Pool;
     private nusaFiberDb: Pool;
 
-    constructor(isxDb: Pool, nusaFiberDb: Pool) {
-        this.isxDb = isxDb;
+    constructor(nisDb: Pool, nusaFiberDb: Pool) {
+        this.nisDb = nisDb;
         this.nusaFiberDb = nusaFiberDb;
     }
 
@@ -14,7 +14,7 @@ export class GeneralService {
      * NOC Tickets with 'Open' status
      */
     async getNocStatus() {
-        const [rows] = await this.isxDb.query<any[]>('SELECT COUNT(1) as total FROM noc WHERE status = ?', ['Open'])
+        const [rows] = await this.nisDb.query<any[]>('SELECT COUNT(1) as total FROM noc WHERE status = ?', ['Open'])
         return Number(rows[0]?.total || 0)
     }
 
@@ -25,7 +25,7 @@ export class GeneralService {
         const { currentPeriod } = DateHelper.getPeriodInfo(period)
         const prevPeriod = DateHelper.getPreviousPeriod(period)
 
-        const [rows] = await this.isxDb.query<any[]>(
+        const [rows] = await this.nisDb.query<any[]>(
             `SELECT -SUM(Debet-Kredit) as total 
                 FROM GeneralJournal 
                 WHERE KodeCabang = '020'
@@ -34,7 +34,7 @@ export class GeneralService {
             [currentPeriod]
         )
 
-        const [prevRows] = await this.isxDb.query<any[]>(
+        const [prevRows] = await this.nisDb.query<any[]>(
             `SELECT -SUM(Debet-Kredit) as total 
                 FROM GeneralJournal 
                 WHERE KodeCabang = '020'
@@ -55,7 +55,7 @@ export class GeneralService {
     async getIspStats(period: string) {
         const { currentPeriod, startDate, endDate } = DateHelper.getPeriodInfo(period)
 
-        const [active] = await this.isxDb.query<any[]>(
+        const [active] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -66,7 +66,7 @@ export class GeneralService {
                 AND c.BranchId = '020'`
         )
 
-        const [added] = await this.isxDb.query<any[]>(
+        const [added] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -81,7 +81,7 @@ export class GeneralService {
 
         const prevStart = DateHelper.getPreviousMonthStart(period)
         const prevEnd = DateHelper.getPreviousMonthEnd(period)
-        const [addedLastMonth] = await this.isxDb.query<any[]>(
+        const [addedLastMonth] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -94,7 +94,7 @@ export class GeneralService {
             [prevStart, prevEnd]
         )
 
-        const [churn] = await this.isxDb.query<any[]>(
+        const [churn] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -121,7 +121,7 @@ export class GeneralService {
     async getNusaWorkStats(period: string) {
         const {startDate, endDate } = DateHelper.getPeriodInfo(period)
 
-        const [active] = await this.isxDb.query<any[]>(
+        const [active] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM ServiceSubcriptions ss 
                 LEFT JOIN CustomerServices cs ON cs.CustServId = ss.CustServId 
@@ -133,7 +133,7 @@ export class GeneralService {
                 AND c.BranchId = '020'`
         )
 
-        const [growth] = await this.isxDb.query<any[]>(
+        const [growth] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM ServiceSubcriptions ss 
                 LEFT JOIN CustomerServices cs ON cs.CustServId = ss.CustServId 
@@ -146,7 +146,7 @@ export class GeneralService {
             [startDate, endDate]
         )
 
-        const [companies] = await this.isxDb.query<any[]>(
+        const [companies] = await this.nisDb.query<any[]>(
             `SELECT COUNT(DISTINCT cs.CustServId) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -159,7 +159,7 @@ export class GeneralService {
             [startDate]
         )
 
-        const [total] = await this.isxDb.query<any[]>(
+        const [total] = await this.nisDb.query<any[]>(
             `SELECT COUNT(1) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -183,7 +183,7 @@ export class GeneralService {
         const prevPeriod = DateHelper.getPreviousPeriod(period)
         const prevPeriodFormatted = prevPeriod.substring(4, 6) + prevPeriod.substring(2, 4)
 
-        const [current] = await this.isxDb.query<any[]>(
+        const [current] = await this.nisDb.query<any[]>(
             `SELECT cs.CustStatus as status, COUNT(cs.CustServId) as total 
                 FROM CustomerServices cs 
                 LEFT JOIN Customer c ON c.CustId = cs.CustId 
@@ -194,7 +194,7 @@ export class GeneralService {
                 GROUP BY cs.CustStatus`
         )
 
-        const [lastMonth] = await this.isxDb.query<any[]>(
+        const [lastMonth] = await this.nisDb.query<any[]>(
             `SELECT cse.CustStatus as status, COUNT(cse.CustServId) as total 
                 FROM CustomerServiceExcerpt cse 
                 LEFT JOIN Customer c ON c.CustId = cse.CustId 
@@ -207,7 +207,7 @@ export class GeneralService {
             [prevPeriodFormatted]
         )
 
-        const [conversion] = await this.isxDb.query<any[]>(
+        const [conversion] = await this.nisDb.query<any[]>(
             `SELECT * FROM (
                 SELECT COUNT(DISTINCT cp.CustServId) as total_upgrade 
                 FROM CustomerServices cs 
@@ -245,7 +245,7 @@ export class GeneralService {
      * Revenue Period
      */
     async getRevenuePeriod(startPeriod: string, endPeriod: string) {
-        const [rows] = await this.isxDb.query<any[]>(
+        const [rows] = await this.nisDb.query<any[]>(
             `SELECT DATE_FORMAT(gj.TglTransaksi, '%Y-%m') as period, p.NamaPerkiraan as name, -SUM(gj.Debet-gj.Kredit) as revenue 
                 FROM GeneralJournal gj 
                 LEFT JOIN Perkiraan p ON p.Perkiraan = SUBSTRING(NoPerkiraan, 1, 7) AND p.KodeCabang = gj.KodeCabang 
@@ -267,7 +267,7 @@ export class GeneralService {
      * Revenue Monthly
      */
     async getRevenueMonthly(period: string) {
-        const [rows] = await this.isxDb.query<any[]>(
+        const [rows] = await this.nisDb.query<any[]>(
             `SELECT p.NamaPerkiraan as name, -SUM(gj.Debet-gj.Kredit) as revenue 
                 FROM GeneralJournal gj 
                 LEFT JOIN Perkiraan p ON p.Perkiraan = SUBSTRING(NoPerkiraan, 1, 7) AND p.KodeCabang = gj.KodeCabang 
@@ -290,7 +290,7 @@ export class GeneralService {
      */
     async getAlerts() {
         // 1. Issues by branch
-        const [issues] = await this.isxDb.query<any[]>(
+        const [issues] = await this.nisDb.query<any[]>(
             `SELECT nb.BranchCity as branch, n.status as status, 
                     COUNT(DISTINCT n.id) as total_issues, 
                     COUNT(DISTINCT ncs.cs_id) as total_effected_customers, 
@@ -303,7 +303,7 @@ export class GeneralService {
         )
 
         // 2. Overdue Invoices
-        const [overdue] = await this.isxDb.query<any[]>(
+        const [overdue] = await this.nisDb.query<any[]>(
             `SELECT s.BusinessOperation as type, 
                     DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate)) as total_exp_days, 
                     COUNT(DISTINCT nci.AI) as total_invoices, SUM(nci.Credit) as amount 
@@ -322,7 +322,7 @@ export class GeneralService {
         )
 
         // 3. Renewals
-        const [renewals] = await this.isxDb.query<any[]>(
+        const [renewals] = await this.nisDb.query<any[]>(
             `SELECT sg.Description as service_group, COUNT(DISTINCT t.csid) as total_services, 
                     SUM(t.amount) as amount, COUNT(DISTINCT t.ai) as total_invoices, 
                     SUM(CASE WHEN t.is_renewal = 1 THEN 1 ELSE 0 END) as total_renewal, 
@@ -367,7 +367,7 @@ export class GeneralService {
         const { currentPeriod, startDate, endDate } = DateHelper.getPeriodInfo(period)
 
         // Churn Rate
-        const [churnRate] = await this.isxDb.query<any[]>(
+        const [churnRate] = await this.nisDb.query<any[]>(
             `SELECT csna.total/csac.total as percentage FROM (
                 SELECT COUNT(cs.CustServId) as total FROM CustomerServices cs 
                 WHERE DATE_FORMAT(cs.CustUnregDate, '%Y%m') = ? 
@@ -385,7 +385,7 @@ export class GeneralService {
         const nextMonthDate = new Date(Number(currentPeriod.substring(0, 4)), Number(currentPeriod.substring(4, 6)), 1)
         const nextMonthStartDate = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}-01`
 
-        const [sla] = await this.isxDb.query<any[]>(
+        const [sla] = await this.nisDb.query<any[]>(
             `SELECT 
                 csdown.weighted_duration / csup.weighted_duration AS percentage
                 FROM (
@@ -413,7 +413,7 @@ export class GeneralService {
         )
 
         // Collection Rate
-        const [collectionRate] = await this.isxDb.query<any[]>(
+        const [collectionRate] = await this.nisDb.query<any[]>(
             `SELECT SUM(gj.Kredit) / SUM(gj.Debet) as percentage 
                 FROM GeneralJournal gj 
                 WHERE gj.NoPerkiraan LIKE '103%' AND gj.KodeCabang = '020' 
@@ -422,14 +422,14 @@ export class GeneralService {
         )
 
         // Tickets Solved
-        const [tickets] = await this.isxDb.query<any[]>(
+        const [tickets] = await this.nisDb.query<any[]>(
             `SELECT SUM(CASE WHEN t.Status IN ('Call', 'Closed') THEN 1 ELSE 0 END) / COUNT(t.TtsId) as percentage 
                 FROM Tts t WHERE t.Status != 'Cancel' AND t.PostedTime BETWEEN ? AND ?`,
             [startDate, endDate]
         )
 
         // ARPU ISP
-        const [arpu] = await this.isxDb.query<any[]>(
+        const [arpu] = await this.nisDb.query<any[]>(
             `SELECT AVG(t.net_subscription / t.period) as average_mrc 
                 FROM (
                     SELECT cs.Subscription - IFNULL(CAST(cs.Discount AS UNSIGNED), 0) AS net_subscription, 

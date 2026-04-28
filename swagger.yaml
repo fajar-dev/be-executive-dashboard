@@ -39,6 +39,8 @@ tags:
     description: Login and JWT token management
   - name: General
     description: Operational statistics — NOC, revenue, ISP, NusaWork, HomeConnect, alerts, and health metrics
+  - name: Additional
+    description: Utility endpoints for periods and other additional information
 
 # ──────────────────────────────────────────────
 # PATHS
@@ -53,10 +55,10 @@ paths:
         - Authentication
       summary: User login
       description: |
-        Authenticate user using username and password. Returns user profile,
+        Authenticate user using employee ID and password. Returns user profile,
         access token (valid for 15 minutes), and refresh token (valid for 7 days).
 
-        Password is verified using Bun.password.verify (bcrypt-compatible).
+        Password is verified with IS5 Service.
       operationId: authLogin
       requestBody:
         required: true
@@ -68,12 +70,12 @@ paths:
               valid:
                 summary: Valid credentials
                 value:
-                  username: "admin"
+                  employeeId: "1912001"
                   password: "secretpassword"
               empty_username:
-                summary: Empty username (validation failure example)
+                summary: Empty employee ID (validation failure example)
                 value:
-                  username: ""
+                  employeeId: ""
                   password: "secretpassword"
       responses:
         "200":
@@ -93,13 +95,11 @@ paths:
                 message: "Logged in successfully"
                 data:
                   user:
-                    id: "usr_01HX9ZK4ABCDEF"
+                    id: 1
+                    employeeId: "1912001"
                     name: "Budi Santoso"
                     email: "budi@nusanet.id"
-                    avatar: "https://cdn.nusanet.id/avatars/budi.jpg"
-                    role: "admin"
-                    lastLoginAt: "2026-04-23T08:30:00.000Z"
-                    lastLoginIp: "192.168.1.10"
+                    photo: "https://cdn.nusanet.id/avatars/budi.jpg"
                     isActive: true
                   accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMDFIWDlaS..."
                   refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMDFIWDla..."
@@ -116,6 +116,96 @@ paths:
                 errors: null
         "422":
           $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/google:
+    post:
+      tags:
+        - Authentication
+      summary: Login with Google
+      description: Authenticate user using a Google OAuth2 authorization code.
+      operationId: authGoogle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleLoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginResponseData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh Access Token
+      description: Obtain a new access token using a valid refresh token.
+      operationId: authRefresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Tokens refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginResponseData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current authenticated user
+      description: Returns the profile of the currently logged in user based on the access token.
+      operationId: authMe
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -181,7 +271,7 @@ paths:
         Returns a comparison of total revenue for the current month versus the previous month,
         along with nominal and percentage growth.
 
-        Data is sourced from ISX `GeneralJournal` with branch code `020`,
+        Data is sourced from NIS `GeneralJournal` with branch code `020`,
         estimated account prefix `400` and `401`.
       operationId: getRevenueStats
       security:
@@ -711,6 +801,41 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  # ────────────────────────────────────────────
+  # ADDITIONAL
+  # ────────────────────────────────────────────
+  /additional/period:
+    get:
+      tags:
+        - Additional
+      summary: Get period breakdown
+      description: Returns the month, year, quarter, and month name for a given or current period.
+      operationId: getPeriodBreakdown
+      parameters:
+        - $ref: "#/components/parameters/PeriodParam"
+      responses:
+        "200":
+          description: Period breakdown successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PeriodBreakdown"
+              example:
+                success: true
+                statusCode: 200
+                message: "Period retrieved successfully"
+                data:
+                  month: 4
+                  year: 2026
+                  quarter: 2
+                  monthName: "April"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 # ──────────────────────────────────────────────
 # COMPONENTS
@@ -757,8 +882,8 @@ components:
             statusCode: 422
             message: "Validator failed"
             errors:
-              - field: "username"
-                message: "Username is required"
+              - field: "employeeId"
+                message: "Employee ID is required"
               - field: "password"
                 message: "Password is required"
 
@@ -901,19 +1026,41 @@ components:
     LoginRequest:
       type: object
       required:
-        - username
+        - employeeId
         - password
       properties:
-        username:
+        employeeId:
           type: string
           minLength: 1
-          description: User's username
-          example: "admin"
+          description: User's Employee ID
+          example: "1912001"
         password:
           type: string
           minLength: 1
-          description: User password (plain text, verified with bcrypt)
+          description: User password (plain text, verified with IS5)
           example: "secretpassword"
+
+    GoogleLoginRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Google OAuth2 authorization code
+          example: "4/0AeaYSHAR123..."
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          description: Valid refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5c...."
 
     LoginResponseData:
       type: object
@@ -934,9 +1081,13 @@ components:
       description: User profile (without sensitive data like password)
       properties:
         id:
-          type: string
+          type: integer
           description: Unique user ID
-          example: "usr_01HX9ZK4ABCDEF"
+          example: 1
+        employeeId:
+          type: string
+          description: User's Employee ID
+          example: "1912001"
         name:
           type: string
           description: User's full name
@@ -946,26 +1097,11 @@ components:
           format: email
           description: User's email address
           example: "budi@nusanet.id"
-        avatar:
+        photo:
           type: string
           nullable: true
           description: User's profile photo URL, can be null
           example: "https://cdn.nusanet.id/avatars/budi.jpg"
-        role:
-          type: string
-          description: User's role in the system
-          example: "admin"
-        lastLoginAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Last login time (ISO 8601), null if never logged in
-          example: "2026-04-23T08:30:00.000Z"
-        lastLoginIp:
-          type: string
-          nullable: true
-          description: IP address at the last login, null if never logged in
-          example: "192.168.1.10"
         isActive:
           type: boolean
           description: User account active status
@@ -1299,3 +1435,24 @@ components:
             Average Revenue Per User — average net subscription (after discount)
             per month per active ISP customer (status AC). In Rupiah.
           example: 285000
+
+    # ── ADDITIONAL ────────────────────────────
+    PeriodBreakdown:
+      type: object
+      properties:
+        month:
+          type: integer
+          description: Month as a number (1-12)
+          example: 4
+        year:
+          type: integer
+          description: Year as a number (YYYY)
+          example: 2026
+        quarter:
+          type: integer
+          description: Quarter as a number (1-4)
+          example: 2
+        monthName:
+          type: string
+          description: Month name in Indonesian
+          example: "April"

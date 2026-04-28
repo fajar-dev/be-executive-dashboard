@@ -5,14 +5,14 @@ import { ApiResponse } from './core/helpers/response'
 import { BaseException } from './core/exceptions/base'
 import { config } from './config/config'
 import { dashboardCheckConnection } from './config/dashboard.db'
-import { isxCheckConnection } from './config/isx.db'
+import { nisCheckConnection } from './config/nis.db'
 import { nusafiberCheckConnection } from './config/nusafiber.db'
 import { swaggerUI } from '@hono/swagger-ui'
 import { serveStatic } from 'hono/bun'
 
 // Check Database Connections
 dashboardCheckConnection()
-isxCheckConnection()
+nisCheckConnection()
 // nusafiberCheckConnection()
 
 const app = new Hono()

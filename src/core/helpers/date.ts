@@ -92,4 +92,17 @@ export class DateHelper {
         const month = Number(period.substring(4, 6))
         return new Date(year, month, 0).getDate()
     }
+
+    /**
+     * Get breakdown of period (month, year, quarter)
+     */
+    static getPeriodBreakdown(period?: string) {
+        const currentPeriod = period || this.getCurrentPeriod()
+        const year = Number(currentPeriod.substring(0, 4))
+        const month = Number(currentPeriod.substring(4, 6))
+        const quarter = Math.ceil(month / 3)
+        const monthName = this.getMonthName(currentPeriod)
+
+        return { month, year, quarter, monthName }
+    }
 }
