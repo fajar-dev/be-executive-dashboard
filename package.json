@@ -2,7 +2,8 @@
   "name": "be",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "bun build --minify --outfile dist/index.js --target bun src/index.ts"
+    "build": "bun build --minify --outfile dist/index.js --target bun src/index.ts",
+    "sync-executive": "bun run src/jobs/sync-executive.cmd.ts"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.6.1",

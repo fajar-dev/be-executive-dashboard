@@ -1,5 +1,5 @@
 import { type Pool } from 'mysql2/promise'
-import { IUserRepository } from './user.repository.interface'
+import { IUserRepository, type UserUpsertPayload } from './user.repository.interface'
 
 export class UserRepository implements IUserRepository {
     constructor(private readonly db: Pool) {}
@@ -26,5 +26,20 @@ export class UserRepository implements IUserRepository {
             [email]
         )
         return user ?? null
+    }
+
+    async upsertByEmployeeId(data: UserUpsertPayload[]): Promise<void> {
+        if (!data.length) return
+
+        const values = data.map(d => [d.employeeId, d.name, d.email, d.photo])
+        await this.db.query(
+            `INSERT INTO users (employee_id, name, email, photo)
+             VALUES ?
+             ON DUPLICATE KEY UPDATE
+               name = VALUES(name),
+               email = VALUES(email),
+               photo = VALUES(photo)`,
+            [values]
+        )
     }
 }
