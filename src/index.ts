@@ -50,7 +50,8 @@ app.onError((err, c) => {
 })
 
 export default {
-  port: config.app.port,
-  fetch: app.fetch,
-  idleTimeout: 60, // seconds
+    port: config.app.port,
+    hostname: '0.0.0.0',
+    fetch: app.fetch,
+    idleTimeout: 60, // seconds
 };
