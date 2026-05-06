@@ -24,7 +24,7 @@ export const config = {
             host: process.env.NIS_DB_HOST || '127.0.0.1',
             port: Number(process.env.NIS_DB_PORT) || 3306,
             user: process.env.NIS_DB_USER || 'root',
-            pass: process.env.NIS_DB_PASSWORD || '',
+            pass: process.env.NIS_DB_PASS || '',
             name: process.env.NIS_DB_NAME || 'nis',
             pool: Number(process.env.NIS_DB_POOL) || 10,
         },
@@ -32,7 +32,7 @@ export const config = {
             host: process.env.NUSAFIBER_DB_HOST || '127.0.0.1',
             port: Number(process.env.NUSAFIBER_DB_PORT) || 3306,
             user: process.env.NUSAFIBER_DB_USER || 'root',
-            pass: process.env.NUSAFIBER_DB_PASSWORD || '',
+            pass: process.env.NUSAFIBER_DB_PASS || '',
             name: process.env.NUSAFIBER_DB_NAME || 'nusafiber',
             pool: Number(process.env.NUSAFIBER_DB_POOL) || 10,
         }

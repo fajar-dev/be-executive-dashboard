@@ -38,10 +38,10 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - kawan-nusa-network
+      - executive-dashboard-network
 
 networks:
-  kawan-nusa-network:
+  executive-dashboard-network:
     driver: bridge
 
 volumes:

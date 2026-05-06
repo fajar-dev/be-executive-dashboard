@@ -49,9 +49,13 @@ app.onError((err, c) => {
     return ApiResponse.error(c, "Internal Server Error", 500, errors)
 })
 
+
+
 export default {
     port: config.app.port,
     hostname: '0.0.0.0',
     fetch: app.fetch,
     idleTimeout: 60, // seconds
 };
+
+console.log(`🚀 Server running on http://localhost:${config.app.port}`);
