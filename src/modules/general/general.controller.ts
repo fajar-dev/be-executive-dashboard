@@ -1,5 +1,5 @@
 import { Context } from 'hono'
-import { GeneralService } from './general.service'
+import { IGeneralService } from './general.service.interface'
 import { ApiResponse } from '../../core/helpers/response'
 import { DateHelper } from '../../core/helpers/date'
 
@@ -14,132 +14,92 @@ import { AlertsSerializer } from './serializers/alerts.serialize'
 import { HealthSerializer } from './serializers/health.serialize'
 
 export class GeneralController {
-    private service: GeneralService
+    constructor(private readonly service: IGeneralService) {}
 
-    constructor(service: GeneralService) {
-        this.service = service
-    }
-
-    /**
-     * GET /general/noc
-     */
     async getNocStatus(c: Context) {
         try {
             const stats = await this.service.getNocStatus()
-            const data = NocSerializer.single(stats)
-            return ApiResponse.success(c, data, 'NOC status retrieved')
+            return ApiResponse.success(c, NocSerializer.single(stats), 'NOC status retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/revenue
-     */
     async getRevenueStats(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getRevenue(period)
-            const data = RevenueSerializer.single(stats)
-            return ApiResponse.success(c, data, 'Revenue retrieved')
+            return ApiResponse.success(c, RevenueSerializer.single(stats), 'Revenue retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/isp
-     */
     async getIspStats(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getIspStats(period)
-            const data = IspSerializer.single(stats)
-            return ApiResponse.success(c, data, 'ISP stats retrieved')
+            return ApiResponse.success(c, IspSerializer.single(stats), 'ISP stats retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/nusawork
-     */
     async getNusaWorkStats(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getNusaWorkStats(period)
-            const data = NusaWorkSerializer.single(stats)
-            return ApiResponse.success(c, data, 'NusaWork stats retrieved')
+            return ApiResponse.success(c, NusaWorkSerializer.single(stats), 'NusaWork stats retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/homeconnect
-     */
     async getHomeConnectStats(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getHomeConnectStats(period)
-            const data = HomeConnectSerializer.single(stats)
-            return ApiResponse.success(c, data, 'HomeConnect stats retrieved')
+            return ApiResponse.success(c, HomeConnectSerializer.single(stats), 'HomeConnect stats retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/revenue/period
-     */
     async getRevenuePeriod(c: Context) {
         try {
-            const startPeriod = c.req.query('startPeriod') || DateHelper.getCurrentPeriod().substring(0, 4) + '01' 
+            const startPeriod = c.req.query('startPeriod') || DateHelper.getCurrentPeriod().substring(0, 4) + '01'
             const endPeriod = c.req.query('endPeriod') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getRevenuePeriod(startPeriod, endPeriod)
-            const data = RevenuePeriodSerializer.list(stats)
-            return ApiResponse.success(c, data, 'Revenue period retrieved')
+            return ApiResponse.success(c, RevenuePeriodSerializer.list(stats), 'Revenue period retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/revenue/monthly
-     */
     async getRevenueMonthly(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getRevenueMonthly(period)
-            const data = RevenueMonthlySerializer.list(stats)
-            return ApiResponse.success(c, data, 'Revenue trend retrieved')
+            return ApiResponse.success(c, RevenueMonthlySerializer.list(stats), 'Revenue trend retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/alerts
-     */
     async getAlerts(c: Context) {
         try {
             const stats = await this.service.getAlerts()
-            const data = AlertsSerializer.single(stats)
-            return ApiResponse.success(c, data, 'Alerts retrieved')
+            return ApiResponse.success(c, AlertsSerializer.single(stats), 'Alerts retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
     }
 
-    /**
-     * GET /general/health
-     */
     async getHealthMetrics(c: Context) {
         try {
             const period = c.req.query('period') || DateHelper.getCurrentPeriod()
             const stats = await this.service.getHealthMetrics(period)
-            const data = HealthSerializer.single(stats)
-            return ApiResponse.success(c, data, 'Health metrics retrieved')
+            return ApiResponse.success(c, HealthSerializer.single(stats), 'Health metrics retrieved')
         } catch (error: any) {
             return ApiResponse.error(c, error.message)
         }
