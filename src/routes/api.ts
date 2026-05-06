@@ -56,7 +56,7 @@ routes.get('/general/revenue/monthly', authMid, (c) => general.getRevenueMonthly
 routes.get('/general/isp', authMid, (c) => general.getIspStats(c))
 routes.get('/general/nusawork', authMid, (c) => general.getNusaWorkStats(c))
 routes.get('/general/homeconnect', authMid, (c) => general.getHomeConnectStats(c))
-routes.get('/general/alerts', authMid, (c) => general.getAlerts(c))
+routes.get('/general/alerts', (c) => general.getAlerts(c))
 routes.get('/general/health', authMid, (c) => general.getHealthMetrics(c))
 
 // Additional Routes
