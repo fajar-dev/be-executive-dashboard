@@ -1,27 +1,36 @@
 export class AlertsSerializer {
     static single(data: any) {
-        return {
-            issues: data.issues.map((i: any) => ({
-                branch: i.branch,
-                status: i.status,
-                totalIssues: Number(i.total_issues),
-                totalEffectedCustomers: Number(i.total_effected_customers),
-                lastStartedAt: i.last_started_at
-            })),
-            overdue: data.overdue.map((o: any) => ({
-                type: o.type,
-                totalExpDays: Number(o.total_exp_days),
-                totalInvoices: Number(o.total_invoices),
-                amount: Number(o.amount)
-            })),
-            renewals: data.renewals.map((r: any) => ({
-                serviceGroup: r.service_group,
-                totalServices: Number(r.total_services),
-                amount: Number(r.amount),
-                totalInvoices: Number(r.total_invoices),
-                totalRenewal: Number(r.total_renewal),
-                totalNewSubscription: Number(r.total_new_subscription)
-            }))
+        const result: any[] = []
+
+        const issues = data.issues?.[0]
+        if (issues?.total_issues) {
+            result.push({
+                type: 'danger',
+                title: 'Gangguan Jaringan Aktif',
+                content: `${issues.total_issues} NOC issue. ${issues.total_effected_customers ?? 0} pelanggan terdampak`
+            })
         }
+
+        const overdue = data.overdue?.[0]
+        if (overdue?.total_invoices) {
+            const amount = Number(overdue.total_amount || 0).toLocaleString('id-ID')
+            result.push({
+                type: 'warning',
+                title: 'Invoice Jatuh Tempo',
+                content: `Rp ${amount} outstanding dari ${overdue.total_invoices} invoice pada ${overdue.total_type ?? 0} jenis bisnis operasi`
+            })
+        }
+
+        const renewal = data.renewals?.[0]
+        if (renewal?.total_invoices) {
+            const amount = Number(renewal.amount || 0).toLocaleString('id-ID')
+            result.push({
+                type: 'info',
+                title: `Total Renewal - ${renewal.total_renewal ?? 0} perusahaan`,
+                content: `${renewal.total_invoices} invoice. Total ARR: Rp ${amount}`
+            })
+        }
+
+        return result
     }
 }

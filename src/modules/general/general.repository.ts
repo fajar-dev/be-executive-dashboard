@@ -228,44 +228,53 @@ export class GeneralRepository implements IGeneralRepository {
 
     async getAlertIssues(): Promise<any[]> {
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT nb.BranchCity as branch, n.status as status,
+            `SELECT 
                     COUNT(DISTINCT n.id) as total_issues,
                     COUNT(DISTINCT ncs.cs_id) as total_effected_customers,
                     MAX(n.start_time) as last_started_at
                 FROM noc n
                 LEFT JOIN noc_customer_service ncs ON ncs.noc_id = n.id
                 LEFT JOIN NusaBranch nb ON nb.BranchId = n.branchId
-                WHERE n.status IN ('Open', 'Under Investigate', 'Scheduled')
-                GROUP BY nb.BranchCity, n.status`
+                WHERE n.status IN ('Open', 'Under Investigate', 'Scheduled')`
         )
         return rows
     }
 
     async getAlertOverdue(): Promise<any[]> {
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT s.BusinessOperation as type,
-                    DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate)) as total_exp_days,
-                    COUNT(DISTINCT nci.AI) as total_invoices, SUM(nci.Credit) as amount
+            `SELECT 
+                    COUNT(DISTINCT s.BusinessOperation) as total_type,
+                    COUNT(DISTINCT nci.AI) as total_invoices,
+                    SUM(nci.Credit) as total_amount
                 FROM NewCustomerInvoice nci
                 LEFT JOIN NewCustomerInvoiceBatch ncib ON ncib.AI = nci.AI
-                LEFT JOIN CustomerInvoiceTemp cit ON cit.InvoiceNum = nci.Id AND cit.Urut = nci.No AND nci.Type = 'internet'
-                LEFT JOIN CustomerInvoiceTemp_Custom citc ON citc.InvoiceNum = cit.InvoiceNum AND citc.Urut = cit.Urut
+                LEFT JOIN CustomerInvoiceTemp cit ON cit.InvoiceNum = nci.Id 
+                    AND cit.Urut = nci.No 
+                    AND nci.Type = 'internet'
+                LEFT JOIN CustomerInvoiceTemp_Custom citc ON citc.InvoiceNum = cit.InvoiceNum 
+                    AND citc.Urut = cit.Urut
                 LEFT JOIN CustomerServices cs ON cs.CustServId = cit.CustServId
                 LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
                 LEFT JOIN Customer c ON c.CustId = nci.CustId
-                WHERE cit.Reverse = 0 AND cit.RInvoiceNum = 0 AND ncib.batchNo IS NULL
-                AND cs.CustStatus = 'AC' AND DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate)) > 0
-                AND nci.Credit > 0 AND c.BranchId = '020'
-                GROUP BY s.BusinessOperation, DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate))
-                ORDER BY DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate)) DESC`
+                LEFT JOIN NusaBranch nb ON nb.BranchCity = IFNULL(c.DisplayBranchId, c.BranchId)
+                WHERE cit.Reverse = 0
+                    AND cit.RInvoiceNum = 0
+                    AND ncib.batchNo IS NULL
+                    AND cs.CustStatus = 'AC'
+                    AND DATEDIFF(NOW(), IFNULL(citc.InvoiceExpDate, cit.InvoiceExpDate)) > 0
+                    AND nci.Credit > 0
+                    AND c.BranchId = '020'`
         )
         return rows
     }
 
     async getAlertRenewals(): Promise<any[]> {
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT sg.Description as service_group, COUNT(DISTINCT t.csid) as total_services,
-                    SUM(t.amount) as amount, COUNT(DISTINCT t.ai) as total_invoices,
+            `SELECT 
+                    COUNT(DISTINCT t.service_group) as count_service_group,
+                    COUNT(DISTINCT t.csid) as total_services,
+                    SUM(t.amount) as amount, 
+                    COUNT(DISTINCT t.ai) as total_invoices,
                     SUM(CASE WHEN t.is_renewal = 1 THEN 1 ELSE 0 END) as total_renewal,
                     SUM(CASE WHEN t.is_renewal = 0 THEN 1 ELSE 0 END) as total_new_subscription
                 FROM (
@@ -290,8 +299,7 @@ export class GeneralRepository implements IGeneralRepository {
                     ) ncir ON ncir.batchNo = ncib.batchNo
                     WHERE nci.Type = 'internet' AND cit.Reverse = 0 AND cit.RInvoiceNum = 0
                     AND ncir.batchNo IS NOT NULL AND c.BranchId = '020'
-                ) t LEFT JOIN ServiceGroup sg ON sg.ServiceGroup = t.service_group
-                GROUP BY t.service_group`
+                ) t`
         )
         return rows
     }
