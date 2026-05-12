@@ -13,7 +13,7 @@ import { serveStatic } from 'hono/bun'
 // Check Database Connections
 dashboardCheckConnection()
 nisCheckConnection()
-// nusafiberCheckConnection()
+nusafiberCheckConnection()
 
 const app = new Hono()
 

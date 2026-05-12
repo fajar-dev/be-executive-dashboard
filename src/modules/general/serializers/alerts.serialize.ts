@@ -31,6 +31,15 @@ export class AlertsSerializer {
             })
         }
 
+        const cluster = data.cluster?.[0]
+        if (cluster?.count_cluster) {
+            result.push({
+                type: 'success',
+                title: `Kawasan Baru Siap`,
+                content: `${cluster.total_ready_connect ?? 0} siap ONU. dari ${cluster.count_cluster ?? 0} total kawasan`
+            })
+        }
+
         return result
     }
 }

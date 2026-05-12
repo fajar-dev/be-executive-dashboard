@@ -29,6 +29,7 @@ export interface IGeneralRepository {
     getAlertIssues(): Promise<any[]>
     getAlertOverdue(): Promise<any[]>
     getAlertRenewals(): Promise<any[]>
+    getAlertCluster(): Promise<any[]>
 
     // Health
     getChurnRate(period: string): Promise<number>
