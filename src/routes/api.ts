@@ -21,6 +21,7 @@ import { AdditionalController } from '../modules/additional/additional.controlle
 
 import { authMiddleware } from '../core/middlewares/auth.middleware'
 import { validationHook } from '../core/helpers/validator'
+import { nusafiberPool } from '../config/nusafiber.db'
 
 const routes = new Hono()
 
@@ -33,7 +34,7 @@ const is5Service = new Is5Service()
 const authService = new AuthService(userService, is5Service)
 const auth = new AuthController(authService)
 
-const generalRepository = new GeneralRepository(nisPool)
+const generalRepository = new GeneralRepository(nisPool, nusafiberPool)
 const generalService = new GeneralService(generalRepository)
 const general = new GeneralController(generalService)
 

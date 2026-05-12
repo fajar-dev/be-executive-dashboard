@@ -2,7 +2,10 @@ import { type Pool } from 'mysql2/promise'
 import { IGeneralRepository } from './general.repository.interface'
 
 export class GeneralRepository implements IGeneralRepository {
-    constructor(private readonly nisDb: Pool) {}
+    constructor(
+        private readonly nisDb: Pool,
+        private readonly nusafiberDb: Pool
+    ) {}
 
     async countNocOpen(): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
@@ -300,6 +303,21 @@ export class GeneralRepository implements IGeneralRepository {
                     WHERE nci.Type = 'internet' AND cit.Reverse = 0 AND cit.RInvoiceNum = 0
                     AND ncir.batchNo IS NOT NULL AND c.BranchId = '020'
                 ) t`
+        )
+        return rows
+    }
+
+
+    async getAlertCluster(): Promise<any[]> {
+        const [rows] = await this.nusafiberDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT hp.cluster_name)          AS count_cluster,
+                MAX(hp.homepass_rfsdate)                 AS last_rfs_date,
+                COUNT(DISTINCT hp.homepass_id_partner)   AS total_ready_connect
+                FROM homepasses hp
+                LEFT JOIN customers c ON c.homepass_id = hp.homepass_id_partner
+                WHERE hp.homepass_rfsdate IS NOT NULL
+                AND c.id IS NULL`
         )
         return rows
     }

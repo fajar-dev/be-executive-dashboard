@@ -6,6 +6,6 @@ export interface IGeneralService {
     getHomeConnectStats(period: string): Promise<any>
     getRevenuePeriod(startPeriod: string, endPeriod: string): Promise<Array<{ period: string; name: string; revenue: number }>>
     getRevenueMonthly(period: string): Promise<Array<{ period: string; name: string; revenue: number }>>
-    getAlerts(): Promise<{ issues: any[]; overdue: any[]; renewals: any[] }>
+    getAlerts(): Promise<{ issues: any[]; overdue: any[]; renewals: any[]; cluster: any[] }>
     getHealthMetrics(period: string): Promise<{ churnRate: number; sla: number; collectionRate: number; tickets: number; arpu: number }>
 }

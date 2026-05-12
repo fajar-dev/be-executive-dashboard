@@ -78,13 +78,14 @@ export class GeneralService implements IGeneralService {
     }
 
     async getAlerts() {
-        const [issues, overdue, renewals] = await Promise.all([
+        const [issues, overdue, renewals, cluster] = await Promise.all([
             this.generalRepository.getAlertIssues(),
             this.generalRepository.getAlertOverdue(),
-            this.generalRepository.getAlertRenewals()
+            this.generalRepository.getAlertRenewals(),
+            this.generalRepository.getAlertCluster()
         ])
 
-        return { issues, overdue, renewals }
+        return { issues, overdue, renewals, cluster }
     }
 
     async getHealthMetrics(period: string) {
