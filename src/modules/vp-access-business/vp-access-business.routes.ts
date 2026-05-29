@@ -18,7 +18,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     // routes.get('/growth/...', authMid, (c) => growth.method(c))
 
     // Retention Routes
-    // routes.get('/retention/...', authMid, (c) => retention.method(c))
+    routes.get('/retention/churn', (c) => retention.getChurnMetrics(c))
 
     return routes
 }

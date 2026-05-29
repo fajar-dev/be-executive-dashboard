@@ -105,4 +105,104 @@ export class DateHelper {
 
         return { month, year, quarter, monthName }
     }
+
+    /**
+     * Get active quarter start and end dates in YYYY-MM-DD format
+     * If no period provided, uses current quarter
+     */
+    static getActiveQuarter(period?: string): { startDate: string; endDate: string } {
+        const currentPeriod = period || this.getCurrentPeriod()
+        const year = Number(currentPeriod.substring(0, 4))
+        const month = Number(currentPeriod.substring(4, 6))
+        const quarter = Math.ceil(month / 3)
+        
+        let startDate = ''
+        let endDate = ''
+
+        switch (quarter) {
+            case 1:
+                startDate = `${year}-01-01`
+                endDate = `${year}-03-31`
+                break
+            case 2:
+                startDate = `${year}-04-01`
+                endDate = `${year}-06-30`
+                break
+            case 3:
+                startDate = `${year}-07-01`
+                endDate = `${year}-09-30`
+                break
+            case 4:
+                startDate = `${year}-10-01`
+                endDate = `${year}-12-31`
+                break
+        }
+
+        return { startDate, endDate }
+    }
+
+    /**
+     * Get active year start and end dates in YYYY-MM-DD format
+     * If no period provided, uses current year
+     */
+    static getActiveYear(period?: string): { startDate: string; endDate: string } {
+        const currentPeriod = period || this.getCurrentPeriod()
+        const year = currentPeriod.substring(0, 4)
+        return {
+            startDate: `${year}-01-01`,
+            endDate: `${year}-12-31`
+        }
+    }
+
+    /**
+     * Get previous quarter start and end dates in YYYY-MM-DD format
+     */
+    static getPreviousQuarterDates(period?: string): { startDate: string; endDate: string } {
+        const currentPeriod = period || this.getCurrentPeriod()
+        let year = Number(currentPeriod.substring(0, 4))
+        const month = Number(currentPeriod.substring(4, 6))
+        let quarter = Math.ceil(month / 3)
+        
+        quarter -= 1
+        if (quarter === 0) {
+            quarter = 4
+            year -= 1
+        }
+        
+        let startDate = ''
+        let endDate = ''
+
+        switch (quarter) {
+            case 1:
+                startDate = `${year}-01-01`
+                endDate = `${year}-03-31`
+                break
+            case 2:
+                startDate = `${year}-04-01`
+                endDate = `${year}-06-30`
+                break
+            case 3:
+                startDate = `${year}-07-01`
+                endDate = `${year}-09-30`
+                break
+            case 4:
+                startDate = `${year}-10-01`
+                endDate = `${year}-12-31`
+                break
+        }
+
+        return { startDate, endDate }
+    }
+
+    /**
+     * Get previous year start and end dates in YYYY-MM-DD format
+     */
+    static getPreviousYearDates(period?: string): { startDate: string; endDate: string } {
+        const currentPeriod = period || this.getCurrentPeriod()
+        const prevYear = Number(currentPeriod.substring(0, 4)) - 1
+        return {
+            startDate: `${prevYear}-01-01`,
+            endDate: `${prevYear}-12-31`
+        }
+    }
 }

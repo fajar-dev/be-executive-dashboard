@@ -1,3 +1,4 @@
 export interface IRetentionRepository {
-    // Tambahkan method repository di sini
+    churnRevenue(branchId: string, startDate: string, endDate: string): Promise<number>
+    churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, totalChurn: number, totalActive: number }>
 }

@@ -32,10 +32,10 @@ routes.post('/auth/refresh', zValidator('json', RefreshTokenSchema, validationHo
 routes.get('/auth/me', authMid, (c) => auth.me(c))
 
 // Direksi Routes
-routes.route('/', setupDireksiRoutes(authMid))
+routes.route('direksi/', setupDireksiRoutes(authMid))
 
 // VP Access Business Routes
-routes.route('/', setupVpAccessBusinessRoutes(authMid))
+routes.route('vp-access-business/', setupVpAccessBusinessRoutes(authMid))
 
 // Additional Routes
 routes.get('/additional/period', (c) => additional.getPeriod(c))

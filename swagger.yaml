@@ -212,7 +212,7 @@ paths:
   # ────────────────────────────────────────────
   # NOC
   # ────────────────────────────────────────────
-  /general/noc:
+  /direksi/general/noc:
     get:
       tags:
         - General
@@ -262,7 +262,7 @@ paths:
   # ────────────────────────────────────────────
   # REVENUE - Summary
   # ────────────────────────────────────────────
-  /general/revenue:
+  /direksi/general/revenue:
     get:
       tags:
         - General
@@ -323,7 +323,7 @@ paths:
   # ────────────────────────────────────────────
   # REVENUE - Period
   # ────────────────────────────────────────────
-  /general/revenue/period:
+  /direksi/general/revenue/period:
     get:
       tags:
         - General
@@ -410,7 +410,7 @@ paths:
   # ────────────────────────────────────────────
   # REVENUE - Monthly Breakdown
   # ────────────────────────────────────────────
-  /general/revenue/monthly:
+  /direksi/general/revenue/monthly:
     get:
       tags:
         - General
@@ -461,7 +461,7 @@ paths:
   # ────────────────────────────────────────────
   # ISP
   # ────────────────────────────────────────────
-  /general/isp:
+  /direksi/general/isp:
     get:
       tags:
         - General
@@ -530,7 +530,7 @@ paths:
   # ────────────────────────────────────────────
   # NUSAWORK
   # ────────────────────────────────────────────
-  /general/nusawork:
+  /direksi/general/nusawork:
     get:
       tags:
         - General
@@ -581,7 +581,7 @@ paths:
   # ────────────────────────────────────────────
   # HOMECONNECT
   # ────────────────────────────────────────────
-  /general/homeconnect:
+  /direksi/general/homeconnect:
     get:
       tags:
         - General
@@ -647,7 +647,7 @@ paths:
   # ────────────────────────────────────────────
   # ALERTS
   # ────────────────────────────────────────────
-  /general/alerts:
+  /direksi/general/alerts:
     get:
       tags:
         - General
@@ -738,7 +738,7 @@ paths:
   # ────────────────────────────────────────────
   # HEALTH
   # ────────────────────────────────────────────
-  /general/health:
+  /direksi/general/health:
     get:
       tags:
         - General
@@ -797,6 +797,59 @@ paths:
                       collectionRate: 0.8230
                       tickets: 0.7650
                       arpu: 260000
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ────────────────────────────────────────────
+  # VP ACCESS BUSINESS
+  # ────────────────────────────────────────────
+  /vp-access-business/retention/churn:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get retention churn metrics
+      description: |
+        Returns churn rate and churn revenue metrics for a specific branch and period type.
+      operationId: getRetentionChurn
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Churn metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionChurn"
+              example:
+                success: true
+                statusCode: 200
+                message: "Churn metrics retrieved successfully"
+                data:
+                  rate: 1.5
+                  revenue: 12000000
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "500":
@@ -1455,4 +1508,39 @@ components:
         monthName:
           type: string
           description: Month name in Indonesian
+          example: "April"
+
+    # ── VP ACCESS BUSINESS ────────────────────
+    RetentionChurn:
+      type: object
+      properties:
+        trend:
+          type: string
+          enum: [up, down]
+          description: Churn rate trend compared to previous period
+          example: "up"
+        customers:
+          type: integer
+          description: Number of customers churned in current period
+          example: 12
+        customersPrevious:
+          type: integer
+          description: Number of customers churned in previous period
+          example: 8
+        customersGrowth:
+          type: integer
+          description: Difference in churned customers (current - previous)
+          example: 4
+        churnRate:
+          type: number
+          format: float
+          description: Retention churn rate percentage
+          example: 1.5
+        revenue:
+          type: number
+          description: Retention churn revenue in Rupiah
+          example: 12000000
+        lastPeriod:
+          type: string
+          description: Name of the previous period (e.g. 'April', 'Q1', '2025')
           example: "April"
