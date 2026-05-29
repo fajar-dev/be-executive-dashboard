@@ -35,6 +35,14 @@ export const config = {
             pass: process.env.NUSAFIBER_DB_PASS || '',
             name: process.env.NUSAFIBER_DB_NAME || 'nusafiber',
             pool: Number(process.env.NUSAFIBER_DB_POOL) || 10,
+        },
+        nusaprospect: {
+            host: process.env.NUSAPROSPECT_DB_HOST || '127.0.0.1',
+            port: Number(process.env.NUSAPROSPECT_DB_PORT) || 3306,
+            user: process.env.NUSAPROSPECT_DB_USER || 'root',
+            pass: process.env.NUSAPROSPECT_DB_PASS || '',
+            name: process.env.NUSAPROSPECT_DB_NAME || 'nusaprospect',
+            pool: Number(process.env.NUSAPROSPECT_DB_POOL) || 10,
         }
     },
     google: {
