@@ -1,6 +1,6 @@
-import { DateHelper } from '../../core/helpers/date'
-import { IGeneralRepository } from './general.repository.interface'
-import { IGeneralService } from './general.service.interface'
+import { DateHelper } from '../../../../core/helpers/date'
+import { IGeneralRepository } from '../interfaces/general.repository.interface'
+import { IGeneralService } from '../interfaces/general.service.interface'
 
 export class GeneralService implements IGeneralService {
     constructor(private readonly generalRepository: IGeneralRepository) {}
@@ -60,8 +60,8 @@ export class GeneralService implements IGeneralService {
         ])
 
         return {
-            current: currentRows.reduce((acc, row) => ({ ...acc, [row.status]: Number(row.total) }), { AC: 0, FR: 0 }),
-            lastMonth: lastMonthRows.reduce((acc, row) => ({ ...acc, [row.status]: Number(row.total) }), { AC: 0, FR: 0 }),
+            current: currentRows.reduce((acc: any, row: any) => ({ ...acc, [row.status]: Number(row.total) }), { AC: 0, FR: 0 }),
+            lastMonth: lastMonthRows.reduce((acc: any, row: any) => ({ ...acc, [row.status]: Number(row.total) }), { AC: 0, FR: 0 }),
             conversion: {
                 upgrade: conversion.total_upgrade,
                 free: conversion.total_free

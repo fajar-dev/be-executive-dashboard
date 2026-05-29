@@ -1,5 +1,5 @@
 import { type Pool } from 'mysql2/promise'
-import { IGeneralRepository } from './general.repository.interface'
+import { IGeneralRepository } from '../interfaces/general.repository.interface'
 
 export class GeneralRepository implements IGeneralRepository {
     constructor(

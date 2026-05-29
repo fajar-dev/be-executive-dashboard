@@ -1,4 +1,4 @@
-import { DateHelper } from '../../../core/helpers/date'
+import { DateHelper } from '../../../../core/helpers/date'
 
 export class RevenuePeriodSerializer {
     static list(data: any[]) {
