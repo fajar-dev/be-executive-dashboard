@@ -9,11 +9,13 @@ import { nisCheckConnection } from './config/nis.db'
 import { nusafiberCheckConnection } from './config/nusafiber.db'
 import { swaggerUI } from '@hono/swagger-ui'
 import { serveStatic } from 'hono/bun'
+import { nusaprospectCheckConnection } from './config/nusaprospect.db'
 
 // Check Database Connections
 dashboardCheckConnection()
 nisCheckConnection()
 nusafiberCheckConnection()
+nusaprospectCheckConnection()
 
 const app = new Hono()
 
