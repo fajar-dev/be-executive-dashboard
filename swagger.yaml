@@ -899,6 +899,57 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /vp-access-business/retention/usage:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get usage metrics
+      description: |
+        Returns the number of customers with usage < 500MB in the given period and its trend.
+      operationId: getRetentionUsage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Usage metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionUsageMetrics"
+              example:
+                success: true
+                statusCode: 200
+                message: "Usage metrics retrieved successfully"
+                data:
+                  value: 8
+                  trend: "down"
+                  percentage: 5.5
+                  period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /vp-access-business/retention/churn-rate:
     get:
       tags:
@@ -1961,6 +2012,24 @@ components:
           type: number
           format: float
           example: 15.5
+        period:
+          type: string
+          example: "May"
+    RetentionUsageMetrics:
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Total customers with usage < 500MB
+          example: 8
+        trend:
+          type: string
+          enum: [up, down]
+          example: "down"
+        percentage:
+          type: number
+          format: float
+          example: 5.5
         period:
           type: string
           example: "May"

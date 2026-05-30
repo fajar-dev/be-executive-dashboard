@@ -290,4 +290,35 @@ export class RetentionRepository implements IRetentionRepository {
         )
         return Number(rows[0]?.total_service || 0)
     }
+
+    async usage(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                COUNT(1) AS total_service
+            FROM (
+                SELECT 
+                    td.csid,
+                    YEAR(td.date) AS yr,
+                    MONTH(td.date) AS mo,
+                    (SUM(td.total) / 1024 / 1024) AS total_usage
+                FROM traff_data td
+                WHERE DATE(td.date) >= ? 
+                  AND DATE(td.date) <= ?
+                GROUP BY td.csid, YEAR(td.date), MONTH(td.date)
+            ) t
+            LEFT JOIN CustomerServices cs 
+                ON cs.CustServId = t.csid
+            LEFT JOIN Customer c 
+                ON c.CustId = cs.CustId
+            LEFT JOIN InvoiceTypeMonth itm
+                ON itm.InvoiceType = cs.InvoiceType
+            LEFT JOIN Services s 
+                ON s.ServiceId = cs.ServiceId
+            WHERE t.total_usage < 500
+              AND s.ServiceCategory = 'access_business'
+              AND c.BranchId = ?`,
+            [startDate, endDate, branchId]
+        )
+        return Number(rows[0]?.total_service || 0)
+    }
 }

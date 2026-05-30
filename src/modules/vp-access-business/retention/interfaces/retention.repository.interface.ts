@@ -7,4 +7,5 @@ export interface IRetentionRepository {
     migrationWirelessPercentage(branchId: string, startDate: string, endDate: string): Promise<number>
     contractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }>
     ticket(branchId: string, startDate: string, endDate: string): Promise<number>
+    usage(branchId: string, startDate: string, endDate: string): Promise<number>
 }

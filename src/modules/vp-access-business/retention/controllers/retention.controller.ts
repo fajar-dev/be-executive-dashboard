@@ -95,4 +95,17 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch ticket metrics', 500)
         }
     }
+
+    async getUsage(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+            const result = await this.service.getUsage(branchId, period)
+            
+            return ApiResponse.success(c, result, 'Usage metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching usage metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch usage metrics', 500)
+        }
+    }
 }
