@@ -78,4 +78,30 @@ export class RetentionRepository implements IRetentionRepository {
         }
     }
 
+    async customerLose(branchId: string, startDate: string, endDate: string): Promise<any[]> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                    sg.Description service_group,
+                    COUNT(1) total_churn
+                FROM CustomerServices cs
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId
+                LEFT JOIN Services s ON
+                    s.ServiceId = cs.ServiceId
+                LEFT JOIN ServiceGroup sg ON
+                    sg.ServiceGroup = s.ServiceGroup
+                WHERE cs.CustStatus IN ('NA', 'BL')
+                AND s.ServiceCategory = 'access_business'
+                AND c.BranchId = ?
+                AND (
+                    (cs.CustUnregDate >= ? AND cs.CustUnregDate <= ?)
+                    OR (cs.CustBlockDate >= ? AND cs.CustBlockDate <= ?)
+                )
+                GROUP BY s.ServiceGroup
+                `,
+            [branchId, startDate, endDate, startDate, endDate]
+        )
+        return rows
+    }
+
 }

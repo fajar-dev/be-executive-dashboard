@@ -11,7 +11,6 @@ export class RetentionController {
             const branchId = c.req.query('branchId') || '020'
             const period = c.req.query('period') || 'month'
 
-            // Validasi period
             if (!['last', 'month', 'quarter', 'year'].includes(period)) {
                 return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
             }
@@ -21,6 +20,25 @@ export class RetentionController {
         } catch (error) {
             console.error('Error fetching churn revenue:', error)
             return ApiResponse.error(c, 'Failed to fetch churn revenue', 500)
+        }
+    }
+
+    async getCustomerLose(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+
+            if (!['last', 'month', 'quarter', 'year'].includes(period)) {
+                return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
+            }
+
+            const result = await this.service.getCustomerLose(branchId, period)
+            // Since it already matches the requested format { total: {}, detail: [] }, we can pass it directly or create a serializer. 
+            // We'll just pass it directly for now as the serializer isn't strictly necessary for simple forwarding.
+            return ApiResponse.success(c, result, 'Customer lose retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching customer lose:', error)
+            return ApiResponse.error(c, 'Failed to fetch customer lose', 500)
         }
     }
 }

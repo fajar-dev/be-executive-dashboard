@@ -805,14 +805,14 @@ paths:
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS
   # ────────────────────────────────────────────
-  /vp-access-business/retention/churn:
+  /vp-access-business/retention/churn-revenue:
     get:
       tags:
         - VP Access Business
-      summary: Get retention churn metrics
+      summary: Get retention churn revenue metrics
       description: |
-        Returns churn rate and churn revenue metrics for a specific branch and period type.
-      operationId: getRetentionChurn
+        Returns churn revenue metrics and growth percentage for a specific branch and period type.
+      operationId: getRetentionChurnRevenue
       security:
         - BearerAuth: []
       parameters:
@@ -833,7 +833,7 @@ paths:
             default: month
       responses:
         "200":
-          description: Churn metrics successfully retrieved
+          description: Churn revenue successfully retrieved
           content:
             application/json:
               schema:
@@ -842,14 +842,78 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: "#/components/schemas/RetentionChurn"
+                        $ref: "#/components/schemas/RetentionChurnRevenue"
               example:
                 success: true
                 statusCode: 200
-                message: "Churn metrics retrieved successfully"
+                message: "Churn revenue retrieved successfully"
                 data:
-                  rate: 1.5
+                  trend: "up"
+                  percentage: 12.5
                   revenue: 12000000
+                  period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /vp-access-business/retention/customer-lose:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get retention customer lose metrics
+      description: |
+        Returns total and detailed customer lose metrics for a specific branch and period type.
+      operationId: getRetentionCustomerLose
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Customer lose successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionCustomerLose"
+              example:
+                success: true
+                statusCode: 200
+                message: "Customer lose retrieved successfully"
+                data:
+                  total:
+                    value: 20
+                    trend: "up"
+                    percentage: 11.1
+                    period: "May"
+                  detail:
+                    - service_group: "Dedicated"
+                      value: 8
+                      trend: "up"
+                      percentage: 14.3
+                    - service_group: "Broadband"
+                      value: 12
+                      trend: "down"
+                      percentage: 7.7
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "500":
@@ -1511,36 +1575,67 @@ components:
           example: "April"
 
     # ── VP ACCESS BUSINESS ────────────────────
-    RetentionChurn:
+    RetentionChurnRevenue:
       type: object
       properties:
         trend:
           type: string
           enum: [up, down]
-          description: Churn rate trend compared to previous period
+          description: Churn revenue trend compared to previous period
           example: "up"
-        customers:
-          type: integer
-          description: Number of customers churned in current period
-          example: 12
-        customersPrevious:
-          type: integer
-          description: Number of customers churned in previous period
-          example: 8
-        customersGrowth:
-          type: integer
-          description: Difference in churned customers (current - previous)
-          example: 4
-        churnRate:
+        percentage:
           type: number
           format: float
-          description: Retention churn rate percentage
-          example: 1.5
+          description: Growth percentage of churn revenue
+          example: 12.5
         revenue:
           type: number
           description: Retention churn revenue in Rupiah
           example: 12000000
-        lastPeriod:
+        period:
           type: string
-          description: Name of the previous period (e.g. 'April', 'Q1', '2025')
-          example: "April"
+          description: Name of the current period (e.g. 'May', 'Q2', '2026')
+          example: "May"
+
+    RetentionCustomerLose:
+      type: object
+      properties:
+        total:
+          type: object
+          properties:
+            value:
+              type: integer
+              description: Total customers lost
+              example: 20
+            trend:
+              type: string
+              enum: [up, down]
+              example: "up"
+            percentage:
+              type: number
+              format: float
+              example: 11.1
+            period:
+              type: string
+              example: "May"
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              service_group:
+                type: string
+                description: Service group name
+                example: "Dedicated"
+              value:
+                type: integer
+                description: Customers lost for this service group
+                example: 8
+              trend:
+                type: string
+                enum: [up, down]
+                example: "up"
+              percentage:
+                type: number
+                format: float
+                example: 14.3
