@@ -158,4 +158,71 @@ export class RetentionService implements IRetentionService {
             detail: detail.sort((a, b) => b.value - a.value)
         }
     }
+
+    async getWirelessMigration(branchId: string, periodType: string): Promise<{
+        totalCustomer: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
+        migrated: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
+        migrationRate: { value: number; trend: 'up' | 'down'; percentage: number; migratedValue: number; totalValue: number; period: string }
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [
+            totalCustomer,
+            currentMigrated,
+            prevMigrated,
+            currentRate,
+            prevRate
+        ] = await Promise.all([
+            this.retentionRepository.wirelessCustomer(branchId),
+            this.retentionRepository.wirelessMigration(branchId, startDate, endDate),
+            this.retentionRepository.wirelessMigration(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.migrationWirelessPercentage(branchId, startDate, endDate),
+            this.retentionRepository.migrationWirelessPercentage(branchId, prevStartDate, prevEndDate)
+        ])
+
+        // Total Customer (current only, no historical tracking available yet)
+        const totalCustomerTrend: 'up' | 'down' = 'up'
+        const totalCustomerPercentage = 0
+
+        // Migrated
+        let migratedPercentage = 0
+        if (prevMigrated > 0) {
+            migratedPercentage = ((currentMigrated - prevMigrated) / prevMigrated) * 100
+        } else if (currentMigrated > 0) {
+            migratedPercentage = 100
+        }
+        const migratedTrend = currentMigrated >= prevMigrated ? 'up' : 'down'
+
+        // Migration Rate
+        let ratePercentage = 0
+        if (prevRate > 0) {
+            ratePercentage = ((currentRate - prevRate) / prevRate) * 100
+        } else if (currentRate > 0) {
+            ratePercentage = 100
+        }
+        const rateTrend = currentRate >= prevRate ? 'up' : 'down'
+
+        return {
+            totalCustomer: {
+                value: totalCustomer,
+                trend: totalCustomerTrend,
+                percentage: totalCustomerPercentage,
+                period
+            },
+            migrated: {
+                value: currentMigrated,
+                trend: migratedTrend,
+                percentage: migratedPercentage,
+                period
+            },
+            migrationRate: {
+                value: currentRate,
+                trend: rateTrend,
+                percentage: ratePercentage,
+                migratedValue: currentMigrated,
+                totalValue: totalCustomer,
+                period
+            }
+        }
+    }
 }

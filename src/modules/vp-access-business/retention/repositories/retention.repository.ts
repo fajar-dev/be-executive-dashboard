@@ -104,4 +104,87 @@ export class RetentionRepository implements IRetentionRepository {
         return rows
     }
 
+    async wirelessCustomer(branchId: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                COUNT(1) total
+            FROM CustomerServices cs
+            LEFT JOIN Customer c ON
+                c.CustId = cs.CustId
+            LEFT JOIN Services s ON
+                s.ServiceId = cs.ServiceId
+            LEFT JOIN ServiceGroup sg ON
+                sg.ServiceGroup = s.ServiceGroup
+            WHERE cs.CustStatus IN ('AC', 'FR')
+            AND s.ServiceGroup IN ('VB', 'WL')
+            AND c.BranchId = ?`,
+            [branchId]
+        )
+        return Number(rows[0]?.total || 0)
+    }
+
+    async wirelessMigration(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                    COUNT(1) total
+                FROM
+                    ChangePackage cp
+                LEFT JOIN Services st ON
+                    st.ServiceId = cp.ChangePackage
+                LEFT JOIN Services sf ON
+                    sf.ServiceId = cp.CurrentService
+                LEFT JOIN CustomerServices cs ON
+                        cs.CustServId = cp.CustServId
+                    LEFT JOIN Customer c ON
+                        c.CustId = cs.CustId
+                WHERE sf.ServiceGroup IN ('VB', 'WL')
+                AND st.ServiceGroup IN ('FD')
+                AND c.BranchId = ?
+                AND DATE(cp.EfectiveFrom) >= ? 
+                AND DATE(cp.EfectiveFrom) <= ?`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
+
+    async migrationWirelessPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                    mg.total / (cr.total + mg.total) * 100 percent
+                FROM (
+                    SELECT
+                        COUNT(1) total
+                    FROM
+                        ChangePackage cp
+                    LEFT JOIN Services st ON
+                        st.ServiceId = cp.ChangePackage
+                    LEFT JOIN Services sf ON
+                        sf.ServiceId = cp.CurrentService
+                    LEFT JOIN CustomerServices cs ON
+                        cs.CustServId = cp.CustServId
+                    LEFT JOIN Customer c ON
+                        c.CustId = cs.CustId
+                    WHERE sf.ServiceGroup IN ('VB', 'WL')
+                    AND c.BranchId = ?
+                    AND DATE(cp.EfectiveFrom) >= ?
+                    AND DATE(cp.EfectiveFrom) <= ?
+                ) mg
+                JOIN (
+                    SELECT
+                        COUNT(1) total
+                    FROM CustomerServices cs
+                    LEFT JOIN Services s ON
+                        s.ServiceId = cs.ServiceId
+                    LEFT JOIN Customer c ON
+                        c.CustId = cs.CustId
+                    WHERE s.ServiceGroup IN ('VB', 'WL')
+                    AND cs.CustStatus IN ('AC', 'FR')
+                    AND c.BranchId = ?
+                ) cr
+                `,
+            [branchId, startDate, endDate, branchId]
+        )
+        return Number(rows[0]?.percent || 0)
+    }
+
 }

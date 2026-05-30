@@ -41,4 +41,21 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch customer lose', 500)
         }
     }
+
+    async getWirelessMigration(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+
+            if (!['last', 'month', 'quarter', 'year'].includes(period)) {
+                return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
+            }
+
+            const result = await this.service.getWirelessMigration(branchId, period)
+            return ApiResponse.success(c, result, 'Wireless migration metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching wireless migration metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch wireless migration metrics', 500)
+        }
+    }
 }
