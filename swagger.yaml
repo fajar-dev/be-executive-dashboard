@@ -918,6 +918,70 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /vp-access-business/retention/wireless-migration:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get retention wireless migration metrics
+      description: |
+        Returns total wireless customers, migrated customers, and migration rate for a specific branch and period type.
+      operationId: getRetentionWirelessMigration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Wireless migration metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionWirelessMigration"
+              example:
+                success: true
+                statusCode: 200
+                message: "Wireless migration metrics retrieved successfully"
+                data:
+                  totalCustomer:
+                    value: 245
+                    trend: "up"
+                    percentage: 0
+                    period: "May"
+                  migrated:
+                    value: 28
+                    trend: "up"
+                    percentage: 25.5
+                    period: "May"
+                  migrationRate:
+                    value: 11.4
+                    trend: "up"
+                    percentage: 5.6
+                    migratedValue: 28
+                    totalValue: 245
+                    period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   # ────────────────────────────────────────────
   # ADDITIONAL
   # ────────────────────────────────────────────
@@ -1639,3 +1703,64 @@ components:
                 type: number
                 format: float
                 example: 14.3
+    RetentionWirelessMigration:
+      type: object
+      properties:
+        totalCustomer:
+          type: object
+          properties:
+            value:
+              type: integer
+              example: 245
+            trend:
+              type: string
+              enum: [up, down]
+              example: "up"
+            percentage:
+              type: number
+              format: float
+              example: 0
+            period:
+              type: string
+              example: "May"
+        migrated:
+          type: object
+          properties:
+            value:
+              type: integer
+              example: 28
+            trend:
+              type: string
+              enum: [up, down]
+              example: "up"
+            percentage:
+              type: number
+              format: float
+              example: 25.5
+            period:
+              type: string
+              example: "May"
+        migrationRate:
+          type: object
+          properties:
+            value:
+              type: number
+              format: float
+              example: 11.4
+            trend:
+              type: string
+              enum: [up, down]
+              example: "up"
+            percentage:
+              type: number
+              format: float
+              example: 5.6
+            migratedValue:
+              type: integer
+              example: 28
+            totalValue:
+              type: integer
+              example: 245
+            period:
+              type: string
+              example: "May"
