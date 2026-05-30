@@ -58,4 +58,16 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch wireless migration metrics', 500)
         }
     }
+
+    async getChurnRate(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const result = await this.service.getChurnRate(branchId)
+            
+            return ApiResponse.success(c, result, 'Churn rate retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching churn rate:', error)
+            return ApiResponse.error(c, 'Failed to fetch churn rate', 500)
+        }
+    }
 }

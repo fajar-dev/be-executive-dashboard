@@ -35,7 +35,7 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total || 0)
     }
 
-    async churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, totalChurn: number, totalActive: number }> {
+    async churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, churn: number, active: number }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     *,
@@ -48,9 +48,11 @@ export class RetentionRepository implements IRetentionRepository {
                         c.CustId = cs.CustId
                     LEFT JOIN Services s ON
                         s.ServiceId = cs.ServiceId
-                    WHERE cs.CustStatus IN ('AC', 'FR')
-                    AND s.ServiceCategory = 'access_business'
+                    WHERE s.ServiceCategory = 'access_business'
                     AND c.BranchId = ?
+                    AND (cs.CustRegDate <= ?)
+                    AND (cs.CustUnregDate IS NULL OR cs.CustUnregDate >= ?)
+                    AND (cs.CustBlockDate IS NULL OR cs.CustBlockDate >= ?)
                 ) ac
                 JOIN (
                     SELECT
@@ -69,12 +71,12 @@ export class RetentionRepository implements IRetentionRepository {
                     )
                 ) na
                 `,
-            [branchId, branchId, startDate, endDate, startDate, endDate]
+            [branchId, endDate, startDate, startDate, branchId, startDate, endDate, startDate, endDate]
         )
         return {
             rate: Number(rows[0]?.churn_rate || 0),
-            totalChurn: Number(rows[0]?.total_churn || 0),
-            totalActive: Number(rows[0]?.total_active || 0)
+            churn: Number(rows[0]?.total_churn || 0),
+            active: Number(rows[0]?.total_active || 0)
         }
     }
 

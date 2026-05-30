@@ -805,6 +805,57 @@ paths:
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS
   # ────────────────────────────────────────────
+  /vp-access-business/retention/churn-rate:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get retention churn rate trend
+      description: |
+        Returns the churn rate trend for the current year and the previous year, from January to the current month.
+      operationId: getRetentionChurnRate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+      responses:
+        "200":
+          description: Churn rate trend successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/RetentionChurnRateTrend"
+              example:
+                success: true
+                statusCode: 200
+                message: "Churn rate retrieved successfully"
+                data:
+                  - period: "Jan"
+                    month:
+                      "2026":
+                        churn: 5
+                        active: 100
+                        ret: 5.0
+                      "2025":
+                        churn: 3
+                        active: 90
+                        ret: 3.3
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /vp-access-business/retention/churn-revenue:
     get:
       tags:
@@ -1764,3 +1815,25 @@ components:
             period:
               type: string
               example: "May"
+    RetentionChurnRateTrend:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "Jan"
+        month:
+          type: object
+          description: Object containing year as keys
+          additionalProperties:
+            type: object
+            properties:
+              churn:
+                type: integer
+                example: 5
+              active:
+                type: integer
+                example: 100
+              ret:
+                type: number
+                format: float
+                example: 5.0

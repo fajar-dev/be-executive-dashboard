@@ -225,4 +225,53 @@ export class RetentionService implements IRetentionService {
             }
         }
     }
+
+    async getChurnRate(branchId: string): Promise<any[]> {
+        const currentPeriod = DateHelper.getCurrentPeriod()
+        const currentYear = Number(currentPeriod.substring(0, 4))
+        const currentMonth = Number(currentPeriod.substring(4, 6))
+
+        const promises: Promise<{ rate: number; churn: number; active: number }>[] = []
+        
+        for (let month = 1; month <= currentMonth; month++) {
+            // Current Year
+            const startDate = `${currentYear}-${String(month).padStart(2, '0')}-01`
+            const endDate = `${currentYear}-${String(month).padStart(2, '0')}-${new Date(currentYear, month, 0).getDate()}`
+            promises.push(this.retentionRepository.churnRate(branchId, startDate, endDate))
+
+            // Previous Year
+            const prevYear = currentYear - 1
+            const prevStartDate = `${prevYear}-${String(month).padStart(2, '0')}-01`
+            const prevEndDate = `${prevYear}-${String(month).padStart(2, '0')}-${new Date(prevYear, month, 0).getDate()}`
+            promises.push(this.retentionRepository.churnRate(branchId, prevStartDate, prevEndDate))
+        }
+
+        const results = await Promise.all(promises)
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const data = []
+
+        for (let i = 0; i < currentMonth; i++) {
+            const currentYearData = results[i * 2]
+            const prevYearData = results[i * 2 + 1]
+
+            data.push({
+                period: monthNames[i],
+                month: {
+                    [currentYear]: {
+                        churn: currentYearData.churn,
+                        active: currentYearData.active,
+                        ret: currentYearData.rate
+                    },
+                    [currentYear - 1]: {
+                        churn: prevYearData.churn,
+                        active: prevYearData.active,
+                        ret: prevYearData.rate
+                    }
+                }
+            })
+        }
+
+        return data
+    }
 }
