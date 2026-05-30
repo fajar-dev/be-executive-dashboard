@@ -261,4 +261,33 @@ export class RetentionRepository implements IRetentionRepository {
             total_90: Number(rows[0]?.total_90 || 0),
         }
     }
+
+    async ticket(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                COUNT(t.csid) AS total_service
+            FROM (
+                SELECT
+                    t.CustServId AS csid,
+                    COUNT(t.TtsId) AS total_ticket
+                FROM Tts t
+                LEFT JOIN CustomerServices cs 
+                    ON cs.CustServId = t.CustServId
+                LEFT JOIN Customer c 
+                    ON c.CustId = cs.CustId
+                LEFT JOIN Services s 
+                    ON s.ServiceId = cs.ServiceId
+                WHERE t.TtsTypeId = 2
+                AND t.Status != 'Cancel'
+                AND s.ServiceCategory = 'access_business'
+                AND c.BranchId = ?
+                AND DATE(t.PostedTime) >= ? 
+                AND DATE(t.PostedTime) <= ?
+                GROUP BY t.CustServId
+            ) t
+            WHERE t.total_ticket >= 2`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total_service || 0)
+    }
 }

@@ -16,4 +16,5 @@ export interface IRetentionService {
     }>
     getChurnRate(branchId: string): Promise<any[]>
     getContractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }>
+    getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }>
 }

@@ -82,4 +82,17 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch contract expiring metrics', 500)
         }
     }
+
+    async getTicket(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+            const result = await this.service.getTicket(branchId, period)
+            
+            return ApiResponse.success(c, result, 'Ticket metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching ticket metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch ticket metrics', 500)
+        }
+    }
 }
