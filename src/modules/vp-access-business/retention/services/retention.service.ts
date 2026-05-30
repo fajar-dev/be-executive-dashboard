@@ -274,4 +274,8 @@ export class RetentionService implements IRetentionService {
 
         return data
     }
+
+    async getContractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }> {
+        return await this.retentionRepository.contractExpiring(branchId)
+    }
 }

@@ -189,4 +189,76 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.percent || 0)
     }
 
+    async contractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                COUNT(1) total,
+                SUM(CASE
+                    WHEN DATEDIFF(t.expired_date, NOW()) <= 30
+                    THEN 1
+                    ELSE 0
+                    END
+                ) as total_30,
+                SUM(CASE
+                    WHEN DATEDIFF(t.expired_date, NOW()) BETWEEN 31 AND 60
+                    THEN 1
+                    ELSE 0
+                    END
+                ) as total_60,
+                SUM(CASE
+                    WHEN DATEDIFF(t.expired_date, NOW()) BETWEEN 61 AND 90
+                    THEN 1
+                    ELSE 0
+                    END
+                ) as total_90
+            FROM (
+                SELECT 
+                    dc.CustServId csid,
+                    dc.Data data,
+                    CASE
+                        WHEN JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiTanggal')) IS NULL
+                            OR JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiTanggal')) = ''
+                        THEN LAST_DAY(
+                            STR_TO_DATE(
+                                CONCAT(
+                                    JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiTahun')),
+                                    '-',
+                                    LPAD(JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiBulan')), 2, '0'),
+                                    '-01'
+                                ),
+                                '%Y-%m-%d'
+                            )
+                        )
+                        ELSE STR_TO_DATE(
+                            CONCAT(
+                                JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiTahun')),
+                                '-',
+                                LPAD(JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiBulan')), 2, '0'),
+                                '-',
+                                LPAD(JSON_UNQUOTE(JSON_EXTRACT(dc.Data, '$.sampaiTanggal')), 2, '0')
+                            ),
+                            '%Y-%m-%d'
+                        )
+                    END AS expired_date,
+                    cs.*
+                FROM document_contract dc
+                LEFT JOIN CustomerServices cs 
+                    ON cs.CustServId = dc.CustServId
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId
+                LEFT JOIN Services s 
+                    ON s.ServiceId = cs.ServiceId
+                WHERE s.ServiceCategory = 'access_business'
+                AND c.BranchId = ?
+            ) t
+            WHERE DATEDIFF(t.expired_date, NOW()) BETWEEN 0 AND 90`,
+            [branchId]
+        )
+        return {
+            total: Number(rows[0]?.total || 0),
+            total_30: Number(rows[0]?.total_30 || 0),
+            total_60: Number(rows[0]?.total_60 || 0),
+            total_90: Number(rows[0]?.total_90 || 0),
+        }
+    }
 }

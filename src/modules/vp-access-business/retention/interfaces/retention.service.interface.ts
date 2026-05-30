@@ -15,4 +15,5 @@ export interface IRetentionService {
         migrationRate: { value: number; trend: 'up' | 'down'; percentage: number; migratedValue: number; totalValue: number; period: string }
     }>
     getChurnRate(branchId: string): Promise<any[]>
+    getContractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }>
 }

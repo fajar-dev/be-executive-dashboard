@@ -805,6 +805,49 @@ paths:
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS
   # ────────────────────────────────────────────
+  /vp-access-business/retention/contract-expiring:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get contract expiring metrics
+      description: |
+        Returns total customers with expiring contracts within the next 90 days, grouped by 30-day intervals.
+      operationId: getRetentionContractExpiring
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+      responses:
+        "200":
+          description: Contract expiring metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionContractExpiring"
+              example:
+                success: true
+                statusCode: 200
+                message: "Contract expiring metrics retrieved successfully"
+                data:
+                  total: 85
+                  total_30: 15
+                  total_60: 28
+                  total_90: 42
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /vp-access-business/retention/churn-rate:
     get:
       tags:
@@ -1837,3 +1880,18 @@ components:
                 type: number
                 format: float
                 example: 5.0
+    RetentionContractExpiring:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 85
+        total_30:
+          type: integer
+          example: 15
+        total_60:
+          type: integer
+          example: 28
+        total_90:
+          type: integer
+          example: 42

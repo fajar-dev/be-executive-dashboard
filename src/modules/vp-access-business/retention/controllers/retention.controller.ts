@@ -70,4 +70,16 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch churn rate', 500)
         }
     }
+
+    async getContractExpiring(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const result = await this.service.getContractExpiring(branchId)
+            
+            return ApiResponse.success(c, result, 'Contract expiring metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching contract expiring metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch contract expiring metrics', 500)
+        }
+    }
 }
