@@ -5,12 +5,9 @@ import { DateHelper } from '../../../../core/helpers/date'
 export class RetentionService implements IRetentionService {
     constructor(private readonly retentionRepository: IRetentionRepository) {}
 
-    async getChurnMetrics(branchId: string, periodType: string): Promise<{
+    async getChurnRevenue(branchId: string, periodType: string): Promise<{
         trend: 'up' | 'down'
-        customers: number
-        customersPrevious: number
-        customersGrowth: number
-        churnRate: number
+        percentage: number
         revenue: number
         period: string
     }> {
@@ -65,23 +62,26 @@ export class RetentionService implements IRetentionService {
             period = DateHelper.getMonthName(currentPeriod)
         }
 
-        const [currentRateObj, revenue, prevRateObj] = await Promise.all([
-            this.retentionRepository.churnRate(branchId, startDate, endDate),
+        const [revenue, prevRevenue] = await Promise.all([
             this.retentionRepository.churnRevenue(branchId, startDate, endDate),
-            this.retentionRepository.churnRate(branchId, prevStartDate, prevEndDate)
+            this.retentionRepository.churnRevenue(branchId, prevStartDate, prevEndDate)
         ])
 
-        const customers = currentRateObj.totalChurn
-        const customersPrevious = prevRateObj.totalChurn
-        const customersGrowth = customers - customersPrevious
-        const trend = currentRateObj.rate >= prevRateObj.rate ? 'up' : 'down'
+        const absRevenue = Math.abs(revenue)
+        const absPrevRevenue = Math.abs(prevRevenue)
+
+        let percentage = 0
+        if (absPrevRevenue > 0) {
+            percentage = ((absRevenue - absPrevRevenue) / absPrevRevenue) * 100
+        } else if (absRevenue > 0) {
+            percentage = 100
+        }
+
+        const trend = absRevenue >= absPrevRevenue ? 'up' : 'down'
 
         return {
             trend,
-            customers,
-            customersPrevious,
-            customersGrowth,
-            churnRate: currentRateObj.rate,
+            percentage,
             revenue,
             period
         }
