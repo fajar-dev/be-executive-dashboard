@@ -1229,6 +1229,57 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /vp-access-business/service-quality/complaint:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get service quality complaint metrics
+      description: |
+        Returns the number of complaint tickets (TtsTypeId = 2) in the given period and its trend.
+      operationId: getServiceQualityComplaint
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Complaint metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ServiceQualityTicketMetrics"
+              example:
+                success: true
+                statusCode: 200
+                message: "Complaint metrics retrieved successfully"
+                data:
+                  value: 85
+                  trend: "down"
+                  percentage: 5.2
+                  period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   # ────────────────────────────────────────────
   # ADDITIONAL
   # ────────────────────────────────────────────

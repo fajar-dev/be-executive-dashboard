@@ -19,4 +19,17 @@ export class ServiceQualityController {
             return ApiResponse.error(c, 'Failed to fetch ticket metrics', 500)
         }
     }
+
+    async getComplaint(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+            const result = await this.service.getComplaint(branchId, period)
+            
+            return ApiResponse.success(c, result, 'Complaint metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching complaint metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch complaint metrics', 500)
+        }
+    }
 }
