@@ -1178,6 +1178,57 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /vp-access-business/service-quality/ticket:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get service quality ticket metrics
+      description: |
+        Returns the number of unique tickets in the given period and its trend.
+      operationId: getServiceQualityTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Ticket metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ServiceQualityTicketMetrics"
+              example:
+                success: true
+                statusCode: 200
+                message: "Ticket metrics retrieved successfully"
+                data:
+                  value: 150
+                  trend: "down"
+                  percentage: 10.5
+                  period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   # ────────────────────────────────────────────
   # ADDITIONAL
   # ────────────────────────────────────────────
@@ -2030,6 +2081,24 @@ components:
           type: number
           format: float
           example: 5.5
+        period:
+          type: string
+          example: "May"
+    ServiceQualityTicketMetrics:
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Total unique tickets
+          example: 150
+        trend:
+          type: string
+          enum: [up, down]
+          example: "down"
+        percentage:
+          type: number
+          format: float
+          example: 10.5
         period:
           type: string
           example: "May"

@@ -31,7 +31,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/retention/wireless-migration', (c) => retention.getWirelessMigration(c))
 
     // Service Quality Routes
-    // routes.get('/service-quality/...', (c) => serviceQuality.method(c))
+    routes.get('/service-quality/ticket', (c) => serviceQuality.getTicket(c))
 
     return routes
 }

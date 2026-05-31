@@ -1,3 +1,3 @@
 export interface IServiceQualityRepository {
-    // Add repository methods here
+    ticket(branchId: string, startDate: string, endDate: string): Promise<number>
 }

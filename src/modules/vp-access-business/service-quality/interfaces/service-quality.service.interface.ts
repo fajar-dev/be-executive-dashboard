@@ -1,3 +1,3 @@
 export interface IServiceQualityService {
-    // Add service methods here
+    getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }>
 }
