@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from 'hono'
 import { nisPool } from '../../config/nis.db'
 import { GrowthModule } from './growth/growth.module'
 import { RetentionModule } from './retention/retention.module'
+import { ServiceQualityModule } from './service-quality/service-quality.module'
 
 export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const routes = new Hono()
@@ -13,6 +14,9 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
 
     const retentionModule = new RetentionModule(nisPool)
     const retention = retentionModule.controller
+
+    const serviceQualityModule = new ServiceQualityModule(nisPool)
+    const serviceQuality = serviceQualityModule.controller
 
     // Growth Routes
     // routes.get('/growth/...', authMid, (c) => growth.method(c))
@@ -25,6 +29,9 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/retention/churn-revenue', (c) => retention.getChurnRevenue(c))
     routes.get('/retention/customer-lose', (c) => retention.getCustomerLose(c))
     routes.get('/retention/wireless-migration', (c) => retention.getWirelessMigration(c))
+
+    // Service Quality Routes
+    // routes.get('/service-quality/...', (c) => serviceQuality.method(c))
 
     return routes
 }
