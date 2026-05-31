@@ -34,6 +34,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/service-quality/ticket', (c) => serviceQuality.getTicket(c))
     routes.get('/service-quality/complaint', (c) => serviceQuality.getComplaint(c))
     routes.get('/service-quality/solved', (c) => serviceQuality.getSolved(c))
+    routes.get('/service-quality/solved-percentage', (c) => serviceQuality.getSolvedPercentage(c))
 
     return routes
 }
