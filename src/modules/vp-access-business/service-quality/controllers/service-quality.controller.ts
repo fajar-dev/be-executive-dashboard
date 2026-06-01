@@ -58,4 +58,17 @@ export class ServiceQualityController {
             return ApiResponse.error(c, 'Failed to fetch solved percentage metrics', 500)
         }
     }
+
+    async getIssue(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const period = c.req.query('period') || 'month'
+            const result = await this.service.getIssue(branchId, period)
+            
+            return ApiResponse.success(c, result, 'Issue metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching issue metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch issue metrics', 500)
+        }
+    }
 }
