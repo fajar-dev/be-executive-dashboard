@@ -186,4 +186,29 @@ export class ServiceQualityService implements IServiceQualityService {
             period
         }
     }
+
+    async getIncident(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [value, prevValue] = await Promise.all([
+            this.serviceQualityRepository.incident(branchId, startDate, endDate),
+            this.serviceQualityRepository.incident(branchId, prevStartDate, prevEndDate)
+        ])
+
+        let percentage = 0
+        if (prevValue > 0) {
+            percentage = ((value - prevValue) / prevValue) * 100
+        } else if (value > 0) {
+            percentage = 100
+        }
+
+        const trend = value >= prevValue ? 'up' : 'down'
+
+        return {
+            value,
+            trend,
+            percentage,
+            period
+        }
+    }
 }

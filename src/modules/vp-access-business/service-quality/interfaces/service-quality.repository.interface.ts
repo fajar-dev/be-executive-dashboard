@@ -4,4 +4,5 @@ export interface IServiceQualityRepository {
     solved(branchId: string, startDate: string, endDate: string): Promise<number>
     solvedPercentage(branchId: string, startDate: string, endDate: string): Promise<number>
     issue(branchId: string, startDate: string, endDate: string): Promise<number>
+    incident(branchId: string, startDate: string, endDate: string): Promise<number>
 }

@@ -1433,6 +1433,57 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /vp-access-business/service-quality/incident:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get service quality incident metrics
+      description: |
+        Returns the total number of NOC incidents in the given period and its trend.
+      operationId: getServiceQualityIncident
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period type (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            enum: [last, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: Incident metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ServiceQualityTicketMetrics"
+              example:
+                success: true
+                statusCode: 200
+                message: "Incident metrics retrieved successfully"
+                data:
+                  value: 45
+                  trend: "up"
+                  percentage: 12.5
+                  period: "May"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   # ────────────────────────────────────────────
   # ADDITIONAL
   # ────────────────────────────────────────────

@@ -112,4 +112,23 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         )
         return Number(rows[0]?.percent || 0)
     }
+
+    async incident(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT n.id) total
+            FROM noc_customer_service ncs
+            LEFT JOIN noc n ON n.id = ncs.noc_id
+            LEFT JOIN CustomerServices cs ON cs.CustServId = ncs.cs_id
+            LEFT JOIN Customer c ON c.CustId = cs.CustId
+            LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
+            WHERE n.status != 'Cancel'
+            AND s.ServiceCategory = 'access_business'
+            AND c.BranchId = ?
+            AND DATE(n.datetime) >= ? 
+            AND DATE(n.datetime) <= ?`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
 }
