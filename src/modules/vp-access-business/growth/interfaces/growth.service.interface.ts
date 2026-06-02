@@ -6,4 +6,5 @@ export interface IGrowthService {
         period: string
         details: { mrc: number; mrc_unpaid: number; mrc_paid: number }
     }>
+    getRevenue(branchId: string): Promise<any[]>
 }

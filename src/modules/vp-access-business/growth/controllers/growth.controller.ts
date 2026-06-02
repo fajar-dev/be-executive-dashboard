@@ -17,4 +17,16 @@ export class GrowthController {
             return ApiResponse.error(c, 'Failed to fetch new MRC metrics', 500)
         }
     }
+
+    async getRevenue(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const result = await this.service.getRevenue(branchId)
+            
+            return ApiResponse.success(c, result, 'Revenue metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching revenue metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch revenue metrics', 500)
+        }
+    }
 }

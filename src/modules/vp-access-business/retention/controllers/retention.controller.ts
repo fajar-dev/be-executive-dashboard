@@ -33,8 +33,6 @@ export class RetentionController {
             }
 
             const result = await this.service.getCustomerLose(branchId, period)
-            // Since it already matches the requested format { total: {}, detail: [] }, we can pass it directly or create a serializer. 
-            // We'll just pass it directly for now as the serializer isn't strictly necessary for simple forwarding.
             return ApiResponse.success(c, result, 'Customer lose retrieved successfully')
         } catch (error) {
             console.error('Error fetching customer lose:', error)

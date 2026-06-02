@@ -94,4 +94,49 @@ export class GrowthService implements IGrowthService {
             details: current
         }
     }
+
+    async getRevenue(branchId: string): Promise<any[]> {
+        const currentPeriod = DateHelper.getCurrentPeriod()
+        const currentYear = Number(currentPeriod.substring(0, 4))
+        const currentMonth = Number(currentPeriod.substring(4, 6))
+
+        const promises: Promise<number>[] = []
+        
+        for (let month = 1; month <= currentMonth; month++) {
+            // Current Year
+            const startDate = `${currentYear}-${String(month).padStart(2, '0')}-01`
+            const endDate = `${currentYear}-${String(month).padStart(2, '0')}-${new Date(currentYear, month, 0).getDate()}`
+            promises.push(this.growthRepository.getRevenue(branchId, startDate, endDate))
+
+            // Previous Year
+            const prevYear = currentYear - 1
+            const prevStartDate = `${prevYear}-${String(month).padStart(2, '0')}-01`
+            const prevEndDate = `${prevYear}-${String(month).padStart(2, '0')}-${new Date(prevYear, month, 0).getDate()}`
+            promises.push(this.growthRepository.getRevenue(branchId, prevStartDate, prevEndDate))
+        }
+
+        const results = await Promise.all(promises)
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const data = []
+
+        for (let i = 0; i < currentMonth; i++) {
+            const currentYearData = results[i * 2]
+            const prevYearData = results[i * 2 + 1]
+
+            data.push({
+                period: monthNames[i],
+                month: {
+                    [currentYear]: {
+                        revenue: currentYearData
+                    },
+                    [currentYear - 1]: {
+                        revenue: prevYearData
+                    }
+                }
+            })
+        }
+
+        return data
+    }
 }

@@ -98,4 +98,29 @@ export class GrowthRepository implements IGrowthRepository {
             mrc_paid: Number(rows[0]?.mrc_paid || 0)
         }
     }
+
+    async getRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                SUM(gj.Kredit - gj.Debet) total
+            FROM GeneralJournal gj
+            LEFT JOIN Panjar_Penjualan_Breakdown ppb ON
+                ppb.id = gj.SumberId 
+                AND gj.Sumber = 'pnjr'
+            LEFT JOIN NewCustomerInvoice nci ON
+                nci.AI = IFNULL(ppb.invoiceAI, gj.SumberId)
+            LEFT JOIN CustomerInvoiceTemp cit ON
+                cit.InvoiceNum = nci.Id
+                AND cit.Urut = nci.No
+            LEFT JOIN Services s ON
+                s.ServiceId = cit.ServiceId
+            WHERE gj.KodeCabang = ?
+            AND s.ServiceCategory = 'access_business'
+            AND gj.NoPerkiraan LIKE '400%'
+            AND gj.TglTransaksi >= ?
+            AND gj.TglTransaksi <= ?`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
 }
