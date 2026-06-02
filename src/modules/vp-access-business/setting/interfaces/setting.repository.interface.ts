@@ -1,3 +1,3 @@
 export interface ISettingRepository {
-    // TODO: Add methods for setting repository
+    getRevenue(branchId: string, year: number): Promise<number>
 }

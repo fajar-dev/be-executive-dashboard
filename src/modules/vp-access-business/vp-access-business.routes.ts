@@ -54,6 +54,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
 
     // Setting Routes
     routes.get('/setting/ping', (c) => setting.ping(c))
+    routes.get('/setting/revenue', (c) => setting.getRevenue(c))
 
     return routes
 }

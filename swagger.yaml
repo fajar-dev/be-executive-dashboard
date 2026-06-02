@@ -1121,6 +1121,54 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
+  # VP ACCESS BUSINESS - SETTING
+  # ────────────────────────────────────────────
+  /vp-access-business/setting/revenue:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get target revenue
+      description: Returns the total target revenue for a specific year and branch.
+      operationId: getSettingRevenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (defaults to '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: year
+          in: query
+          description: Year (defaults to current year)
+          required: false
+          schema:
+            type: number
+            example: 2026
+      responses:
+        "200":
+          description: Target revenue successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          total:
+                            type: number
+                            example: 150000000
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
   /vp-access-business/retention/contract-expiring:

@@ -1,3 +1,3 @@
 export interface ISettingService {
-    // TODO: Add methods for setting service
+    getRevenue(branchId: string, year: number): Promise<number>
 }
