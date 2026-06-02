@@ -7,9 +7,10 @@ export class SettingRepository implements ISettingRepository {
         private readonly prospectDb: Pool
     ) {}
 
-    async getRevenue(branchId: string, year: number): Promise<number> {
+    async getRevenue(branchId: string, year: number): Promise<{ total: number, details: { month: number, total: number }[] }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
+                MONTH(gj.TglTransaksi) as month,
                 SUM(gj.Kredit - gj.Debet) AS total
             FROM GeneralJournal gj
             LEFT JOIN Panjar_Penjualan_Breakdown ppb ON
@@ -25,10 +26,22 @@ export class SettingRepository implements ISettingRepository {
             WHERE gj.KodeCabang = ?
             AND s.ServiceCategory = 'access_business'
             AND gj.NoPerkiraan LIKE '400%'
-            AND YEAR(gj.TglTransaksi) = ?`,
+            AND YEAR(gj.TglTransaksi) = ?
+            GROUP BY MONTH(gj.TglTransaksi)`,
             [branchId, year]
         )
 
-        return Number(rows[0]?.total || 0)
+        const total = rows.reduce((acc, row) => acc + Number(row.total || 0), 0)
+        
+        const details = Array.from({ length: 12 }, (_, i) => {
+            const month = i + 1
+            const row = rows.find(r => Number(r.month) === month)
+            return {
+                month,
+                total: Number(row?.total || 0)
+            }
+        })
+
+        return { total, details }
     }
 }

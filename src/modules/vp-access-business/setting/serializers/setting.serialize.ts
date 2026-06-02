@@ -1,7 +1,8 @@
 export class SettingSerializer {
-    static revenue(total: number) {
+    static revenue(data: { total: number, details: { month: number, total: number }[] }) {
         return {
-            total
+            total: data.total,
+            details: data.details
         }
     }
 }

@@ -1,3 +1,3 @@
 export interface ISettingService {
-    getRevenue(branchId: string, year: number): Promise<number>
+    getRevenue(branchId: string, year: number): Promise<{ total: number, details: { month: number, total: number }[] }>
 }

@@ -1163,6 +1163,17 @@ paths:
                           total:
                             type: number
                             example: 150000000
+                          details:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                month:
+                                  type: number
+                                  example: 1
+                                total:
+                                  type: number
+                                  example: 12500000
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "500":
