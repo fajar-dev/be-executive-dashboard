@@ -27,4 +27,11 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.leads(result), 'Leads metrics retrieved successfully')
     }
+
+    async getOpportunity(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getOpportunity(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.opportunity(result), 'Opportunity metrics retrieved successfully')
+    }
 }

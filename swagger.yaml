@@ -916,6 +916,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/opportunity:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get opportunity metrics
+      description: Returns opportunity metrics including trend and percentage.
+      operationId: getGrowthOpportunity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Opportunity metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthOpportunityResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
@@ -2552,6 +2586,22 @@ components:
                 type: number
                 example: 125000000
     GrowthLeadsResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 120
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 15.5
+        period:
+          type: string
+          example: "May"
+    GrowthOpportunityResponse:
       type: object
       properties:
         value:

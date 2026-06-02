@@ -144,4 +144,23 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.total || 0)
     }
+
+    async getOpportunity(startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT po.id) total
+            FROM customer_object_product_services cops
+            LEFT JOIN prospect_opportunities po ON
+                po.id = cops.object_id
+                AND cops.object = 'opportunity'
+            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            AND po.id IS NOT NULL
+            AND po.opportunity_stage_id NOT IN (6,7)
+            AND po.deleted_at IS NULL
+            AND DATE(po.created_at) >= ?
+            AND DATE(po.created_at) <= ?`,
+            [startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
 }
