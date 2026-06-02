@@ -2746,35 +2746,6 @@ components:
         period:
           type: string
           example: "May"
-        details:
-          type: object
-          properties:
-            activity:
-              type: object
-              properties:
-                value:
-                  type: number
-                  example: 45
-                trend:
-                  type: string
-                  enum: [up, down]
-                  example: "up"
-                percentage:
-                  type: number
-                  example: 10.5
-            amCount:
-              type: object
-              properties:
-                value:
-                  type: number
-                  example: 10
-                trend:
-                  type: string
-                  enum: [up, down]
-                  example: "up"
-                percentage:
-                  type: number
-                  example: 0
     RetentionPaymentResponse:
       type: object
       properties:

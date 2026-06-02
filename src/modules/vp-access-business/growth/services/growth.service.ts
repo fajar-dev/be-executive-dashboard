@@ -299,41 +299,11 @@ export class GrowthService implements IGrowthService {
 
         const trend = currentValue >= prevValue ? 'up' : 'down'
 
-        // Activity stats
-        let activityPercentage = 0
-        if (prevStats.activity > 0) {
-            activityPercentage = ((currentStats.activity - prevStats.activity) / prevStats.activity) * 100
-        } else if (currentStats.activity > 0) {
-            activityPercentage = 100
-        }
-        const activityTrend = currentStats.activity >= prevStats.activity ? 'up' : 'down'
-
-        // amCount stats
-        let amCountPercentage = 0
-        if (prevStats.amCount > 0) {
-            amCountPercentage = ((currentStats.amCount - prevStats.amCount) / prevStats.amCount) * 100
-        } else if (currentStats.amCount > 0) {
-            amCountPercentage = 100
-        }
-        const amCountTrend = currentStats.amCount >= prevStats.amCount ? 'up' : 'down'
-
         return {
             value: currentValue,
             trend,
             percentage,
-            period,
-            details: {
-                activity: {
-                    value: currentStats.activity,
-                    trend: activityTrend,
-                    percentage: activityPercentage
-                },
-                amCount: {
-                    value: currentStats.amCount,
-                    trend: amCountTrend,
-                    percentage: amCountPercentage
-                }
-            }
+            period
         }
     }
 }

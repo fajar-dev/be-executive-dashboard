@@ -34,9 +34,5 @@ export interface IGrowthService {
         trend: 'up' | 'down'
         percentage: number
         period: string
-        details: {
-            activity: { value: number; trend: 'up' | 'down'; percentage: number }
-            amCount: { value: number; trend: 'up' | 'down'; percentage: number }
-        }
     }>
 }
