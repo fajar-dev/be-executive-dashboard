@@ -12,9 +12,9 @@ export class GrowthService implements IGrowthService {
         let prevEndDate: string
         let period: string
 
-        const now = new Date()
-        const currentYear = now.getFullYear()
-        const currentMonth = now.getMonth() + 1 // 1-12
+        const currentPeriod = DateHelper.getCurrentPeriod()
+        const currentYear = Number(currentPeriod.substring(0, 4))
+        const currentMonth = Number(currentPeriod.substring(4, 6))
 
         if (periodType === 'last') {
             startDate = DateHelper.getPreviousMonthStart()
@@ -54,7 +54,7 @@ export class GrowthService implements IGrowthService {
             prevStartDate = DateHelper.getPreviousMonthStart()
             prevEndDate = DateHelper.getPreviousMonthEnd()
             
-            period = DateHelper.getMonthName(DateHelper.getActivePeriod())
+            period = DateHelper.getMonthName(currentPeriod)
         }
 
         return { startDate, endDate, prevStartDate, prevEndDate, period }
