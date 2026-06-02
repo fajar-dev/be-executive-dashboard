@@ -64,9 +64,9 @@ export class GrowthController {
     }
 
     async getDiscount(c: Context) {
-        const user = c.get('user')
+        const branchId = c.req.query('branchId') || '020'
         const period = c.req.query('period') || 'month'
-        const result = await this.service.getDiscount(user.branch_id, period)
+        const result = await this.service.getDiscount(branchId, period)
         
         return ApiResponse.success(c, GrowthSerializer.discount(result), 'Discount metrics retrieved successfully')
     }
