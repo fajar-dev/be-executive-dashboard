@@ -41,4 +41,10 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
+    getCycle(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
 }

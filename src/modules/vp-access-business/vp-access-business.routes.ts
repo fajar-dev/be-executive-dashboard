@@ -27,6 +27,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/win-rate', (c) => growth.getWinRate(c))
     routes.get('/growth/activity', (c) => growth.getActivity(c))
     routes.get('/growth/pipeline', (c) => growth.getPipeline(c))
+    routes.get('/growth/cycle', (c) => growth.getCycle(c))
 
     // Retention Routes
     routes.get('/retention/contract-expiring', (c) => retention.getContractExpiring(c))

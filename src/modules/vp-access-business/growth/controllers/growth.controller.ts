@@ -55,4 +55,11 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.pipeline(result), 'Pipeline metrics retrieved successfully')
     }
+
+    async getCycle(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getCycle(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.cycle(result), 'Cycle metrics retrieved successfully')
+    }
 }
