@@ -7,4 +7,5 @@ export interface IGrowthRepository {
     getActivity(startDate: string, endDate: string): Promise<{ activity: number, amCount: number }>
     getPipeline(startDate: string, endDate: string): Promise<number>
     getCycle(startDate: string, endDate: string): Promise<number>
+    getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]>
 }

@@ -47,4 +47,11 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
+    getDiscount(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: { serviceGroup: string, discount: number }[]
+    }>
 }

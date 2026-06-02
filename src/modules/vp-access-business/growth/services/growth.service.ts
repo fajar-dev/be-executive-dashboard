@@ -362,4 +362,39 @@ export class GrowthService implements IGrowthService {
             period
         }
     }
+
+    async getDiscount(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: { serviceGroup: string, discount: number }[]
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [currentDetails, prevDetails] = await Promise.all([
+            this.growthRepository.getDiscount(branchId, startDate, endDate),
+            this.growthRepository.getDiscount(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const currentValue = currentDetails.reduce((sum, item) => sum + item.discount, 0)
+        const prevValue = prevDetails.reduce((sum, item) => sum + item.discount, 0)
+
+        let percentage = 0
+        if (prevValue > 0) {
+            percentage = ((currentValue - prevValue) / prevValue) * 100
+        } else if (currentValue > 0) {
+            percentage = 100
+        }
+
+        const trend = currentValue >= prevValue ? 'up' : 'down'
+
+        return {
+            value: currentValue,
+            trend,
+            percentage,
+            period,
+            details: currentDetails
+        }
+    }
 }

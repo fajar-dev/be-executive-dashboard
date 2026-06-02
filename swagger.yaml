@@ -1086,6 +1086,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/discount:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get discount metrics
+      description: Returns discount amount including trend, percentage, and breakdown by service group.
+      operationId: getGrowthDiscount
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Discount metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthDiscountResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
@@ -2846,6 +2880,33 @@ components:
         period:
           type: string
           example: "May"
+    GrowthDiscountResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 185000000
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 8.2
+        period:
+          type: string
+          example: "May"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceGroup:
+                type: string
+                example: "Dedicated"
+              discount:
+                type: number
+                example: 30000000
     RetentionPaymentResponse:
       type: object
       properties:

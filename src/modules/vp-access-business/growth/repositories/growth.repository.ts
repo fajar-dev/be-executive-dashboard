@@ -278,4 +278,28 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.avg_days || 0)
     }
+
+    async getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                sg.Description service_group,
+                SUM(cid.Amount) discount
+            FROM CustomerInvoiceDiscount cid
+            LEFT JOIN CustomerServices cs ON cs.CustServId = cid.CustServId
+            LEFT JOIN Customer c ON c.CustId = cs.CustId
+            LEFT JOIN Services s on s.ServiceId = cs.ServiceId
+            LEFT JOIN ServiceGroup sg ON sg.ServiceGroup = s.ServiceGroup
+            WHERE s.ServiceCategory = 'access_business'
+            AND c.BranchId = ?
+            AND DATE(cid.DateTime) >= ?
+            AND DATE(cid.DateTime) <= ?
+            GROUP BY s.ServiceGroup`,
+            [branchId, startDate, endDate]
+        )
+
+        return rows.map(row => ({
+            serviceGroup: row.service_group,
+            discount: Number(row.discount) || 0
+        }))
+    }
 }
