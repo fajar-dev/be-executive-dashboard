@@ -78,6 +78,25 @@ export class SettingRepository implements ISettingRepository {
         }
     }
 
+    private extractTargetLogData(data: any) {
+        if (!data) return {};
+        return {
+            yearly_target: Number(data.yearly_target) || 0,
+            jan: Number(data.jan) || 0,
+            feb: Number(data.feb) || 0,
+            mar: Number(data.mar) || 0,
+            apr: Number(data.apr) || 0,
+            may: Number(data.may) || 0,
+            jun: Number(data.jun) || 0,
+            jul: Number(data.jul) || 0,
+            aug: Number(data.aug) || 0,
+            sep: Number(data.sep) || 0,
+            oct: Number(data.oct) || 0,
+            nov: Number(data.nov) || 0,
+            dec: Number(data.dec) || 0
+        };
+    }
+
     async saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void> {
         const connection = await this.dashboardDb.getConnection()
         try {
@@ -118,20 +137,51 @@ export class SettingRepository implements ISettingRepository {
                 ]
             )
 
-            // Insert Log
-            const isLocked = payload.is_locked;
-            await connection.query(
-                `INSERT INTO vp_access_business_target_log (year, old_value, new_value, created_by, updated_by, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)`,
-                [
-                    year,
-                    oldValue ? JSON.stringify(oldValue) : '{}',
-                    isLocked ? JSON.stringify(payload) : null,
-                    userId,
-                    isLocked ? userId : null,
-                    isLocked ? new Date() : null
-                ]
-            )
+            // Handle Logging Logic
+            if (!payload.is_locked && payload.reason) {
+                // Action: Unlock target
+                await connection.query(
+                    `INSERT INTO vp_access_business_target_log (year, reason, old_value, new_value, created_by, updated_by, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        year,
+                        payload.reason,
+                        oldValue ? JSON.stringify(this.extractTargetLogData(oldValue)) : '{}',
+                        null,
+                        userId,
+                        null,
+                        null
+                    ]
+                )
+            } else if (payload.is_locked) {
+                // Action: Lock target
+                const [pendingLogs] = await connection.query<any[]>(
+                    `SELECT id FROM vp_access_business_target_log WHERE year = ? AND new_value IS NULL ORDER BY id DESC LIMIT 1`,
+                    [year]
+                )
+
+                if (pendingLogs.length > 0) {
+                    await connection.query(
+                        `UPDATE vp_access_business_target_log 
+                        SET new_value = ?, updated_by = ?, updated_at = NOW() 
+                        WHERE id = ?`,
+                        [JSON.stringify(this.extractTargetLogData(payload)), userId, pendingLogs[0].id]
+                    )
+                } else {
+                    await connection.query(
+                        `INSERT INTO vp_access_business_target_log (year, reason, old_value, new_value, created_by, updated_by, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+                        [
+                            year,
+                            'Initial Lock',
+                            oldValue ? JSON.stringify(this.extractTargetLogData(oldValue)) : '{}',
+                            JSON.stringify(this.extractTargetLogData(payload)),
+                            userId,
+                            userId
+                        ]
+                    )
+                }
+            }
 
             await connection.commit()
         } catch (error) {

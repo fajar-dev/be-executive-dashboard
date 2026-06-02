@@ -16,6 +16,7 @@ export interface TargetRevenuePayload {
     is_locked: boolean
     updated_at?: Date | string
     updated_by_name?: string
+    reason?: string
 }
 
 export interface ISettingRepository {
