@@ -56,4 +56,13 @@ export class GrowthSerializer {
             period: data.period
         }
     }
+
+    static pipeline(data: any) {
+        return {
+            value: data.value,
+            trend: data.trend,
+            percentage: data.percentage,
+            period: data.period
+        }
+    }
 }

@@ -35,4 +35,10 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
+    getPipeline(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
 }

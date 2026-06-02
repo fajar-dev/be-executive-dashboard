@@ -5,4 +5,5 @@ export interface IGrowthRepository {
     getOpportunity(startDate: string, endDate: string): Promise<number>
     getWinLose(startDate: string, endDate: string): Promise<{ win: number, lose: number }>
     getActivity(startDate: string, endDate: string): Promise<{ activity: number, amCount: number }>
+    getPipeline(startDate: string, endDate: string): Promise<number>
 }
