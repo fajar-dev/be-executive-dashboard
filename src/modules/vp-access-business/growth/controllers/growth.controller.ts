@@ -34,4 +34,11 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.opportunity(result), 'Opportunity metrics retrieved successfully')
     }
+
+    async getWinRate(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getWinRate(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.winRate(result), 'Win rate metrics retrieved successfully')
+    }
 }

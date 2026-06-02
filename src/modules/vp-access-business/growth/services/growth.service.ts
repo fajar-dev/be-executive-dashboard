@@ -199,4 +199,40 @@ export class GrowthService implements IGrowthService {
             period
         }
     }
+
+    async getWinRate(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [currentStats, prevStats] = await Promise.all([
+            this.growthRepository.getWinLose(startDate, endDate),
+            this.growthRepository.getWinLose(prevStartDate, prevEndDate)
+        ])
+
+        const currentTotal = currentStats.win + currentStats.lose
+        const currentRate = currentTotal > 0 ? (currentStats.win / currentTotal) * 100 : 0
+
+        const prevTotal = prevStats.win + prevStats.lose
+        const prevRate = prevTotal > 0 ? (prevStats.win / prevTotal) * 100 : 0
+
+        let percentage = 0
+        if (prevRate > 0) {
+            percentage = ((currentRate - prevRate) / prevRate) * 100
+        } else if (currentRate > 0) {
+            percentage = 100
+        }
+
+        const trend = currentRate >= prevRate ? 'up' : 'down'
+
+        return {
+            value: currentRate,
+            trend,
+            percentage,
+            period
+        }
+    }
 }

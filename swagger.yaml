@@ -950,6 +950,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/win-rate:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get win rate metrics
+      description: Returns win rate metrics including trend and percentage.
+      operationId: getGrowthWinRate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Win rate metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthWinRateResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
@@ -2607,6 +2641,22 @@ components:
         value:
           type: number
           example: 120
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 15.5
+        period:
+          type: string
+          example: "May"
+    GrowthWinRateResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 65.5
         trend:
           type: string
           enum: [up, down]

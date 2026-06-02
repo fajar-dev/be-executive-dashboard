@@ -3,4 +3,5 @@ export interface IGrowthRepository {
     getRevenue(branchId: string, startDate: string, endDate: string): Promise<number>
     getLeads(startDate: string, endDate: string): Promise<number>
     getOpportunity(startDate: string, endDate: string): Promise<number>
+    getWinLose(startDate: string, endDate: string): Promise<{ win: number, lose: number }>
 }

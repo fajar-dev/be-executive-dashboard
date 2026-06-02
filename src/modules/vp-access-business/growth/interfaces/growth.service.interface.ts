@@ -19,4 +19,10 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
+    getWinRate(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
 }
