@@ -324,7 +324,7 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total_service || 0)
     }
 
-    async payment(branchId: string): Promise<number> {
+    async payment(branchId: string): Promise<number | null> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 (csm.total / cst.total) * 100 as percent
@@ -363,6 +363,11 @@ export class RetentionRepository implements IRetentionRepository {
             ) cst`,
             [branchId, branchId]
         )
-        return Number(rows[0]?.percent || 0)
+        
+        if (rows[0]?.percent === null || rows[0]?.percent === undefined) {
+            return null
+        }
+        
+        return Number(rows[0].percent)
     }
 }

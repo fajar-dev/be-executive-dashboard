@@ -332,6 +332,13 @@ export class RetentionService implements IRetentionService {
     async getPayment(branchId: string): Promise<{ monthly: number; annual: number }> {
         const monthlyPercent = await this.retentionRepository.payment(branchId)
         
+        if (monthlyPercent === null) {
+            return {
+                monthly: 0,
+                annual: 0
+            }
+        }
+
         return {
             monthly: monthlyPercent,
             annual: 100 - monthlyPercent
