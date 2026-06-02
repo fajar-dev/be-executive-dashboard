@@ -106,4 +106,16 @@ export class RetentionController {
             return ApiResponse.error(c, 'Failed to fetch usage metrics', 500)
         }
     }
+
+    async getPayment(c: Context) {
+        try {
+            const branchId = c.req.query('branchId') || '020'
+            const result = await this.service.getPayment(branchId)
+            
+            return ApiResponse.success(c, result, 'Payment metrics retrieved successfully')
+        } catch (error) {
+            console.error('Error fetching payment metrics:', error)
+            return ApiResponse.error(c, 'Failed to fetch payment metrics', 500)
+        }
+    }
 }

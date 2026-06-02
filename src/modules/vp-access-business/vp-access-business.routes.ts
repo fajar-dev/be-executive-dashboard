@@ -30,6 +30,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/retention/churn-revenue', (c) => retention.getChurnRevenue(c))
     routes.get('/retention/customer-lose', (c) => retention.getCustomerLose(c))
     routes.get('/retention/wireless-migration', (c) => retention.getWirelessMigration(c))
+    routes.get('/retention/payment', (c) => retention.getPayment(c))
 
     // Service Quality Routes
     routes.get('/service-quality/ticket', (c) => serviceQuality.getTicket(c))

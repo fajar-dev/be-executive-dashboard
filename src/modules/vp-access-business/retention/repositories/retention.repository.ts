@@ -323,4 +323,46 @@ export class RetentionRepository implements IRetentionRepository {
         )
         return Number(rows[0]?.total_service || 0)
     }
+
+    async payment(branchId: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                (csm.total / cst.total) * 100 as percent
+            FROM (
+                SELECT
+                    COUNT(1) total
+                FROM CustomerServices cs
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId 
+                LEFT JOIN Services s ON
+                    s.ServiceId = cs.ServiceId
+                LEFT JOIN InvoiceTypeMonth itm
+                    ON itm.InvoiceType = cs.InvoiceType
+                WHERE s.ServiceCategory = 'access_business'
+                AND c.BranchId = ?
+                AND cs.CustStatus = 'AC'
+                AND IF(	
+                        cs.InvoiceType != 8,
+                            itm.Month,
+                            1
+                        ) = 1
+            ) csm
+            JOIN (
+                    SELECT
+                    COUNT(1) total
+                FROM CustomerServices cs
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId 
+                LEFT JOIN Services s ON
+                    s.ServiceId = cs.ServiceId
+                LEFT JOIN InvoiceTypeMonth itm
+                    ON itm.InvoiceType = cs.InvoiceType
+                WHERE s.ServiceCategory = 'access_business'
+                AND c.BranchId = ?
+                AND cs.CustStatus = 'AC'
+            ) cst`,
+            [branchId, branchId]
+        )
+        return Number(rows[0]?.percent || 0)
+    }
 }

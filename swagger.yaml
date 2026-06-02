@@ -803,7 +803,87 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   # ────────────────────────────────────────────
-  # VP ACCESS BUSINESS
+  # VP ACCESS BUSINESS - GROWTH
+  # ────────────────────────────────────────────
+  /vp-access-business/growth/new-mrc:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get new MRC metrics
+      description: Returns new MRC metrics including trend, percentage, and details.
+      operationId: getGrowthNewMrc
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: New MRC metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthNewMrcResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /vp-access-business/growth/revenue:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get revenue metrics
+      description: Returns monthly revenue breakdown comparing the current year and the previous year.
+      operationId: getGrowthRevenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+      responses:
+        "200":
+          description: Revenue metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/GrowthRevenueResponseItem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ────────────────────────────────────────────
+  # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
   /vp-access-business/retention/contract-expiring:
     get:
@@ -1178,6 +1258,44 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
+
+  /vp-access-business/retention/payment:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get payment metrics
+      description: Returns the percentage of monthly and annual payments for the branch.
+      operationId: getRetentionPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+      responses:
+        "200":
+          description: Payment metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RetentionPaymentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ────────────────────────────────────────────
+  # VP ACCESS BUSINESS - SERVICE QUALITY
+  # ────────────────────────────────────────────
   /vp-access-business/service-quality/ticket:
     get:
       tags:
@@ -2357,3 +2475,54 @@ components:
         period:
           type: string
           example: "May"
+    GrowthNewMrcResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 15000000
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 12.5
+        period:
+          type: string
+          example: "May"
+        details:
+          type: object
+          properties:
+            mrc:
+              type: number
+              example: 15000000
+            mrc_unpaid:
+              type: number
+              example: 5000000
+            mrc_paid:
+              type: number
+              example: 10000000
+    GrowthRevenueResponseItem:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "May"
+        month:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              revenue:
+                type: number
+                example: 125000000
+    RetentionPaymentResponse:
+      type: object
+      properties:
+        monthly:
+          type: number
+          example: 65.5
+        annual:
+          type: number
+          example: 34.5

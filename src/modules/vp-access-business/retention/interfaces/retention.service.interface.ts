@@ -18,4 +18,5 @@ export interface IRetentionService {
     getContractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }>
     getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }>
     getUsage(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }>
+    getPayment(branchId: string): Promise<{ monthly: number; annual: number }>
 }
