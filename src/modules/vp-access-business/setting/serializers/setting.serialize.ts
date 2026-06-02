@@ -1,3 +1,7 @@
 export class SettingSerializer {
-    // TODO: Add static methods for formatting responses
+    static revenue(total: number) {
+        return {
+            total
+        }
+    }
 }

@@ -1,6 +1,7 @@
 import { Context } from 'hono'
 import { ISettingService } from '../interfaces/setting.service.interface'
 import { ApiResponse } from '../../../../core/helpers/response'
+import { SettingSerializer } from '../serializers/setting.serialize'
 
 export class SettingController {
     constructor(private readonly service: ISettingService) {}
@@ -16,6 +17,6 @@ export class SettingController {
 
         const result = await this.service.getRevenue(branchId, year)
         
-        return ApiResponse.success(c, { total: result }, 'Target revenue retrieved successfully')
+        return ApiResponse.success(c, SettingSerializer.revenue(result), 'Target revenue retrieved successfully')
     }
 }
