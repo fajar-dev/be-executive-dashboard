@@ -1,10 +1,11 @@
 import { Pool } from 'mysql2/promise'
-import { ISettingRepository } from '../interfaces/setting.repository.interface'
+import { ISettingRepository, TargetRevenuePayload } from '../interfaces/setting.repository.interface'
 
 export class SettingRepository implements ISettingRepository {
     constructor(
         private readonly nisDb: Pool,
-        private readonly prospectDb: Pool
+        private readonly prospectDb: Pool,
+        private readonly dashboardDb: Pool
     ) {}
 
     async getRevenue(branchId: string, year: number): Promise<{ total: number, details: { month: number, total: number }[] }> {
@@ -43,5 +44,101 @@ export class SettingRepository implements ISettingRepository {
         })
 
         return { total, details }
+    }
+
+    async getTarget(year: number): Promise<TargetRevenuePayload | null> {
+        const [rows] = await this.dashboardDb.query<any[]>(
+            `SELECT t.*, u.name as updated_by_name 
+             FROM vp_access_business_target t
+             LEFT JOIN users u ON t.updated_by = u.id
+             WHERE t.year = ?`,
+            [year]
+        )
+        if (rows.length === 0) return null
+
+        const row = rows[0]
+        return {
+            year: row.year,
+            yearly_target: Number(row.yearly_target),
+            jan: Number(row.jan),
+            feb: Number(row.feb),
+            mar: Number(row.mar),
+            apr: Number(row.apr),
+            may: Number(row.may),
+            jun: Number(row.jun),
+            jul: Number(row.jul),
+            aug: Number(row.aug),
+            sep: Number(row.sep),
+            oct: Number(row.oct),
+            nov: Number(row.nov),
+            dec: Number(row.dec),
+            is_locked: Boolean(row.is_locked),
+            updated_at: row.updated_at,
+            updated_by_name: row.updated_by_name
+        }
+    }
+
+    async saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void> {
+        const connection = await this.dashboardDb.getConnection()
+        try {
+            await connection.beginTransaction()
+
+            // Get old value for logging
+            const [oldRows] = await connection.query<any[]>(
+                `SELECT * FROM vp_access_business_target WHERE year = ?`,
+                [year]
+            )
+            const oldValue = oldRows.length > 0 ? oldRows[0] : null
+
+            // Insert or Update Target
+            await connection.query(
+                `INSERT INTO vp_access_business_target 
+                (year, yearly_target, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, \`dec\`, is_locked, updated_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                yearly_target = VALUES(yearly_target),
+                jan = VALUES(jan),
+                feb = VALUES(feb),
+                mar = VALUES(mar),
+                apr = VALUES(apr),
+                may = VALUES(may),
+                jun = VALUES(jun),
+                jul = VALUES(jul),
+                aug = VALUES(aug),
+                sep = VALUES(sep),
+                oct = VALUES(oct),
+                nov = VALUES(nov),
+                \`dec\` = VALUES(\`dec\`),
+                is_locked = VALUES(is_locked),
+                updated_by = VALUES(updated_by)`,
+                [
+                    year, payload.yearly_target, payload.jan, payload.feb, payload.mar,
+                    payload.apr, payload.may, payload.jun, payload.jul, payload.aug,
+                    payload.sep, payload.oct, payload.nov, payload.dec, payload.is_locked, userId
+                ]
+            )
+
+            // Insert Log
+            const isLocked = payload.is_locked;
+            await connection.query(
+                `INSERT INTO vp_access_business_target_log (year, old_value, new_value, created_by, updated_by, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    year,
+                    oldValue ? JSON.stringify(oldValue) : '{}',
+                    isLocked ? JSON.stringify(payload) : null,
+                    userId,
+                    isLocked ? userId : null,
+                    isLocked ? new Date() : null
+                ]
+            )
+
+            await connection.commit()
+        } catch (error) {
+            await connection.rollback()
+            throw error
+        } finally {
+            connection.release()
+        }
     }
 }

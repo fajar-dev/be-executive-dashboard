@@ -8,8 +8,8 @@ export class SettingModule {
     public readonly service: SettingService
     public readonly repository: SettingRepository
 
-    constructor(nisPool: Pool, nusaprospectPool: Pool) {
-        this.repository = new SettingRepository(nisPool, nusaprospectPool)
+    constructor(nisPool: Pool, nusaprospectPool: Pool, dashboardPool: Pool) {
+        this.repository = new SettingRepository(nisPool, nusaprospectPool, dashboardPool)
         this.service = new SettingService(this.repository)
         this.controller = new SettingController(this.service)
     }

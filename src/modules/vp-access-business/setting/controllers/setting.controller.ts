@@ -19,4 +19,26 @@ export class SettingController {
         
         return ApiResponse.success(c, SettingSerializer.revenue(result), 'Target revenue retrieved successfully')
     }
+
+    async getTarget(c: Context) {
+        const currentYear = new Date().getFullYear()
+        const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : currentYear
+
+        const result = await this.service.getTarget(year)
+        
+        return ApiResponse.success(c, result, 'Target retrieved successfully')
+    }
+
+    async saveTarget(c: Context) {
+        const currentYear = new Date().getFullYear()
+        const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : currentYear
+        
+        const payload = await c.req.json()
+        const user = c.get('user')
+        const userId = user?.id || 1 // Fallback to 1 if user ID not found in context
+
+        await this.service.saveTarget(year, payload, userId)
+        
+        return ApiResponse.success(c, null, 'Target saved successfully')
+    }
 }

@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { MiddlewareHandler } from 'hono'
 import { nisPool } from '../../config/nis.db'
 import { nusaprospectPool } from '../../config/nusaprospect.db'
+import { dashboardPool } from '../../config/dashboard.db'
 import { GrowthModule } from './growth/growth.module'
 import { RetentionModule } from './retention/retention.module'
 import { ServiceQualityModule } from './service-quality/service-quality.module'
@@ -20,7 +21,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const serviceQualityModule = new ServiceQualityModule(nisPool)
     const serviceQuality = serviceQualityModule.controller
 
-    const settingModule = new SettingModule(nisPool, nusaprospectPool)
+    const settingModule = new SettingModule(nisPool, nusaprospectPool, dashboardPool)
     const setting = settingModule.controller
 
     // Growth Routes
@@ -55,6 +56,8 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     // Setting Routes
     routes.get('/setting/ping', (c) => setting.ping(c))
     routes.get('/setting/revenue', (c) => setting.getRevenue(c))
+    routes.get('/setting/target', authMid, (c) => setting.getTarget(c))
+    routes.post('/setting/target', authMid, (c) => setting.saveTarget(c))
 
     return routes
 }
