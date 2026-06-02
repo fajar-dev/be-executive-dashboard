@@ -1,121 +1,81 @@
 import { Context } from 'hono'
 import { IRetentionService } from '../interfaces/retention.service.interface'
 import { ApiResponse } from '../../../../core/helpers/response'
-import { ChurnRevenueSerializer } from '../serializers/churn.serialize'
+import { RetentionSerializer } from '../serializers/retention.serialize'
 
 export class RetentionController {
     constructor(private readonly service: IRetentionService) {}
 
     async getChurnRevenue(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const period = c.req.query('period') || 'month'
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
 
-            if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-                return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-            }
-
-            const result = await this.service.getChurnRevenue(branchId, period)
-            return ApiResponse.success(c, ChurnRevenueSerializer.single(result), 'Churn revenue retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching churn revenue:', error)
-            return ApiResponse.error(c, 'Failed to fetch churn revenue', 500)
+        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
+            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
         }
+
+        const result = await this.service.getChurnRevenue(branchId, period)
+        return ApiResponse.success(c, RetentionSerializer.churnRevenue(result), 'Churn revenue retrieved successfully')
     }
 
     async getCustomerLose(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const period = c.req.query('period') || 'month'
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
 
-            if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-                return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-            }
-
-            const result = await this.service.getCustomerLose(branchId, period)
-            return ApiResponse.success(c, result, 'Customer lose retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching customer lose:', error)
-            return ApiResponse.error(c, 'Failed to fetch customer lose', 500)
+        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
+            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
         }
+
+        const result = await this.service.getCustomerLose(branchId, period)
+        return ApiResponse.success(c, RetentionSerializer.customerLose(result), 'Customer lose retrieved successfully')
     }
 
     async getWirelessMigration(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const period = c.req.query('period') || 'month'
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
 
-            if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-                return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-            }
-
-            const result = await this.service.getWirelessMigration(branchId, period)
-            return ApiResponse.success(c, result, 'Wireless migration metrics retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching wireless migration metrics:', error)
-            return ApiResponse.error(c, 'Failed to fetch wireless migration metrics', 500)
+        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
+            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
         }
+
+        const result = await this.service.getWirelessMigration(branchId, period)
+        return ApiResponse.success(c, RetentionSerializer.wirelessMigration(result), 'Wireless migration metrics retrieved successfully')
     }
 
     async getChurnRate(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const result = await this.service.getChurnRate(branchId)
-            
-            return ApiResponse.success(c, result, 'Churn rate retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching churn rate:', error)
-            return ApiResponse.error(c, 'Failed to fetch churn rate', 500)
-        }
+        const branchId = c.req.query('branchId') || '020'
+        const result = await this.service.getChurnRate(branchId)
+        
+        return ApiResponse.success(c, RetentionSerializer.churnRate(result), 'Churn rate retrieved successfully')
     }
 
     async getContractExpiring(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const result = await this.service.getContractExpiring(branchId)
-            
-            return ApiResponse.success(c, result, 'Contract expiring metrics retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching contract expiring metrics:', error)
-            return ApiResponse.error(c, 'Failed to fetch contract expiring metrics', 500)
-        }
+        const branchId = c.req.query('branchId') || '020'
+        const result = await this.service.getContractExpiring(branchId)
+        
+        return ApiResponse.success(c, RetentionSerializer.contractExpiring(result), 'Contract expiring metrics retrieved successfully')
     }
 
     async getTicket(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const period = c.req.query('period') || 'month'
-            const result = await this.service.getTicket(branchId, period)
-            
-            return ApiResponse.success(c, result, 'Ticket metrics retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching ticket metrics:', error)
-            return ApiResponse.error(c, 'Failed to fetch ticket metrics', 500)
-        }
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getTicket(branchId, period)
+        
+        return ApiResponse.success(c, RetentionSerializer.ticket(result), 'Ticket metrics retrieved successfully')
     }
 
     async getUsage(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const period = c.req.query('period') || 'month'
-            const result = await this.service.getUsage(branchId, period)
-            
-            return ApiResponse.success(c, result, 'Usage metrics retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching usage metrics:', error)
-            return ApiResponse.error(c, 'Failed to fetch usage metrics', 500)
-        }
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getUsage(branchId, period)
+        
+        return ApiResponse.success(c, RetentionSerializer.usage(result), 'Usage metrics retrieved successfully')
     }
 
     async getPayment(c: Context) {
-        try {
-            const branchId = c.req.query('branchId') || '020'
-            const result = await this.service.getPayment(branchId)
-            
-            return ApiResponse.success(c, result, 'Payment metrics retrieved successfully')
-        } catch (error) {
-            console.error('Error fetching payment metrics:', error)
-            return ApiResponse.error(c, 'Failed to fetch payment metrics', 500)
-        }
+        const branchId = c.req.query('branchId') || '020'
+        const result = await this.service.getPayment(branchId)
+        
+        return ApiResponse.success(c, RetentionSerializer.payment(result), 'Payment metrics retrieved successfully')
     }
 }
