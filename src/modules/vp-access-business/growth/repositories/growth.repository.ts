@@ -3,7 +3,8 @@ import { IGrowthRepository } from '../interfaces/growth.repository.interface'
 
 export class GrowthRepository implements IGrowthRepository {
     constructor(
-        private readonly nisDb: Pool
+        private readonly nisDb: Pool,
+        private readonly prospectDb: Pool
     ) {}
 
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
@@ -120,6 +121,26 @@ export class GrowthRepository implements IGrowthRepository {
             AND gj.TglTransaksi >= ?
             AND gj.TglTransaksi <= ?`,
             [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
+
+    async getLeads(startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT pl.id) total
+            FROM customer_object_product_services cops
+            LEFT JOIN prospect_leads pl ON
+                pl.id = cops.object_id
+                AND cops.object = 'lead'
+            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            AND pl.id IS NOT NULL
+            AND pl.conversion_datetime IS NULL
+            AND pl.unqualified_reason_id IS NULL
+            AND pl.deleted_at IS NULL
+            AND DATE(pl.created_at) >= ?
+            AND DATE(pl.created_at) <= ?`,
+            [startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }

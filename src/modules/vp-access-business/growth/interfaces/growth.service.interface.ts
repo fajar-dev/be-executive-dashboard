@@ -7,4 +7,10 @@ export interface IGrowthService {
         details: { mrc: number; mrc_unpaid: number; mrc_paid: number }
     }>
     getRevenue(branchId: string): Promise<any[]>
+    getLeads(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
 }

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { MiddlewareHandler } from 'hono'
 import { nisPool } from '../../config/nis.db'
+import { nusaprospectPool } from '../../config/nusaprospect.db'
 import { GrowthModule } from './growth/growth.module'
 import { RetentionModule } from './retention/retention.module'
 import { ServiceQualityModule } from './service-quality/service-quality.module'
@@ -9,7 +10,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const routes = new Hono()
 
     // Module dependencies
-    const growthModule = new GrowthModule(nisPool)
+    const growthModule = new GrowthModule(nisPool, nusaprospectPool)
     const growth = growthModule.controller
 
     const retentionModule = new RetentionModule(nisPool)
@@ -21,6 +22,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     // Growth Routes
     routes.get('/growth/new-mrc', (c) => growth.getNewMrc(c))
     routes.get('/growth/revenue', (c) => growth.getRevenue(c))
+    routes.get('/growth/leads', (c) => growth.getLeads(c))
 
     // Retention Routes
     routes.get('/retention/contract-expiring', (c) => retention.getContractExpiring(c))

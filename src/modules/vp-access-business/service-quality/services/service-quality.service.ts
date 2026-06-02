@@ -56,7 +56,7 @@ export class ServiceQualityService implements IServiceQualityService {
             prevStartDate = DateHelper.getPreviousMonthStart()
             prevEndDate = DateHelper.getPreviousMonthEnd()
             
-            period = DateHelper.getMonthName(currentPeriod)
+            period = 'Bulan Ini'
         }
 
         return { startDate, endDate, prevStartDate, prevEndDate, period }

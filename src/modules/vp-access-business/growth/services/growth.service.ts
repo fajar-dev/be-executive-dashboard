@@ -54,7 +54,7 @@ export class GrowthService implements IGrowthService {
             prevStartDate = DateHelper.getPreviousMonthStart()
             prevEndDate = DateHelper.getPreviousMonthEnd()
             
-            period = DateHelper.getMonthName(currentPeriod)
+            period = 'Bulan Ini'
         }
 
         return { startDate, endDate, prevStartDate, prevEndDate, period }
@@ -138,5 +138,35 @@ export class GrowthService implements IGrowthService {
         }
 
         return data
+    }
+
+    async getLeads(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [value, prevValue] = await Promise.all([
+            this.growthRepository.getLeads(startDate, endDate),
+            this.growthRepository.getLeads(prevStartDate, prevEndDate)
+        ])
+
+        let percentage = 0
+        if (prevValue > 0) {
+            percentage = ((value - prevValue) / prevValue) * 100
+        } else if (value > 0) {
+            percentage = 100
+        }
+
+        const trend = value >= prevValue ? 'up' : 'down'
+
+        return {
+            value,
+            trend,
+            percentage,
+            period
+        }
     }
 }

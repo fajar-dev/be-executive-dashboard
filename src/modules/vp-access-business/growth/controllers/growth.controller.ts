@@ -20,4 +20,11 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.revenue(result), 'Revenue metrics retrieved successfully')
     }
+
+    async getLeads(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getLeads(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.leads(result), 'Leads metrics retrieved successfully')
+    }
 }
