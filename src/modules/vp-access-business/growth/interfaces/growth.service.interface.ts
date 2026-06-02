@@ -24,5 +24,9 @@ export interface IGrowthService {
         trend: 'up' | 'down'
         percentage: number
         period: string
+        details: {
+            win: { value: number; trend: 'up' | 'down'; percentage: number }
+            lose: { value: number; trend: 'up' | 'down'; percentage: number }
+        }
     }>
 }

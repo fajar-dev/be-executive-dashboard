@@ -2667,6 +2667,35 @@ components:
         period:
           type: string
           example: "May"
+        details:
+          type: object
+          properties:
+            win:
+              type: object
+              properties:
+                value:
+                  type: number
+                  example: 85
+                trend:
+                  type: string
+                  enum: [up, down]
+                  example: "up"
+                percentage:
+                  type: number
+                  example: 10.5
+            lose:
+              type: object
+              properties:
+                value:
+                  type: number
+                  example: 35
+                trend:
+                  type: string
+                  enum: [up, down]
+                  example: "down"
+                percentage:
+                  type: number
+                  example: 5.2
     RetentionPaymentResponse:
       type: object
       properties:

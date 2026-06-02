@@ -205,6 +205,10 @@ export class GrowthService implements IGrowthService {
         trend: 'up' | 'down'
         percentage: number
         period: string
+        details: {
+            win: { value: number; trend: 'up' | 'down'; percentage: number }
+            lose: { value: number; trend: 'up' | 'down'; percentage: number }
+        }
     }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
 
@@ -228,11 +232,41 @@ export class GrowthService implements IGrowthService {
 
         const trend = currentRate >= prevRate ? 'up' : 'down'
 
+        // Win stats
+        let winPercentage = 0
+        if (prevStats.win > 0) {
+            winPercentage = ((currentStats.win - prevStats.win) / prevStats.win) * 100
+        } else if (currentStats.win > 0) {
+            winPercentage = 100
+        }
+        const winTrend = currentStats.win >= prevStats.win ? 'up' : 'down'
+
+        // Lose stats
+        let losePercentage = 0
+        if (prevStats.lose > 0) {
+            losePercentage = ((currentStats.lose - prevStats.lose) / prevStats.lose) * 100
+        } else if (currentStats.lose > 0) {
+            losePercentage = 100
+        }
+        const loseTrend = currentStats.lose >= prevStats.lose ? 'up' : 'down'
+
         return {
             value: currentRate,
             trend,
             percentage,
-            period
+            period,
+            details: {
+                win: {
+                    value: currentStats.win,
+                    trend: winTrend,
+                    percentage: winPercentage
+                },
+                lose: {
+                    value: currentStats.lose,
+                    trend: loseTrend,
+                    percentage: losePercentage
+                }
+            }
         }
     }
 }

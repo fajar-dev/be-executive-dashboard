@@ -43,7 +43,8 @@ export class GrowthSerializer {
             value: data.value,
             trend: data.trend,
             percentage: data.percentage,
-            period: data.period
+            period: data.period,
+            details: data.details
         }
     }
 }
