@@ -275,10 +275,6 @@ export class GrowthService implements IGrowthService {
         trend: 'up' | 'down'
         percentage: number
         period: string
-        details: {
-            activity: { value: number; trend: 'up' | 'down'; percentage: number }
-            amCount: { value: number; trend: 'up' | 'down'; percentage: number }
-        }
     }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
 
