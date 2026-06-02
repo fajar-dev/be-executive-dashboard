@@ -984,6 +984,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/activity:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get activity metrics
+      description: Returns activity per AM metrics including trend and percentage.
+      operationId: getGrowthActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Activity metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthActivityResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
@@ -2696,6 +2730,51 @@ components:
                 percentage:
                   type: number
                   example: 5.2
+    GrowthActivityResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 4.5
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 12.5
+        period:
+          type: string
+          example: "May"
+        details:
+          type: object
+          properties:
+            activity:
+              type: object
+              properties:
+                value:
+                  type: number
+                  example: 45
+                trend:
+                  type: string
+                  enum: [up, down]
+                  example: "up"
+                percentage:
+                  type: number
+                  example: 10.5
+            amCount:
+              type: object
+              properties:
+                value:
+                  type: number
+                  example: 10
+                trend:
+                  type: string
+                  enum: [up, down]
+                  example: "up"
+                percentage:
+                  type: number
+                  example: 0
     RetentionPaymentResponse:
       type: object
       properties:

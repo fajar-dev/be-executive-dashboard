@@ -29,4 +29,14 @@ export interface IGrowthService {
             lose: { value: number; trend: 'up' | 'down'; percentage: number }
         }
     }>
+    getActivity(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: {
+            activity: { value: number; trend: 'up' | 'down'; percentage: number }
+            amCount: { value: number; trend: 'up' | 'down'; percentage: number }
+        }
+    }>
 }

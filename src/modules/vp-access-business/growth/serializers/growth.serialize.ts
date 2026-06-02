@@ -47,4 +47,14 @@ export class GrowthSerializer {
             details: data.details
         }
     }
+
+    static activity(data: any) {
+        return {
+            value: data.value,
+            trend: data.trend,
+            percentage: data.percentage,
+            period: data.period,
+            details: data.details
+        }
+    }
 }

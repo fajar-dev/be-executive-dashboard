@@ -41,4 +41,11 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.winRate(result), 'Win rate metrics retrieved successfully')
     }
+
+    async getActivity(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getActivity(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.activity(result), 'Activity metrics retrieved successfully')
+    }
 }

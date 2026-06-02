@@ -269,4 +269,71 @@ export class GrowthService implements IGrowthService {
             }
         }
     }
+
+    async getActivity(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: {
+            activity: { value: number; trend: 'up' | 'down'; percentage: number }
+            amCount: { value: number; trend: 'up' | 'down'; percentage: number }
+        }
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+
+        const [currentStats, prevStats] = await Promise.all([
+            this.growthRepository.getActivity(startDate, endDate),
+            this.growthRepository.getActivity(prevStartDate, prevEndDate)
+        ])
+
+        const currentValue = currentStats.amCount > 0 ? currentStats.activity / currentStats.amCount : 0
+        const prevValue = prevStats.amCount > 0 ? prevStats.activity / prevStats.amCount : 0
+
+        let percentage = 0
+        if (prevValue > 0) {
+            percentage = ((currentValue - prevValue) / prevValue) * 100
+        } else if (currentValue > 0) {
+            percentage = 100
+        }
+
+        const trend = currentValue >= prevValue ? 'up' : 'down'
+
+        // Activity stats
+        let activityPercentage = 0
+        if (prevStats.activity > 0) {
+            activityPercentage = ((currentStats.activity - prevStats.activity) / prevStats.activity) * 100
+        } else if (currentStats.activity > 0) {
+            activityPercentage = 100
+        }
+        const activityTrend = currentStats.activity >= prevStats.activity ? 'up' : 'down'
+
+        // amCount stats
+        let amCountPercentage = 0
+        if (prevStats.amCount > 0) {
+            amCountPercentage = ((currentStats.amCount - prevStats.amCount) / prevStats.amCount) * 100
+        } else if (currentStats.amCount > 0) {
+            amCountPercentage = 100
+        }
+        const amCountTrend = currentStats.amCount >= prevStats.amCount ? 'up' : 'down'
+
+        return {
+            value: currentValue,
+            trend,
+            percentage,
+            period,
+            details: {
+                activity: {
+                    value: currentStats.activity,
+                    trend: activityTrend,
+                    percentage: activityPercentage
+                },
+                amCount: {
+                    value: currentStats.amCount,
+                    trend: amCountTrend,
+                    percentage: amCountPercentage
+                }
+            }
+        }
+    }
 }

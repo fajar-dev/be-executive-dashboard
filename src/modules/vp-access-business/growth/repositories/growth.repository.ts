@@ -185,4 +185,48 @@ export class GrowthRepository implements IGrowthRepository {
             lose: Number(rows[0]?.lose_count || 0)
         }
     }
+
+    async getActivity(startDate: string, endDate: string): Promise<{ activity: number, amCount: number }> {
+        const [amRows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT gu.user_uuid) total
+            FROM group_users gu
+            LEFT JOIN groups g ON
+                g.id = gu.group_id
+            WHERE gu.group_id IN (57, 21, 43)
+            OR g.group_parent_id IN (57, 21, 43)`
+        )
+
+        const [activityRows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT clc.id) + COUNT(DISTINCT pt.id) + COUNT(DISTINCT pci.id) total
+            FROM (
+                SELECT
+                    DISTINCT gu.user_uuid user_id
+                FROM group_users gu
+                LEFT JOIN groups g ON
+                    g.id = gu.group_id
+                WHERE gu.group_id IN (57, 21, 43)
+                OR g.group_parent_id IN (57, 21, 43)
+            ) u
+            LEFT JOIN customer_log_calls clc ON
+                IFNULL(clc.assigned_to_id, clc.created_by) = u.user_id
+                AND DATE(clc.created_at) >= ?
+                AND DATE(clc.created_at) <= ?
+            LEFT JOIN prospect_tasks pt ON
+                IFNULL(pt.assigned_to_id, pt.created_by) = u.user_id
+                AND DATE(pt.created_at) >= ?
+                AND DATE(pt.created_at) <= ?
+            LEFT JOIN prospect_check_ins pci ON
+                pci.user_uuid = u.user_id
+                AND DATE(pci.created_at) >= ?
+                AND DATE(pci.created_at) <= ?`,
+            [startDate, endDate, startDate, endDate, startDate, endDate]
+        )
+
+        return {
+            activity: Number(activityRows[0]?.total || 0),
+            amCount: Number(amRows[0]?.total || 0)
+        }
+    }
 }
