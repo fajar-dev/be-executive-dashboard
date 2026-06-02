@@ -5,6 +5,7 @@ import { nusaprospectPool } from '../../config/nusaprospect.db'
 import { GrowthModule } from './growth/growth.module'
 import { RetentionModule } from './retention/retention.module'
 import { ServiceQualityModule } from './service-quality/service-quality.module'
+import { SettingModule } from './setting/setting.module'
 
 export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const routes = new Hono()
@@ -18,6 +19,9 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
 
     const serviceQualityModule = new ServiceQualityModule(nisPool)
     const serviceQuality = serviceQualityModule.controller
+
+    const settingModule = new SettingModule(nisPool, nusaprospectPool)
+    const setting = settingModule.controller
 
     // Growth Routes
     routes.get('/growth/new-mrc', (c) => growth.getNewMrc(c))
@@ -47,6 +51,9 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/service-quality/solved-percentage', (c) => serviceQuality.getSolvedPercentage(c))
     routes.get('/service-quality/issue', (c) => serviceQuality.getIssue(c))
     routes.get('/service-quality/incident', (c) => serviceQuality.getIncident(c))
+
+    // Setting Routes
+    routes.get('/setting/ping', (c) => setting.ping(c))
 
     return routes
 }
