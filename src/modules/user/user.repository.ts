@@ -31,14 +31,16 @@ export class UserRepository implements IUserRepository {
     async upsertByEmployeeId(data: UserUpsertPayload[]): Promise<void> {
         if (!data.length) return
 
-        const values = data.map(d => [d.employeeId, d.name, d.email, d.photo])
+        const values = data.map(d => [d.employeeId, d.name, d.email, d.photo, d.jobPosition])
         await this.db.query(
-            `INSERT INTO users (employee_id, name, email, photo)
+            `INSERT INTO users (employee_id, name, email, photo, job_position)
              VALUES ?
              ON DUPLICATE KEY UPDATE
-               name = VALUES(name),
-               email = VALUES(email),
-               photo = VALUES(photo)`,
+             name = VALUES(name),
+             email = VALUES(email),
+             photo = VALUES(photo),
+             job_position = VALUES(job_position),
+             updated_at = CURRENT_TIMESTAMP`,
             [values]
         )
     }

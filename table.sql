@@ -4,6 +4,7 @@ CREATE TABLE `users` (
     `name` varchar(255) NOT NULL,
     `email` varchar(255) NOT NULL UNIQUE,
     `photo` varchar(255) NULL,
+    `job_position` varchar(255) NULL,
     `is_active` tinyint(1) NOT NULL DEFAULT 1,
     `created_at` timestamp NULL DEFAULT current_timestamp(),
     `updated_at` timestamp NULL DEFAULT current_timestamp(),

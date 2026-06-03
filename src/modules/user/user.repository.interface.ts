@@ -3,6 +3,7 @@ export interface UserUpsertPayload {
     name: string
     email: string
     photo: string
+    jobPosition?: string
 }
 
 export interface IUserRepository {
