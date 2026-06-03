@@ -129,13 +129,13 @@ export class GrowthRepository implements IGrowthRepository {
     async getLeads(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
-                COUNT(DISTINCT pl.id) total
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_leads pl ON
-                pl.id = cops.object_id
-                AND cops.object = 'lead'
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
-            AND pl.id IS NOT NULL
+                COUNT(1) total
+            FROM prospect_leads pl
+            WHERE pl.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'lead' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND pl.conversion_datetime IS NULL
             AND pl.unqualified_reason_id IS NULL
             AND pl.deleted_at IS NULL
@@ -149,13 +149,13 @@ export class GrowthRepository implements IGrowthRepository {
     async getOpportunity(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
-                COUNT(DISTINCT po.id) total
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_opportunities po ON
-                po.id = cops.object_id
-                AND cops.object = 'opportunity'
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
-            AND po.id IS NOT NULL
+                COUNT(1) total
+            FROM prospect_opportunities po
+            WHERE po.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'opportunity' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND po.opportunity_stage_id NOT IN (6,7)
             AND po.deleted_at IS NULL
             AND DATE(po.created_at) >= ?
@@ -168,14 +168,14 @@ export class GrowthRepository implements IGrowthRepository {
     async getWinLose(startDate: string, endDate: string): Promise<{ win: number, lose: number }> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
-                COUNT(DISTINCT CASE WHEN po.opportunity_stage_id = 6 THEN po.id END) AS win_count,
-                COUNT(DISTINCT CASE WHEN po.opportunity_stage_id = 7 THEN po.id END) AS lose_count
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_opportunities po ON
-                po.id = cops.object_id
-                AND cops.object = 'opportunity'
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
-            AND po.id IS NOT NULL
+                SUM(CASE WHEN po.opportunity_stage_id = 6 THEN 1 ELSE 0 END) AS win_count,
+                SUM(CASE WHEN po.opportunity_stage_id = 7 THEN 1 ELSE 0 END) AS lose_count
+            FROM prospect_opportunities po
+            WHERE po.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'opportunity' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND po.deleted_at IS NULL
             AND DATE(po.created_at) >= ?
             AND DATE(po.created_at) <= ?`,
@@ -235,15 +235,15 @@ export class GrowthRepository implements IGrowthRepository {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
                 SUM(poa.amount) value
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_opportunities po ON
-                po.id = cops.object_id
-                AND cops.object = 'opportunity'
+            FROM prospect_opportunities po
             LEFT JOIN prospect_opportunity_amounts poa ON
                 poa.opportunity_id = po.id
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            WHERE po.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'opportunity' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND poa.amount_category_setting_id = 1
-            AND po.id IS NOT NULL
             AND po.deleted_at IS NULL
             AND DATE(po.created_at) >= ?
             AND DATE(po.created_at) <= ?`,
@@ -255,23 +255,23 @@ export class GrowthRepository implements IGrowthRepository {
     async getCycle(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
-                AVG(DATEDIFF(po.close_date, posc.closed_date)) avg_days
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_opportunities po ON
-                po.id = cops.object_id
-                AND cops.object = 'opportunity'
+                AVG(DATEDIFF(posc.closed_date, po.created_at)) avg_days
+            FROM prospect_opportunities po
             LEFT JOIN (
                 SELECT 
-                    posc.opportunity_id,
-                    MAX(posc.created_at) closed_date
-                FROM prospect_opportunity_stage_changes posc
-                WHERE posc.opportunity_stage_id = 6
-                GROUP BY posc.opportunity_id
+                    opportunity_id,
+                    MAX(created_at) closed_date
+                FROM prospect_opportunity_stage_changes
+                WHERE opportunity_stage_id = 6
+                GROUP BY opportunity_id
             ) posc ON
                 posc.opportunity_id = po.id
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            WHERE po.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'opportunity' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND po.opportunity_stage_id = 6
-            AND po.id IS NOT NULL
             AND po.deleted_at IS NULL
             AND DATE(po.created_at) >= ?
             AND DATE(po.created_at) <= ?`,
@@ -285,17 +285,17 @@ export class GrowthRepository implements IGrowthRepository {
                 pos.id as stage_id,
                 pos.name,
                 SUM(poa.amount) AS value
-            FROM customer_object_product_services cops
-            LEFT JOIN prospect_opportunities po ON
-                po.id = cops.object_id
-                AND cops.object = 'opportunity'
+            FROM prospect_opportunities po
             LEFT JOIN prospect_opportunity_amounts poa ON
                 poa.opportunity_id = po.id
             LEFT JOIN prospect_opportunity_stages pos ON
                 pos.id = po.opportunity_stage_id
-            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            WHERE po.id IN (
+                SELECT object_id
+                FROM customer_object_product_services
+                WHERE object = 'opportunity' AND product_service_id IN (12, 36, 34, 28)
+            )
             AND poa.amount_category_setting_id = 1
-            AND po.id IS NOT NULL
             AND po.deleted_at IS NULL
             AND DATE(po.created_at) >= ?
             AND DATE(po.created_at) <= ?

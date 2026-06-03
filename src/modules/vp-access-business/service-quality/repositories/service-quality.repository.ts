@@ -91,7 +91,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
                         THEN 1
                         ELSE 0
                     END
-                ) / NULLIF(SUM(t.total_incident), 0) * 100), 0) as percent
+                ) / NULLIF(COUNT(1), 0) * 100), 0) as percent
             FROM (
                 SELECT
                     ncs.cs_id,

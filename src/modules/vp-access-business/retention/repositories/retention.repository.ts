@@ -9,7 +9,7 @@ export class RetentionRepository implements IRetentionRepository {
     async churnRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                    SUM(gj.Kredit - gj.Debet) / COUNT(DISTINCT cit.CustServId) total
+                    SUM(gj.Kredit - gj.Debet) total
                 FROM GeneralJournal gj
                 LEFT JOIN Panjar_Penjualan_Breakdown ppb ON
                     ppb.id = gj.SumberId 
@@ -99,7 +99,7 @@ export class RetentionRepository implements IRetentionRepository {
                     (cs.CustUnregDate >= ? AND cs.CustUnregDate <= ?)
                     OR (cs.CustBlockDate >= ? AND cs.CustBlockDate <= ?)
                 )
-                GROUP BY s.ServiceGroup
+                GROUP BY s.ServiceGroup, sg.Description
                 `,
             [branchId, startDate, endDate, startDate, endDate]
         )
@@ -152,7 +152,7 @@ export class RetentionRepository implements IRetentionRepository {
     async migrationWirelessPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                    mg.total / (cr.total + mg.total) * 100 percent
+                    IFNULL(mg.total / NULLIF(cr.total + mg.total, 0) * 100, 0) percent
                 FROM (
                     SELECT
                         COUNT(1) total
@@ -327,7 +327,7 @@ export class RetentionRepository implements IRetentionRepository {
     async payment(branchId: string): Promise<number | null> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                (csm.total / cst.total) * 100 as percent
+                IFNULL((csm.total / NULLIF(cst.total, 0)) * 100, 0) as percent
             FROM (
                 SELECT
                     COUNT(1) total
