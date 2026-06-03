@@ -108,4 +108,19 @@ export class GrowthSerializer {
             details: data.details
         }
     }
+
+    static arpu(data: any) {
+        return {
+            value: data.value,
+            trend: data.trend,
+            percentage: data.percentage,
+            period: data.period,
+            details: data.details.map((item: any) => ({
+                serviceGroup: item.serviceGroup,
+                jumlahService: item.jumlahService,
+                totalRevenue: item.totalRevenue,
+                avgPerService: item.avgPerService
+            }))
+        }
+    }
 }

@@ -477,4 +477,49 @@ export class GrowthService implements IGrowthService {
             details: currentDetails
         }
     }
+
+    async getArpu(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: {
+            serviceGroup: string
+            jumlahService: number
+            totalRevenue: number
+            avgPerService: number
+        }[]
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        
+        const [currentDetails, prevDetails] = await Promise.all([
+            this.growthRepository.getArpu(branchId, startDate, endDate),
+            this.growthRepository.getArpu(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const currentTotalRevenue = currentDetails.reduce((sum, item) => sum + item.totalRevenue, 0)
+        const currentTotalService = currentDetails.reduce((sum, item) => sum + item.jumlahService, 0)
+        const currentValue = currentTotalService > 0 ? currentTotalRevenue / currentTotalService : 0
+
+        const prevTotalRevenue = prevDetails.reduce((sum, item) => sum + item.totalRevenue, 0)
+        const prevTotalService = prevDetails.reduce((sum, item) => sum + item.jumlahService, 0)
+        const prevValue = prevTotalService > 0 ? prevTotalRevenue / prevTotalService : 0
+
+        let percentage = 0
+        if (prevValue > 0) {
+            percentage = ((currentValue - prevValue) / prevValue) * 100
+        } else if (currentValue > 0) {
+            percentage = 100
+        }
+
+        const trend = currentValue >= prevValue ? 'up' : 'down'
+
+        return {
+            value: currentValue,
+            trend,
+            percentage,
+            period,
+            details: currentDetails
+        }
+    }
 }

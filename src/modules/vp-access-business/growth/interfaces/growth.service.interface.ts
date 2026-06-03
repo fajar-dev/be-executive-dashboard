@@ -69,4 +69,16 @@ export interface IGrowthService {
         period: string
         details: { serviceGroup: string, discount: number }[]
     }>
+    getArpu(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        details: {
+            serviceGroup: string
+            jumlahService: number
+            totalRevenue: number
+            avgPerService: number
+        }[]
+    }>
 }

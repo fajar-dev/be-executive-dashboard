@@ -426,4 +426,41 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.total_dpp || 0)
     }
+
+    async getArpu(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number }[]> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                sg.Description AS service_group,
+                COUNT(DISTINCT cit.CustServId) AS jumlah_service,
+                SUM(gj.Kredit - gj.Debet) AS total_revenue,
+                SUM(gj.Kredit - gj.Debet) / COUNT(DISTINCT cit.CustServId) AS avg_per_service
+            FROM GeneralJournal gj
+            LEFT JOIN Panjar_Penjualan_Breakdown ppb
+                ON ppb.id = gj.SumberId
+                AND gj.Sumber = 'pnjr'
+            LEFT JOIN NewCustomerInvoice nci
+                ON nci.AI = IFNULL(ppb.invoiceAI, gj.SumberId)
+            LEFT JOIN CustomerInvoiceTemp cit
+                ON cit.InvoiceNum = nci.Id
+                AND cit.Urut = nci.No
+            LEFT JOIN Services s
+                ON s.ServiceId = cit.ServiceId
+            LEFT JOIN ServiceGroup sg
+                ON sg.ServiceGroupId = s.ServiceGroupId
+            WHERE gj.KodeCabang = ?
+              AND s.ServiceCategory = 'access_business'
+              AND gj.NoPerkiraan LIKE '400%'
+              AND DATE(gj.TglTransaksi) >= ?
+              AND DATE(gj.TglTransaksi) <= ?
+            GROUP BY s.ServiceGroupId, sg.Description`,
+            [branchId, startDate, endDate]
+        )
+
+        return rows.map(row => ({
+            serviceGroup: row.service_group,
+            jumlahService: Number(row.jumlah_service) || 0,
+            totalRevenue: Number(row.total_revenue) || 0,
+            avgPerService: Number(row.avg_per_service) || 0
+        }))
+    }
 }

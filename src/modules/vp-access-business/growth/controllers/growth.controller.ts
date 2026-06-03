@@ -91,4 +91,12 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.discount(result), 'Discount metrics retrieved successfully')
     }
+
+    async getArpu(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getArpu(branchId, period)
+        
+        return ApiResponse.success(c, GrowthSerializer.arpu(result), 'ARPU metrics retrieved successfully')
+    }
 }

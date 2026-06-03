@@ -1236,6 +1236,47 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/arpu:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get ARPU metrics
+      description: Returns ARPU (Average Revenue Per User) broken down by service group.
+      operationId: getGrowthArpu
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g. 020)
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: ARPU metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthArpuResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - SETTING
   # ────────────────────────────────────────────
@@ -3251,6 +3292,39 @@ components:
               discount:
                 type: number
                 example: 30000000
+    GrowthArpuResponse:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 3900000
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          example: 2.8
+        period:
+          type: string
+          example: "Bulan Ini"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceGroup:
+                type: string
+                example: "Dedicated"
+              jumlahService:
+                type: integer
+                example: 10
+              totalRevenue:
+                type: number
+                example: 10000000
+              avgPerService:
+                type: number
+                example: 1000000
     RetentionPaymentResponse:
       type: object
       properties:
