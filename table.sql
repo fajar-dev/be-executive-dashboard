@@ -41,6 +41,7 @@ CREATE TABLE `vp_access_business_target_log` (
     `updated_by` int(11) DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT current_timestamp(),
     `updated_at` timestamp NULL DEFAULT NULL,
+    `reason` TEXT NULL,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`created_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`)
