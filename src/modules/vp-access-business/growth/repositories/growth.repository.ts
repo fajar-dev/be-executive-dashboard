@@ -575,4 +575,34 @@ export class GrowthRepository implements IGrowthRepository {
             avgPerService: Number(row.avg_per_service) || 0
         }))
     }
+
+    /**
+     * Query forecast revenue from opportunities
+     * Calculates sum of amount * probability / 100 for opportunities in stage 5
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Forecast revenue value
+     */
+    async getForecastRevenue(startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                SUM(poa.amount * po.probability / 100) AS value
+            FROM customer_object_product_services cops
+            LEFT JOIN prospect_opportunities po ON
+                po.id = cops.object_id
+                AND cops.object = 'opportunity'
+            LEFT JOIN prospect_opportunity_amounts poa ON
+                poa.opportunity_id = po.id
+            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            AND po.opportunity_stage_id = 5
+            AND poa.amount_category_setting_id = 1
+            AND po.id IS NOT NULL
+            AND po.deleted_at IS NULL
+            AND DATE(po.created_at) >= ?
+            AND DATE(po.created_at) <= ?`,
+            [startDate, endDate]
+        )
+        return Number(rows[0]?.value || 0)
+    }
 }

@@ -518,4 +518,33 @@ export class GrowthService implements IGrowthService {
             details: currentDetails
         }
     }
+
+    /**
+     * Calculate forecast revenue from opportunities
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast revenue, trend, and percentage
+     */
+    async getForecastRevenue(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [value, prevValue] = await Promise.all([
+            this.growthRepository.getForecastRevenue(startDate, endDate),
+            this.growthRepository.getForecastRevenue(prevStartDate, prevEndDate)
+        ])
+
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
+
+        return {
+            value,
+            trend,
+            percentage,
+            period
+        }
+    }
 }

@@ -167,6 +167,20 @@ export class GrowthController {
     }
 
     /**
+     * Get forecast revenue metrics
+     * Calculates the estimated revenue from pipeline opportunities in stage 5
+     * 
+     * @param {Context} c - Hono request context containing query param (period)
+     * @returns {Promise<Response>} JSON response containing forecast revenue and trend
+     */
+    async getForecastRevenue(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getForecastRevenue(period)
+        
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Forecast revenue metrics retrieved successfully')
+    }
+
+    /**
      * Get average sales cycle metrics
      * Calculates the average days taken to close won opportunities
      * 
