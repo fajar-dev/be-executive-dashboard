@@ -66,16 +66,7 @@ export class RetentionSerializer {
         }
     }
 
-    static ticket(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
-    }
-
-    static usage(data: any) {
+    static metric(data: any) {
         return {
             value: data.value,
             trend: data.trend,

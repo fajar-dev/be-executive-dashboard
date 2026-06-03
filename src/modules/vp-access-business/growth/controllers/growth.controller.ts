@@ -34,21 +34,21 @@ export class GrowthController {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getNewCustomer(branchId, period)
         
-        return ApiResponse.success(c, GrowthSerializer.newCustomer(result), 'New customer metrics retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'New customer metrics retrieved successfully')
     }
 
     async getLeads(c: Context) {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getLeads(period)
         
-        return ApiResponse.success(c, GrowthSerializer.leads(result), 'Leads metrics retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Leads metrics retrieved successfully')
     }
 
     async getOpportunity(c: Context) {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getOpportunity(period)
         
-        return ApiResponse.success(c, GrowthSerializer.opportunity(result), 'Opportunity metrics retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Opportunity metrics retrieved successfully')
     }
 
     async getWinRate(c: Context) {
@@ -62,13 +62,13 @@ export class GrowthController {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getActivity(period)
         
-        return ApiResponse.success(c, GrowthSerializer.activity(result), 'Activity metrics retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Activity metrics retrieved successfully')
     }
 
     async getPipelineValue(c: Context) {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getPipelineValue(period)
-        return ApiResponse.success(c, GrowthSerializer.pipelineValue(result), 'Pipeline value retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Pipeline value retrieved successfully')
     }
 
     async getPipelineStage(c: Context) {
@@ -81,7 +81,7 @@ export class GrowthController {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getCycle(period)
         
-        return ApiResponse.success(c, GrowthSerializer.cycle(result), 'Cycle metrics retrieved successfully')
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Cycle metrics retrieved successfully')
     }
 
     async getDiscount(c: Context) {

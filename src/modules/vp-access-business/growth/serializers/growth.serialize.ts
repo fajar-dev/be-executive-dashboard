@@ -31,25 +31,7 @@ export class GrowthSerializer {
         }
     }
 
-    static newCustomer(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
-    }
-
-    static leads(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
-    }
-
-    static opportunity(data: any) {
+    static metric(data: any) {
         return {
             value: data.value,
             trend: data.trend,
@@ -68,35 +50,8 @@ export class GrowthSerializer {
         }
     }
 
-    static activity(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
-    }
-
-    static pipelineValue(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
-    }
-
     static pipelineStage(data: any) {
         return data
-    }
-
-    static cycle(data: any) {
-        return {
-            value: data.value,
-            trend: data.trend,
-            percentage: data.percentage,
-            period: data.period
-        }
     }
 
     static discount(data: any) {

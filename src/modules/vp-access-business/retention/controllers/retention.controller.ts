@@ -61,7 +61,7 @@ export class RetentionController {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getTicket(branchId, period)
         
-        return ApiResponse.success(c, RetentionSerializer.ticket(result), 'Ticket metrics retrieved successfully')
+        return ApiResponse.success(c, RetentionSerializer.metric(result), 'Ticket metrics retrieved successfully')
     }
 
     async getUsage(c: Context) {
@@ -69,7 +69,7 @@ export class RetentionController {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getUsage(branchId, period)
         
-        return ApiResponse.success(c, RetentionSerializer.usage(result), 'Usage metrics retrieved successfully')
+        return ApiResponse.success(c, RetentionSerializer.metric(result), 'Usage metrics retrieved successfully')
     }
 
     async getPayment(c: Context) {
