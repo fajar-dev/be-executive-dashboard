@@ -48,7 +48,8 @@ export class SettingRepository implements ISettingRepository {
 
     async getTarget(year: number): Promise<TargetRevenuePayload | null> {
         const [rows] = await this.dashboardDb.query<any[]>(
-            `SELECT t.*, u.name as updated_by_name 
+            `SELECT t.*, 
+                 u.id as u_id, u.name as u_name, u.email as u_email, u.photo as u_photo, u.job_position as u_job_position
              FROM vp_access_business_target t
              LEFT JOIN users u ON t.updated_by = u.id
              WHERE t.year = ?`,
@@ -74,7 +75,13 @@ export class SettingRepository implements ISettingRepository {
             dec: Number(row.dec),
             is_locked: Boolean(row.is_locked),
             updated_at: row.updated_at,
-            updated_by_name: row.updated_by_name
+            updated_by: row.u_id ? {
+                id: row.u_id,
+                name: row.u_name,
+                email: row.u_email,
+                photo: row.u_photo,
+                jobPosition: row.u_job_position
+            } : null
         }
     }
 
@@ -104,8 +111,8 @@ export class SettingRepository implements ISettingRepository {
                 SELECT 
                     l.id, l.year, l.reason, l.old_value, l.new_value, 
                     l.created_at, l.updated_at,
-                    c.name as created_by_name,
-                    u.name as updated_by_name
+                    c.id as c_id, c.name as c_name, c.email as c_email, c.photo as c_photo, c.job_position as c_job_position,
+                    u.id as u_id, u.name as u_name, u.email as u_email, u.photo as u_photo, u.job_position as u_job_position
                 FROM vp_access_business_target_log l
                 LEFT JOIN users c ON l.created_by = c.id
                 LEFT JOIN users u ON l.updated_by = u.id

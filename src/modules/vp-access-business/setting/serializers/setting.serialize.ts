@@ -54,8 +54,20 @@ export class SettingSerializer {
                 } : null,
                 createdAt: item.created_at,
                 updatedAt: item.updated_at,
-                createdByName: item.created_by_name,
-                updatedByName: item.updated_by_name
+                createdBy: item.c_id ? {
+                    id: item.c_id,
+                    name: item.c_name,
+                    email: item.c_email,
+                    photo: item.c_photo,
+                    jobPosition: item.c_job_position
+                } : null,
+                updatedBy: item.u_id ? {
+                    id: item.u_id,
+                    name: item.u_name,
+                    email: item.u_email,
+                    photo: item.u_photo,
+                    jobPosition: item.u_job_position
+                } : null
             }
         })
     }

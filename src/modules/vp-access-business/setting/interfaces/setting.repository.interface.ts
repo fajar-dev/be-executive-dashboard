@@ -1,3 +1,11 @@
+export interface UserReference {
+    id: number
+    name: string
+    email: string
+    photo: string | null
+    jobPosition: string | null
+}
+
 export interface TargetRevenuePayload {
     year: number
     yearly_target: number
@@ -15,7 +23,7 @@ export interface TargetRevenuePayload {
     dec: number
     is_locked: boolean
     updated_at?: Date | string
-    updated_by_name?: string
+    updated_by?: UserReference | null
     reason?: string
 }
 
