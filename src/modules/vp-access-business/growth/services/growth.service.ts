@@ -48,6 +48,53 @@ export class GrowthService implements IGrowthService {
     }
 
     /**
+     * Get Total MRC Year-to-Date (YTD)
+     * Calculates the total MRC accumulated from the start of the current year up to the current date
+     * Compares with the same period in the previous year to determine trend and percentage growth
+     * 
+     * @param {string} branchId - The branch identifier (e.g., '020')
+     * @returns {Promise<any>} Object containing MRC value, trend, and detailed breakdown
+     */
+    async getTotalMrcYtd(branchId: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const now = new Date()
+        const currentYear = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, '0')
+        const day = String(now.getDate()).padStart(2, '0')
+        
+        const startDate = `${currentYear}-01-01`
+        const endDate = `${currentYear}-${month}-${day}`
+        
+        const prevStartDate = `${currentYear - 1}-01-01`
+        const prevEndDate = `${currentYear - 1}-${month}-${day}`
+
+        const [current, prev] = await Promise.all([
+            this.growthRepository.getNewMrc(branchId, startDate, endDate),
+            this.growthRepository.getNewMrc(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const value = current.mrc
+        const prevValue = prev.mrc
+
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
+        
+        const currentPeriod = DateHelper.getCurrentPeriod()
+        const formattedDate = `${now.getDate()} ${DateHelper.getMonthName(currentPeriod)} ${currentYear}`
+        const period = `Year to Date sampai ${formattedDate}`
+
+        return {
+            value,
+            trend,
+            percentage,
+            period
+        }
+    }
+
+    /**
      * Build month-by-month revenue comparison for the current year vs previous year
      * Iterates from January up to the current month to construct the historical data array
      * 

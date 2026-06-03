@@ -6,6 +6,12 @@ export interface IGrowthService {
         period: string
         details: { mrc: number; mrc_unpaid: number; mrc_paid: number }
     }>
+    getTotalMrcYtd(branchId: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
     getRevenue(branchId: string): Promise<any[]>
     getRevenueAchievement(branchId: string, periodType: string): Promise<{
         target: number

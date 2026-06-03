@@ -26,6 +26,21 @@ export class GrowthController {
     }
 
     /**
+     * Get Total MRC Year-to-Date (YTD)
+     * Retrieves the total MRC accumulated from the start of the current year
+     * Includes breakdown by service group, trend data, and historical comparison
+     * 
+     * @param {Context} c - Hono request context containing query param (branchId)
+     * @returns {Promise<Response>} JSON response containing total MRC YTD metrics and breakdown
+     */
+    async getTotalMrcYtd(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const result = await this.service.getTotalMrcYtd(branchId)
+        
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Total MRC YTD metrics retrieved successfully')
+    }
+
+    /**
      * Get historical revenue trend for the current year
      * Retrieves month-by-month revenue comparison against the previous year
      * 
