@@ -5,68 +5,13 @@ import { DateHelper } from '../../../../core/helpers/date'
 export class RetentionService implements IRetentionService {
     constructor(private readonly retentionRepository: IRetentionRepository) {}
 
-    private getDatesForPeriod(periodType: string) {
-        let startDate = ''
-        let endDate = ''
-        let prevStartDate = ''
-        let prevEndDate = ''
-        let period = ''
-
-        const currentPeriod = DateHelper.getCurrentPeriod()
-        const currentYear = Number(currentPeriod.substring(0, 4))
-        const currentMonth = Number(currentPeriod.substring(4, 6))
-
-        if (periodType === 'last') {
-            startDate = DateHelper.getPreviousMonthStart()
-            endDate = DateHelper.getPreviousMonthEnd()
-
-            const prevPeriodStr = DateHelper.getPreviousPeriod()
-            prevStartDate = DateHelper.getPreviousMonthStart(prevPeriodStr)
-            prevEndDate = DateHelper.getPreviousMonthEnd(prevPeriodStr)
-            
-            period = DateHelper.getMonthName(DateHelper.getPreviousPeriod())
-        } else if (periodType === 'year') {
-            const periodInfo = DateHelper.getActiveYear()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            const prevInfo = DateHelper.getPreviousYearDates()
-            prevStartDate = prevInfo.startDate
-            prevEndDate = prevInfo.endDate
-            
-            period = String(currentYear)
-        } else if (periodType === 'quarter') {
-            const periodInfo = DateHelper.getActiveQuarter()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            const prevInfo = DateHelper.getPreviousQuarterDates()
-            prevStartDate = prevInfo.startDate
-            prevEndDate = prevInfo.endDate
-            
-            period = `Q${Math.ceil(currentMonth / 3)}`
-        } else {
-            // Default to month
-            const periodInfo = DateHelper.getPeriodInfo()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            prevStartDate = DateHelper.getPreviousMonthStart()
-            prevEndDate = DateHelper.getPreviousMonthEnd()
-            
-            period = 'Bulan Ini'
-        }
-
-        return { startDate, endDate, prevStartDate, prevEndDate, period }
-    }
-
     async getChurnRevenue(branchId: string, periodType: string): Promise<{
         trend: 'up' | 'down'
         percentage: number
         revenue: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [revenue, prevRevenue] = await Promise.all([
             this.retentionRepository.churnRevenue(branchId, startDate, endDate),
@@ -97,7 +42,7 @@ export class RetentionService implements IRetentionService {
         total: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
         detail: { service_group: string; value: number; trend: 'up' | 'down'; percentage: number }[]
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [currentList, prevList] = await Promise.all([
             this.retentionRepository.customerLose(branchId, startDate, endDate),
@@ -164,7 +109,7 @@ export class RetentionService implements IRetentionService {
         migrated: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
         migrationRate: { value: number; trend: 'up' | 'down'; percentage: number; migratedValue: number; totalValue: number; period: string }
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [
             totalCustomer,
@@ -280,7 +225,7 @@ export class RetentionService implements IRetentionService {
     }
 
     async getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.retentionRepository.ticket(branchId, startDate, endDate),
@@ -305,7 +250,7 @@ export class RetentionService implements IRetentionService {
     }
 
     async getUsage(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.retentionRepository.usage(branchId, startDate, endDate),

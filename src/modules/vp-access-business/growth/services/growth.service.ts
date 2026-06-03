@@ -6,61 +6,6 @@ import { DateHelper } from '../../../../core/helpers/date'
 export class GrowthService implements IGrowthService {
     constructor(private readonly growthRepository: IGrowthRepository) {}
 
-    private getDatesForPeriod(periodType: string) {
-        let startDate: string
-        let endDate: string
-        let prevStartDate: string
-        let prevEndDate: string
-        let period: string
-
-        const currentPeriod = DateHelper.getCurrentPeriod()
-        const currentYear = Number(currentPeriod.substring(0, 4))
-        const currentMonth = Number(currentPeriod.substring(4, 6))
-
-        if (periodType === 'last') {
-            startDate = DateHelper.getPreviousMonthStart()
-            endDate = DateHelper.getPreviousMonthEnd()
-
-            const prevPeriodStr = DateHelper.getPreviousPeriod()
-            prevStartDate = DateHelper.getPreviousMonthStart(prevPeriodStr)
-            prevEndDate = DateHelper.getPreviousMonthEnd(prevPeriodStr)
-            
-            period = DateHelper.getMonthName(DateHelper.getPreviousPeriod())
-        } else if (periodType === 'year') {
-            const periodInfo = DateHelper.getActiveYear()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            const prevInfo = DateHelper.getPreviousYearDates()
-            prevStartDate = prevInfo.startDate
-            prevEndDate = prevInfo.endDate
-            
-            period = String(currentYear)
-        } else if (periodType === 'quarter') {
-            const periodInfo = DateHelper.getActiveQuarter()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            const prevInfo = DateHelper.getPreviousQuarterDates()
-            prevStartDate = prevInfo.startDate
-            prevEndDate = prevInfo.endDate
-            
-            period = `Q${Math.ceil(currentMonth / 3)}`
-        } else {
-            // Default to month
-            const periodInfo = DateHelper.getPeriodInfo()
-            startDate = periodInfo.startDate
-            endDate = periodInfo.endDate
-
-            prevStartDate = DateHelper.getPreviousMonthStart()
-            prevEndDate = DateHelper.getPreviousMonthEnd()
-            
-            period = 'Bulan Ini'
-        }
-
-        return { startDate, endDate, prevStartDate, prevEndDate, period }
-    }
-
     async getNewMrc(branchId: string, periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -68,7 +13,7 @@ export class GrowthService implements IGrowthService {
         period: string
         details: { mrc: number; mrc_unpaid: number; mrc_paid: number }
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [current, prev] = await Promise.all([
             this.growthRepository.getNewMrc(branchId, startDate, endDate),
@@ -142,7 +87,7 @@ export class GrowthService implements IGrowthService {
     }
 
     async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trendPercentage: number, trend: 'up' | 'down', period: string }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
         
         const start = new Date(startDate)
         const end = new Date(endDate)
@@ -196,7 +141,7 @@ export class GrowthService implements IGrowthService {
         percentage: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.growthRepository.getLeads(startDate, endDate),
@@ -221,7 +166,7 @@ export class GrowthService implements IGrowthService {
     }
 
     async getNewCustomer(branchId: string, periodType: string): Promise<{ value: number, trend: 'up' | 'down', percentage: number, period: string }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.growthRepository.getNewCustomer(branchId, startDate, endDate),
@@ -251,7 +196,7 @@ export class GrowthService implements IGrowthService {
         percentage: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.growthRepository.getOpportunity(startDate, endDate),
@@ -285,7 +230,7 @@ export class GrowthService implements IGrowthService {
             lose: { value: number; trend: 'up' | 'down'; percentage: number }
         }
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [currentStats, prevStats] = await Promise.all([
             this.growthRepository.getWinLose(startDate, endDate),
@@ -351,7 +296,7 @@ export class GrowthService implements IGrowthService {
         percentage: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [currentStats, prevStats] = await Promise.all([
             this.growthRepository.getActivity(startDate, endDate),
@@ -384,7 +329,7 @@ export class GrowthService implements IGrowthService {
         percentage: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.growthRepository.getPipelineValue(startDate, endDate),
@@ -409,7 +354,7 @@ export class GrowthService implements IGrowthService {
     }
 
     async getPipelineStage(periodType: string): Promise<any> {
-        const { startDate, endDate } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate } = DateHelper.getDatesForPeriod(periodType)
         return this.growthRepository.getPipelineStage(startDate, endDate)
     }
 
@@ -419,7 +364,7 @@ export class GrowthService implements IGrowthService {
         percentage: number
         period: string
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
             this.growthRepository.getCycle(startDate, endDate),
@@ -450,7 +395,7 @@ export class GrowthService implements IGrowthService {
         period: string
         details: { serviceGroup: string, discount: number }[]
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
         const [currentDetails, prevDetails] = await Promise.all([
             this.growthRepository.getDiscount(branchId, startDate, endDate),
@@ -490,7 +435,7 @@ export class GrowthService implements IGrowthService {
             avgPerService: number
         }[]
     }> {
-        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
         
         const [currentDetails, prevDetails] = await Promise.all([
             this.growthRepository.getArpu(branchId, startDate, endDate),

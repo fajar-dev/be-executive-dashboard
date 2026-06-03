@@ -205,4 +205,62 @@ export class DateHelper {
             endDate: `${prevYear}-12-31`
         }
     }
+
+    /**
+     * Get full dates info for a given period type (last, year, quarter, month)
+     */
+    static getDatesForPeriod(periodType: string) {
+        let startDate = ''
+        let endDate = ''
+        let prevStartDate = ''
+        let prevEndDate = ''
+        let period = ''
+
+        const currentPeriod = this.getCurrentPeriod()
+        const currentYear = Number(currentPeriod.substring(0, 4))
+        const currentMonth = Number(currentPeriod.substring(4, 6))
+
+        if (periodType === 'last') {
+            startDate = this.getPreviousMonthStart()
+            endDate = this.getPreviousMonthEnd()
+
+            const prevPeriodStr = this.getPreviousPeriod()
+            prevStartDate = this.getPreviousMonthStart(prevPeriodStr)
+            prevEndDate = this.getPreviousMonthEnd(prevPeriodStr)
+            
+            period = this.getMonthName(this.getPreviousPeriod())
+        } else if (periodType === 'year') {
+            const periodInfo = this.getActiveYear()
+            startDate = periodInfo.startDate
+            endDate = periodInfo.endDate
+
+            const prevInfo = this.getPreviousYearDates()
+            prevStartDate = prevInfo.startDate
+            prevEndDate = prevInfo.endDate
+            
+            period = String(currentYear)
+        } else if (periodType === 'quarter') {
+            const periodInfo = this.getActiveQuarter()
+            startDate = periodInfo.startDate
+            endDate = periodInfo.endDate
+
+            const prevInfo = this.getPreviousQuarterDates()
+            prevStartDate = prevInfo.startDate
+            prevEndDate = prevInfo.endDate
+            
+            period = `Q${Math.ceil(currentMonth / 3)}`
+        } else {
+            // Default to month
+            const periodInfo = this.getPeriodInfo()
+            startDate = periodInfo.startDate
+            endDate = periodInfo.endDate
+
+            prevStartDate = this.getPreviousMonthStart()
+            prevEndDate = this.getPreviousMonthEnd()
+            
+            period = 'Bulan Ini'
+        }
+
+        return { startDate, endDate, prevStartDate, prevEndDate, period }
+    }
 }
