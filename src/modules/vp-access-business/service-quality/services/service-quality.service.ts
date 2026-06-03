@@ -1,6 +1,7 @@
 import { IServiceQualityService } from '../interfaces/service-quality.service.interface'
 import { IServiceQualityRepository } from '../interfaces/service-quality.repository.interface'
 import { DateHelper } from '../../../../core/helpers/date'
+import { TrendHelper } from '../../../../core/helpers/trend'
 
 export class ServiceQualityService implements IServiceQualityService {
     constructor(
@@ -15,14 +16,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.ticket(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -40,14 +34,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.complaint(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -65,14 +52,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.solved(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -90,14 +70,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.solvedPercentage(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -115,14 +88,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.issue(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -140,14 +106,7 @@ export class ServiceQualityService implements IServiceQualityService {
             this.serviceQualityRepository.incident(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,

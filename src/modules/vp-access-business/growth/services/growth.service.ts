@@ -2,6 +2,7 @@
 import { IGrowthRepository } from '../interfaces/growth.repository.interface'
 import { IGrowthService } from '../interfaces/growth.service.interface'
 import { DateHelper } from '../../../../core/helpers/date'
+import { TrendHelper } from '../../../../core/helpers/trend'
 
 export class GrowthService implements IGrowthService {
     constructor(private readonly growthRepository: IGrowthRepository) {}
@@ -23,14 +24,7 @@ export class GrowthService implements IGrowthService {
         const value = current.mrc
         const prevValue = prev.mrc
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -116,14 +110,7 @@ export class GrowthService implements IGrowthService {
 
         const percentage = target > 0 ? (revenue / target) * 100 : 0
         
-        let trendPercentage = 0
-        if (prevRevenue > 0) {
-            trendPercentage = ((revenue - prevRevenue) / prevRevenue) * 100
-        } else if (revenue > 0) {
-            trendPercentage = 100
-        }
-        
-        const trend = revenue >= prevRevenue ? 'up' : 'down'
+        const { trend, percentage: trendPercentage } = TrendHelper.calculate(revenue, prevRevenue)
 
         return {
             target,
@@ -148,14 +135,7 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getLeads(prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -173,14 +153,7 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getNewCustomer(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -203,14 +176,7 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getOpportunity(prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -243,32 +209,11 @@ export class GrowthService implements IGrowthService {
         const prevTotal = prevStats.win + prevStats.lose
         const prevRate = prevTotal > 0 ? (prevStats.win / prevTotal) * 100 : 0
 
-        let percentage = 0
-        if (prevRate > 0) {
-            percentage = ((currentRate - prevRate) / prevRate) * 100
-        } else if (currentRate > 0) {
-            percentage = 100
-        }
+        const { trend, percentage } = TrendHelper.calculate(currentRate, prevRate)
 
-        const trend = currentRate >= prevRate ? 'up' : 'down'
+        const { trend: winTrend, percentage: winPercentage } = TrendHelper.calculate(currentStats.win, prevStats.win)
 
-        // Win stats
-        let winPercentage = 0
-        if (prevStats.win > 0) {
-            winPercentage = ((currentStats.win - prevStats.win) / prevStats.win) * 100
-        } else if (currentStats.win > 0) {
-            winPercentage = 100
-        }
-        const winTrend = currentStats.win >= prevStats.win ? 'up' : 'down'
-
-        // Lose stats
-        let losePercentage = 0
-        if (prevStats.lose > 0) {
-            losePercentage = ((currentStats.lose - prevStats.lose) / prevStats.lose) * 100
-        } else if (currentStats.lose > 0) {
-            losePercentage = 100
-        }
-        const loseTrend = currentStats.lose >= prevStats.lose ? 'up' : 'down'
+        const { trend: loseTrend, percentage: losePercentage } = TrendHelper.calculate(currentStats.lose, prevStats.lose)
 
         return {
             value: currentRate,
@@ -306,14 +251,7 @@ export class GrowthService implements IGrowthService {
         const currentValue = currentStats.amCount > 0 ? currentStats.activity / currentStats.amCount : 0
         const prevValue = prevStats.amCount > 0 ? prevStats.activity / prevStats.amCount : 0
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((currentValue - prevValue) / prevValue) * 100
-        } else if (currentValue > 0) {
-            percentage = 100
-        }
-
-        const trend = currentValue >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(currentValue, prevValue)
 
         return {
             value: currentValue,
@@ -336,14 +274,7 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getPipelineValue(prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -371,14 +302,7 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getCycle(prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -405,14 +329,7 @@ export class GrowthService implements IGrowthService {
         const currentValue = currentDetails.reduce((sum, item) => sum + item.discount, 0)
         const prevValue = prevDetails.reduce((sum, item) => sum + item.discount, 0)
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((currentValue - prevValue) / prevValue) * 100
-        } else if (currentValue > 0) {
-            percentage = 100
-        }
-
-        const trend = currentValue >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(currentValue, prevValue)
 
         return {
             value: currentValue,
@@ -450,14 +367,7 @@ export class GrowthService implements IGrowthService {
         const prevTotalService = prevDetails.reduce((sum, item) => sum + item.jumlahService, 0)
         const prevValue = prevTotalService > 0 ? prevTotalRevenue / prevTotalService : 0
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((currentValue - prevValue) / prevValue) * 100
-        } else if (currentValue > 0) {
-            percentage = 100
-        }
-
-        const trend = currentValue >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(currentValue, prevValue)
 
         return {
             value: currentValue,

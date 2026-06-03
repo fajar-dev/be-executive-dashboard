@@ -1,6 +1,7 @@
 import { IRetentionRepository } from '../interfaces/retention.repository.interface'
 import { IRetentionService } from '../interfaces/retention.service.interface'
 import { DateHelper } from '../../../../core/helpers/date'
+import { TrendHelper } from '../../../../core/helpers/trend'
 
 export class RetentionService implements IRetentionService {
     constructor(private readonly retentionRepository: IRetentionRepository) {}
@@ -18,17 +19,7 @@ export class RetentionService implements IRetentionService {
             this.retentionRepository.churnRevenue(branchId, prevStartDate, prevEndDate)
         ])
 
-        const absRevenue = Math.abs(revenue)
-        const absPrevRevenue = Math.abs(prevRevenue)
-
-        let percentage = 0
-        if (absPrevRevenue > 0) {
-            percentage = ((absRevenue - absPrevRevenue) / absPrevRevenue) * 100
-        } else if (absRevenue > 0) {
-            percentage = 100
-        }
-
-        const trend = absRevenue >= absPrevRevenue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(revenue, prevRevenue, true)
 
         return {
             trend,
@@ -71,32 +62,22 @@ export class RetentionService implements IRetentionService {
             totalCurrent += data.current
             totalPrev += data.prev
 
-            let percentage = 0
-            if (data.prev > 0) {
-                percentage = ((data.current - data.prev) / data.prev) * 100
-            } else if (data.current > 0) {
-                percentage = 100
-            }
+            const { trend, percentage } = TrendHelper.calculate(data.current, data.prev)
             
             detail.push({
                 service_group: group,
                 value: data.current,
-                trend: data.current >= data.prev ? 'up' : 'down',
+                trend,
                 percentage
             })
         })
 
-        let totalPercentage = 0
-        if (totalPrev > 0) {
-            totalPercentage = ((totalCurrent - totalPrev) / totalPrev) * 100
-        } else if (totalCurrent > 0) {
-            totalPercentage = 100
-        }
+        const { trend: totalTrend, percentage: totalPercentage } = TrendHelper.calculate(totalCurrent, totalPrev)
 
         return {
             total: {
                 value: totalCurrent,
-                trend: totalCurrent >= totalPrev ? 'up' : 'down',
+                trend: totalTrend,
                 percentage: totalPercentage,
                 period
             },
@@ -130,22 +111,10 @@ export class RetentionService implements IRetentionService {
         const totalCustomerPercentage = 0
 
         // Migrated
-        let migratedPercentage = 0
-        if (prevMigrated > 0) {
-            migratedPercentage = ((currentMigrated - prevMigrated) / prevMigrated) * 100
-        } else if (currentMigrated > 0) {
-            migratedPercentage = 100
-        }
-        const migratedTrend = currentMigrated >= prevMigrated ? 'up' : 'down'
+        const { trend: migratedTrend, percentage: migratedPercentage } = TrendHelper.calculate(currentMigrated, prevMigrated)
 
         // Migration Rate
-        let ratePercentage = 0
-        if (prevRate > 0) {
-            ratePercentage = ((currentRate - prevRate) / prevRate) * 100
-        } else if (currentRate > 0) {
-            ratePercentage = 100
-        }
-        const rateTrend = currentRate >= prevRate ? 'up' : 'down'
+        const { trend: rateTrend, percentage: ratePercentage } = TrendHelper.calculate(currentRate, prevRate)
 
         return {
             totalCustomer: {
@@ -232,14 +201,7 @@ export class RetentionService implements IRetentionService {
             this.retentionRepository.ticket(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
@@ -257,14 +219,7 @@ export class RetentionService implements IRetentionService {
             this.retentionRepository.usage(branchId, prevStartDate, prevEndDate)
         ])
 
-        let percentage = 0
-        if (prevValue > 0) {
-            percentage = ((value - prevValue) / prevValue) * 100
-        } else if (value > 0) {
-            percentage = 100
-        }
-
-        const trend = value >= prevValue ? 'up' : 'down'
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
 
         return {
             value,
