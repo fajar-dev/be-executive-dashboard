@@ -20,7 +20,7 @@ export class SettingController {
 
         const result = await this.service.getTarget(year)
         
-        return ApiResponse.success(c, result, 'Target retrieved successfully')
+        return ApiResponse.success(c, SettingSerializer.target(result), 'Target retrieved successfully')
     }
 
     async getTargetLog(c: Context) {

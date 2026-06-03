@@ -6,6 +6,29 @@ export class SettingSerializer {
         }
     }
 
+    static target(data: any) {
+        if (!data) return null
+        return {
+            year: data.year,
+            yearlyTarget: data.yearly_target,
+            jan: data.jan,
+            feb: data.feb,
+            mar: data.mar,
+            apr: data.apr,
+            may: data.may,
+            jun: data.jun,
+            jul: data.jul,
+            aug: data.aug,
+            sep: data.sep,
+            oct: data.oct,
+            nov: data.nov,
+            dec: data.dec,
+            isLocked: data.is_locked,
+            updatedAt: data.updated_at,
+            updatedBy: data.updated_by
+        }
+    }
+
     static targetLog(data: any[]) {
         return data.map(item => {
             let oldVal = item.old_value;
