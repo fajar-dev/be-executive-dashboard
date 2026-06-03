@@ -21,6 +21,14 @@ export class GrowthController {
         return ApiResponse.success(c, GrowthSerializer.revenue(result), 'Revenue metrics retrieved successfully')
     }
 
+    async getRevenueAchievement(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getRevenueAchievement(branchId, period)
+        
+        return ApiResponse.success(c, GrowthSerializer.revenueAchievement(result), 'Revenue achievement retrieved successfully')
+    }
+
     async getLeads(c: Context) {
         const period = c.req.query('period') || 'month'
         const result = await this.service.getLeads(period)

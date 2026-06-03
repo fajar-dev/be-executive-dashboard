@@ -4,7 +4,8 @@ import { IGrowthRepository } from '../interfaces/growth.repository.interface'
 export class GrowthRepository implements IGrowthRepository {
     constructor(
         private readonly nisDb: Pool,
-        private readonly prospectDb: Pool
+        private readonly prospectDb: Pool,
+        private readonly dashboardDb: Pool
     ) {}
 
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
@@ -349,5 +350,13 @@ export class GrowthRepository implements IGrowthRepository {
             serviceGroup: row.service_group,
             discount: Number(row.discount) || 0
         }))
+    }
+
+    async getTarget(year: number): Promise<any> {
+        const [rows] = await this.dashboardDb.query<any[]>(
+            `SELECT * FROM vp_access_business_target WHERE year = ?`,
+            [year]
+        )
+        return rows[0] || null
     }
 }

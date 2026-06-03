@@ -140,6 +140,46 @@ export class GrowthService implements IGrowthService {
         return data
     }
 
+    async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trend: 'up' | 'down', period: string }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
+        
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        const year = start.getFullYear()
+
+        const targetData = await this.growthRepository.getTarget(year)
+        
+        let target = 0
+        if (targetData) {
+            if (periodType === 'year') {
+                target = targetData.yearly_target
+            } else {
+                const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+                const startMonth = start.getMonth()
+                const endMonth = end.getMonth()
+                for (let i = startMonth; i <= endMonth; i++) {
+                    target += Number(targetData[monthKeys[i]] || 0)
+                }
+            }
+        }
+
+        const [revenue, prevRevenue] = await Promise.all([
+            this.growthRepository.getRevenue(branchId, startDate, endDate),
+            this.growthRepository.getRevenue(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const percentage = target > 0 ? (revenue / target) * 100 : 0
+        const trend = revenue >= prevRevenue ? 'up' : 'down'
+
+        return {
+            target,
+            revenue,
+            percentage,
+            trend,
+            period
+        }
+    }
+
     async getLeads(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'

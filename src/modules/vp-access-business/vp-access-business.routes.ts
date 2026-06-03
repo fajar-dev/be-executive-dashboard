@@ -12,7 +12,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const routes = new Hono()
 
     // Module dependencies
-    const growthModule = new GrowthModule(nisPool, nusaprospectPool)
+    const growthModule = new GrowthModule(nisPool, nusaprospectPool, dashboardPool)
     const growth = growthModule.controller
 
     const retentionModule = new RetentionModule(nisPool)
@@ -27,6 +27,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     // Growth Routes
     routes.get('/growth/new-mrc', (c) => growth.getNewMrc(c))
     routes.get('/growth/revenue', (c) => growth.getRevenue(c))
+    routes.get('/growth/revenue-achievement', (c) => growth.getRevenueAchievement(c))
     routes.get('/growth/leads', (c) => growth.getLeads(c))
     routes.get('/growth/opportunity', (c) => growth.getOpportunity(c))
     routes.get('/growth/win-rate', (c) => growth.getWinRate(c))

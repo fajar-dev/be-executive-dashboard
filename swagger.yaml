@@ -882,6 +882,47 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/revenue-achievement:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get revenue achievement
+      description: Returns revenue achievement including target, revenue, and percentage.
+      operationId: getGrowthRevenueAchievement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g. 020)
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Revenue achievement successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthRevenueAchievementResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /vp-access-business/growth/leads:
     get:
       tags:
@@ -2943,6 +2984,25 @@ components:
             mrc_paid:
               type: number
               example: 10000000
+    GrowthRevenueAchievementResponse:
+      type: object
+      properties:
+        target:
+          type: number
+          example: 1500000000
+        revenue:
+          type: number
+          example: 1400000000
+        percentage:
+          type: number
+          example: 93.33
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        period:
+          type: string
+          example: "May"
     GrowthRevenueResponseItem:
       type: object
       properties:

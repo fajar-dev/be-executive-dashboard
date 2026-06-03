@@ -8,8 +8,8 @@ export class GrowthModule {
     public readonly service: GrowthService
     public readonly repository: GrowthRepository
 
-    constructor(nisPool: Pool, nusaprospectPool: Pool) {
-        this.repository = new GrowthRepository(nisPool, nusaprospectPool)
+    constructor(nisPool: Pool, nusaprospectPool: Pool, dashboardPool: Pool) {
+        this.repository = new GrowthRepository(nisPool, nusaprospectPool, dashboardPool)
         this.service = new GrowthService(this.repository)
         this.controller = new GrowthController(this.service)
     }

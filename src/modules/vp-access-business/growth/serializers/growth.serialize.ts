@@ -20,6 +20,16 @@ export class GrowthSerializer {
         }))
     }
 
+    static revenueAchievement(data: any) {
+        return {
+            target: data.target,
+            revenue: data.revenue,
+            percentage: data.percentage,
+            trend: data.trend,
+            period: data.period
+        }
+    }
+
     static leads(data: any) {
         return {
             value: data.value,
