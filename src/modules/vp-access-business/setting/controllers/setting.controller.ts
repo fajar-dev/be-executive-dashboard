@@ -5,10 +5,6 @@ import { SettingSerializer } from '../serializers/setting.serialize'
 
 export class SettingController {
     constructor(private readonly service: ISettingService) {}
-    
-    async ping(c: Context) {
-        return ApiResponse.success(c, { message: 'Setting module is ready' }, 'Ping success')
-    }
 
     async getRevenue(c: Context) {
         const branchId = c.req.query('branchId') || '020'

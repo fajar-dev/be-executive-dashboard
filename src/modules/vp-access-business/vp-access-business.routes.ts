@@ -54,7 +54,6 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/service-quality/incident', (c) => serviceQuality.getIncident(c))
 
     // Setting Routes
-    routes.get('/setting/ping', (c) => setting.ping(c))
     routes.get('/setting/revenue', (c) => setting.getRevenue(c))
     routes.get('/setting/target', (c) => setting.getTarget(c))
     routes.get('/setting/target/log', (c) => setting.getTargetLog(c))
