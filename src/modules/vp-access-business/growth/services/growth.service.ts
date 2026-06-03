@@ -4,9 +4,21 @@ import { IGrowthService } from '../interfaces/growth.service.interface'
 import { DateHelper } from '../../../../core/helpers/date'
 import { TrendHelper } from '../../../../core/helpers/trend'
 
+/**
+ * Service class for handling growth business logic
+ * Responsible for orchestrating data retrieval from repositories and calculating trends/percentages for sales and revenue
+ */
 export class GrowthService implements IGrowthService {
     constructor(private readonly growthRepository: IGrowthRepository) {}
 
+    /**
+     * Calculate New MRC metrics
+     * Retrieves the new MRC and its breakdown (paid vs unpaid) for a specific period
+     * 
+     * @param {string} branchId - The branch identifier (e.g., '020')
+     * @param {string} periodType - The period to query ('month', 'quarter', 'year', 'last')
+     * @returns {Promise<any>} Object containing MRC value, trend, and detailed breakdown
+     */
     async getNewMrc(branchId: string, periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -35,6 +47,13 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Build month-by-month revenue comparison for the current year vs previous year
+     * Iterates from January up to the current month to construct the historical data array
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<any[]>} Array of monthly revenue data points
+     */
     async getRevenue(branchId: string): Promise<any[]> {
         const currentPeriod = DateHelper.getCurrentPeriod()
         const currentYear = Number(currentPeriod.substring(0, 4))
@@ -80,6 +99,14 @@ export class GrowthService implements IGrowthService {
         return data
     }
 
+    /**
+     * Calculate revenue achievement against the sales target
+     * Automatically adjusts the target proportionally if the period is not a full year
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing actual revenue, target, and achievement percentage
+     */
     async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trendPercentage: number, trend: 'up' | 'down', period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
         
@@ -122,6 +149,12 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate lead generation metrics
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing lead count, trend, and percentage
+     */
     async getLeads(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -145,6 +178,13 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate new customer acquisition metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing new customer count, trend, and percentage
+     */
     async getNewCustomer(branchId: string, periodType: string): Promise<{ value: number, trend: 'up' | 'down', percentage: number, period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -163,6 +203,12 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate opportunity generation metrics
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing opportunity count, trend, and percentage
+     */
     async getOpportunity(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -186,6 +232,13 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate sales win rate metrics
+     * Includes the overall win rate percentage as well as counts for won and lost opportunities
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing win rate, win count, lose count, and their trends
+     */
     async getWinRate(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -235,6 +288,12 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate average sales activities per account manager
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing average activity count, trend, and percentage
+     */
     async getActivity(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -261,6 +320,12 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate total pipeline value metrics
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing pipeline value, trend, and percentage
+     */
     async getPipelineValue(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -284,11 +349,24 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Retrieve current distribution of pipeline stages
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Array or Object containing counts per pipeline stage
+     */
     async getPipelineStage(periodType: string): Promise<any> {
         const { startDate, endDate } = DateHelper.getDatesForPeriod(periodType)
         return this.growthRepository.getPipelineStage(startDate, endDate)
     }
 
+    /**
+     * Calculate average sales cycle length
+     * Returns the average number of days it takes to close a won opportunity
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing average cycle days, trend, and percentage
+     */
     async getCycle(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -312,6 +390,14 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate discount metrics
+     * Retrieves the total monetary value of discounts given across all services
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing total discount value and detailed breakdown by service group
+     */
     async getDiscount(branchId: string, periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
@@ -340,6 +426,14 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate Average Revenue Per User (ARPU) metrics
+     * Retrieves total revenue and divides it by the total number of active services
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing overall ARPU and detailed ARPU per service group
+     */
     async getArpu(branchId: string, periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'

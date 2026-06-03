@@ -1,6 +1,10 @@
 import { Pool } from 'mysql2/promise'
 import { ISettingRepository, TargetRevenuePayload } from '../interfaces/setting.repository.interface'
 
+/**
+ * Repository for handling target configuration database queries
+ * Interfaces with nisDb for actual revenue and dashboardDb for target data
+ */
 export class SettingRepository implements ISettingRepository {
     constructor(
         private readonly nisDb: Pool,
@@ -8,6 +12,14 @@ export class SettingRepository implements ISettingRepository {
         private readonly dashboardDb: Pool
     ) {}
 
+    /**
+     * Query actual revenue broken down by month for a specific year
+     * Aggregates general journal entries
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {number} year - The target year
+     * @returns {Promise<{total: number, details: any[]}>}
+     */
     async getRevenue(branchId: string, year: number): Promise<{ total: number, details: { month: number, total: number }[] }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -46,6 +58,13 @@ export class SettingRepository implements ISettingRepository {
         return { total, details }
     }
 
+    /**
+     * Query sales target configuration for a specific year
+     * Includes user metadata for the person who last updated it
+     * 
+     * @param {number} year - The target year
+     * @returns {Promise<TargetRevenuePayload | null>}
+     */
     async getTarget(year: number): Promise<TargetRevenuePayload | null> {
         const [rows] = await this.dashboardDb.query<any[]>(
             `SELECT t.*, 
@@ -85,6 +104,13 @@ export class SettingRepository implements ISettingRepository {
         }
     }
 
+    /**
+     * Utility method to extract only target fields from a database record
+     * Useful for formatting audit log payloads
+     * 
+     * @param {any} data - Raw database record
+     * @returns {any} Cleaned target object
+     */
     private extractTargetLogData(data: any) {
         if (!data) return {};
         return {
@@ -104,6 +130,13 @@ export class SettingRepository implements ISettingRepository {
         };
     }
 
+    /**
+     * Query target modification history
+     * Fetches logs of when targets were locked, unlocked, or updated
+     * 
+     * @param {number} [year] - Optional year filter
+     * @returns {Promise<any[]>} Audit logs with user metadata
+     */
     async getTargetLog(year?: number): Promise<any[]> {
         const connection = await this.dashboardDb.getConnection()
         try {
@@ -133,6 +166,15 @@ export class SettingRepository implements ISettingRepository {
         }
     }
 
+    /**
+     * Save target configuration and generate audit logs
+     * Uses a transaction to ensure atomicity. Handles locking/unlocking logic
+     * 
+     * @param {number} year - The target year
+     * @param {TargetRevenuePayload} payload - Target values (yearly and monthly)
+     * @param {number} userId - The user performing the action
+     * @returns {Promise<void>}
+     */
     async saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void> {
         const connection = await this.dashboardDb.getConnection()
         try {

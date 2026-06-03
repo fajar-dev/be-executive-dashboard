@@ -1,6 +1,10 @@
 import { type Pool } from 'mysql2/promise'
 import { IGrowthRepository } from '../interfaces/growth.repository.interface'
 
+/**
+ * Repository for handling growth-related database queries
+ * Interfaces with multiple databases: nisDb (billing), prospectDb (CRM), and dashboardDb (targets)
+ */
 export class GrowthRepository implements IGrowthRepository {
     constructor(
         private readonly nisDb: Pool,
@@ -8,6 +12,15 @@ export class GrowthRepository implements IGrowthRepository {
         private readonly dashboardDb: Pool
     ) {}
 
+    /**
+     * Query New MRC (Monthly Recurring Charge)
+     * Calculates the recurring revenue generated from new customers
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{mrc: number, mrc_unpaid: number, mrc_paid: number}>} MRC breakdown
+     */
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -101,6 +114,15 @@ export class GrowthRepository implements IGrowthRepository {
         }
     }
 
+    /**
+     * Query actual revenue generated
+     * Aggregates revenue from the general journal (accounting)
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total revenue
+     */
     async getRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -126,6 +148,14 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query number of new leads
+     * Counts leads created in the CRM database (prospectDb)
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total new leads
+     */
     async getLeads(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -146,6 +176,14 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query number of new opportunities
+     * Counts opportunities created in the CRM database (prospectDb)
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total new opportunities
+     */
     async getOpportunity(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -165,6 +203,14 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query won and lost opportunities
+     * Aggregates opportunities by their closing stage (6 = win, 7 = lose)
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{win: number, lose: number}>} Counts of won and lost opportunities
+     */
     async getWinLose(startDate: string, endDate: string): Promise<{ win: number, lose: number }> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -187,6 +233,14 @@ export class GrowthRepository implements IGrowthRepository {
         }
     }
 
+    /**
+     * Query sales activities
+     * Counts the total number of calls, tasks, and check-ins logged by account managers
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{activity: number, amCount: number}>} Total activities and number of active AMs
+     */
     async getActivity(startDate: string, endDate: string): Promise<{ activity: number, amCount: number }> {
         const [amRows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -231,6 +285,14 @@ export class GrowthRepository implements IGrowthRepository {
         }
     }
 
+    /**
+     * Query total pipeline value
+     * Aggregates the estimated monetary value of all open opportunities
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total pipeline value
+     */
     async getPipelineValue(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -252,6 +314,14 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.value || 0)
     }
 
+    /**
+     * Query average sales cycle length
+     * Calculates the average days between opportunity creation and closure (win)
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Average sales cycle in days
+     */
     async getCycle(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -279,6 +349,14 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.avg_days || 0)
     }
+    /**
+     * Query pipeline stage distribution
+     * Groups open opportunities by their current stage (Qualification, Proposal, Negotiation)
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<any>} Breakdown of pipeline value per stage
+     */
     async getPipelineStage(startDate: string, endDate: string): Promise<any> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
@@ -328,6 +406,15 @@ export class GrowthRepository implements IGrowthRepository {
         return stages
     }
 
+    /**
+     * Query discount given to customers
+     * Aggregates the total discount amount from the billing system
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{serviceGroup: string, discount: number}[]>} Total discount per service group
+     */
     async getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -352,6 +439,13 @@ export class GrowthRepository implements IGrowthRepository {
         }))
     }
 
+    /**
+     * Query sales target for a specific year
+     * Retrieves the yearly and monthly revenue targets from the dashboard database
+     * 
+     * @param {number} year - The year to query
+     * @returns {Promise<any>} Target configuration object
+     */
     async getTarget(year: number): Promise<any> {
         const [rows] = await this.dashboardDb.query<any[]>(
             `SELECT * FROM vp_access_business_target WHERE year = ?`,
@@ -360,6 +454,15 @@ export class GrowthRepository implements IGrowthRepository {
         return rows[0] || null
     }
 
+    /**
+     * Query new customer acquisition value
+     * Calculates the total value generated from new customers within the period
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total revenue from new customers
+     */
     async getNewCustomer(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -427,6 +530,15 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.total_dpp || 0)
     }
 
+    /**
+     * Query Average Revenue Per User (ARPU) metrics
+     * Calculates total services, total revenue, and their ratio grouped by service type
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number}[]>}
+     */
     async getArpu(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT

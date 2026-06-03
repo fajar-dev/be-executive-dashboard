@@ -3,11 +3,22 @@ import { IServiceQualityRepository } from '../interfaces/service-quality.reposit
 import { DateHelper } from '../../../../core/helpers/date'
 import { TrendHelper } from '../../../../core/helpers/trend'
 
+/**
+ * Service class for handling service quality business logic
+ * Orchestrates data retrieval for tickets, complaints, and incident metrics
+ */
 export class ServiceQualityService implements IServiceQualityService {
     constructor(
         private readonly serviceQualityRepository: IServiceQualityRepository
     ) {}
 
+    /**
+     * Calculate total ticket metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query ('month', 'quarter', 'year', 'last')
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -26,6 +37,13 @@ export class ServiceQualityService implements IServiceQualityService {
         }
     }
 
+    /**
+     * Calculate complaint metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getComplaint(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -44,6 +62,13 @@ export class ServiceQualityService implements IServiceQualityService {
         }
     }
 
+    /**
+     * Calculate solved tickets metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getSolved(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -62,6 +87,13 @@ export class ServiceQualityService implements IServiceQualityService {
         }
     }
 
+    /**
+     * Calculate ticket resolution percentage
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getSolvedPercentage(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -80,6 +112,13 @@ export class ServiceQualityService implements IServiceQualityService {
         }
     }
 
+    /**
+     * Calculate issue (general technical problem) metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getIssue(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -98,6 +137,13 @@ export class ServiceQualityService implements IServiceQualityService {
         }
     }
 
+    /**
+     * Calculate incident (critical outage) metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getIncident(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 

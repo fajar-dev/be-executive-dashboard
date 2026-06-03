@@ -1,11 +1,24 @@
 import { type Pool } from 'mysql2/promise'
 import { IServiceQualityRepository } from '../interfaces/service-quality.repository.interface'
 
+/**
+ * Repository for handling service quality database queries
+ * Provides methods to query ticketing and NOC incident data from nisDb
+ */
 export class ServiceQualityRepository implements IServiceQualityRepository {
     constructor(
         private readonly nisDb: Pool
     ) {}
 
+    /**
+     * Query total number of tickets created
+     * Excludes canceled tickets
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total tickets
+     */
     async ticket(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -24,6 +37,15 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query total number of complaint tickets
+     * Filters tickets specifically marked as complaints (TtsTypeId = 2)
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total complaints
+     */
     async complaint(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -43,6 +65,15 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query total number of solved tickets
+     * Filters tickets with status 'Call' (indicating closed/solved state)
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total solved tickets
+     */
     async solved(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -61,6 +92,15 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Query ticket resolution percentage
+     * Calculates the ratio of solved tickets against total complaint tickets
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Solved percentage
+     */
     async solvedPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -82,6 +122,15 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         return Number(rows[0]?.percentage || 0)
     }
 
+    /**
+     * Query percentage of customers with recurring NOC issues
+     * Calculates the percentage of customers who experienced > 1 incident in the period
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Percentage of customers with multiple issues
+     */
     async issue(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -113,6 +162,15 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
         return Number(rows[0]?.percent || 0)
     }
 
+    /**
+     * Query total number of NOC incidents
+     * Counts unique incidents affecting customer services
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total incident count
+     */
     async incident(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
