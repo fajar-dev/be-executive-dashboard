@@ -12,6 +12,10 @@ export class SettingService implements ISettingService {
         return this.settingRepository.getTarget(year)
     }
 
+    async getTargetLog(year?: number): Promise<any[]> {
+        return this.settingRepository.getTargetLog(year)
+    }
+
     async saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void> {
         return this.settingRepository.saveTarget(year, payload, userId)
     }

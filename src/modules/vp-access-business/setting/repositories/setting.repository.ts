@@ -97,6 +97,35 @@ export class SettingRepository implements ISettingRepository {
         };
     }
 
+    async getTargetLog(year?: number): Promise<any[]> {
+        const connection = await this.dashboardDb.getConnection()
+        try {
+            let query = `
+                SELECT 
+                    l.id, l.year, l.reason, l.old_value, l.new_value, 
+                    l.created_at, l.updated_at,
+                    c.name as created_by_name,
+                    u.name as updated_by_name
+                FROM vp_access_business_target_log l
+                LEFT JOIN users c ON l.created_by = c.id
+                LEFT JOIN users u ON l.updated_by = u.id
+            `
+            const params: any[] = []
+
+            if (year) {
+                query += ` WHERE l.year = ?`
+                params.push(year)
+            }
+
+            query += ` ORDER BY l.id DESC`
+
+            const [rows] = await connection.query<any[]>(query, params)
+            return rows
+        } finally {
+            connection.release()
+        }
+    }
+
     async saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void> {
         const connection = await this.dashboardDb.getConnection()
         try {
