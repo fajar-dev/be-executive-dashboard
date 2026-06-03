@@ -66,6 +66,10 @@ export class GrowthSerializer {
         }
     }
 
+    static pipelineStage(data: any) {
+        return data
+    }
+
     static cycle(data: any) {
         return {
             value: data.value,

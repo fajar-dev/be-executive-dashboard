@@ -278,6 +278,54 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.avg_days || 0)
     }
+    async getPipelineStage(startDate: string, endDate: string): Promise<any> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                pos.id as stage_id,
+                pos.name,
+                SUM(poa.amount) AS value
+            FROM customer_object_product_services cops
+            LEFT JOIN prospect_opportunities po ON
+                po.id = cops.object_id
+                AND cops.object = 'opportunity'
+            LEFT JOIN prospect_opportunity_amounts poa ON
+                poa.opportunity_id = po.id
+            LEFT JOIN prospect_opportunity_stages pos ON
+                pos.id = po.opportunity_stage_id
+            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            AND poa.amount_category_setting_id = 1
+            AND po.id IS NOT NULL
+            AND po.deleted_at IS NULL
+            AND DATE(po.created_at) >= ?
+            AND DATE(po.created_at) <= ?
+            AND po.opportunity_stage_id IN (1, 4, 5)
+            GROUP BY po.opportunity_stage_id, pos.name`,
+            [startDate, endDate]
+        )
+
+        const stages = {
+            qualification: { name: 'Qualification', value: 0, percentage: 0 },
+            proposal: { name: 'Proposal', value: 0, percentage: 0 },
+            negotiation: { name: 'Negotiation', value: 0, percentage: 0 }
+        }
+
+        const totalValue = rows.reduce((acc, row) => acc + Number(row.value), 0)
+
+        rows.forEach(row => {
+            const val = Number(row.value) || 0
+            const percentage = totalValue > 0 ? Number(((val / totalValue) * 100).toFixed(2)) : 0
+            
+            if (row.stage_id === 1) {
+                stages.qualification = { name: row.name || 'Qualification', value: val, percentage }
+            } else if (row.stage_id === 4) {
+                stages.proposal = { name: row.name || 'Proposal', value: val, percentage }
+            } else if (row.stage_id === 5) {
+                stages.negotiation = { name: row.name || 'Negotiation', value: val, percentage }
+            }
+        })
+
+        return stages
+    }
 
     async getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(

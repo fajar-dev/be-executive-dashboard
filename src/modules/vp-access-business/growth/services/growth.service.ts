@@ -333,6 +333,11 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    async getPipelineStage(periodType: string): Promise<any> {
+        const { startDate, endDate } = this.getDatesForPeriod(periodType)
+        return this.growthRepository.getPipelineStage(startDate, endDate)
+    }
+
     async getCycle(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'

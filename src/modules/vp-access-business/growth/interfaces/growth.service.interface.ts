@@ -47,6 +47,7 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
+    getPipelineStage(periodType: string): Promise<any>
     getDiscount(branchId: string, periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'

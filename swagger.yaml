@@ -1052,6 +1052,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/pipeline-stage:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get pipeline stages
+      description: Returns pipeline stages amount and percentage.
+      operationId: getGrowthPipelineStage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Pipeline stage successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthPipelineStageResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /vp-access-business/growth/cycle:
     get:
       tags:
@@ -3032,6 +3066,27 @@ components:
         period:
           type: string
           example: "May"
+    GrowthPipelineStageDetail:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Qualification"
+        value:
+          type: number
+          example: 150000000
+        percentage:
+          type: number
+          example: 25.5
+    GrowthPipelineStageResponse:
+      type: object
+      properties:
+        qualification:
+          $ref: "#/components/schemas/GrowthPipelineStageDetail"
+        proposal:
+          $ref: "#/components/schemas/GrowthPipelineStageDetail"
+        negotiation:
+          $ref: "#/components/schemas/GrowthPipelineStageDetail"
     GrowthCycleResponse:
       type: object
       properties:
