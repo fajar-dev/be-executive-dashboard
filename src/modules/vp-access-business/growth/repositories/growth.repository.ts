@@ -446,13 +446,13 @@ export class GrowthRepository implements IGrowthRepository {
             LEFT JOIN Services s
                 ON s.ServiceId = cit.ServiceId
             LEFT JOIN ServiceGroup sg
-                ON sg.ServiceGroupId = s.ServiceGroupId
+                ON sg.ServiceGroup = s.ServiceGroup
             WHERE gj.KodeCabang = ?
               AND s.ServiceCategory = 'access_business'
               AND gj.NoPerkiraan LIKE '400%'
               AND DATE(gj.TglTransaksi) >= ?
               AND DATE(gj.TglTransaksi) <= ?
-            GROUP BY s.ServiceGroupId, sg.Description`,
+            GROUP BY s.ServiceGroup, sg.Description`,
             [branchId, startDate, endDate]
         )
 
