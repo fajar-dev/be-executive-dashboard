@@ -605,4 +605,36 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return Number(rows[0]?.value || 0)
     }
+
+    /**
+     * Query forecast MRC from opportunities
+     * Calculates sum of amount for opportunities in stage 5
+     * 
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Forecast MRC value
+     */
+    async getForecastMrc(startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                SUM(poa.amount) AS value
+            FROM customer_object_product_services cops
+            LEFT JOIN prospect_opportunities po ON
+                po.id = cops.object_id
+                AND cops.object = 'opportunity'
+            LEFT JOIN prospect_opportunity_amounts poa ON
+                poa.opportunity_id = po.id
+            LEFT JOIN prospect_opportunity_stages pos ON
+                pos.id = po.opportunity_stage_id
+            WHERE cops.product_service_id IN (12, 36, 34, 28)
+            AND po.opportunity_stage_id = 5
+            AND poa.amount_category_setting_id = 1
+            AND po.id IS NOT NULL
+            AND po.deleted_at IS NULL
+            AND DATE(po.created_at) >= ?
+            AND DATE(po.created_at) <= ?`,
+            [startDate, endDate]
+        )
+        return Number(rows[0]?.value || 0)
+    }
 }

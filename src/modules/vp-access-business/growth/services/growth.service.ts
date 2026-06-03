@@ -547,4 +547,33 @@ export class GrowthService implements IGrowthService {
             period
         }
     }
+
+    /**
+     * Calculate forecast MRC from opportunities
+     * 
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast MRC, trend, and percentage
+     */
+    async getForecastMrc(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [value, prevValue] = await Promise.all([
+            this.growthRepository.getForecastMrc(startDate, endDate),
+            this.growthRepository.getForecastMrc(prevStartDate, prevEndDate)
+        ])
+
+        const { trend, percentage } = TrendHelper.calculate(value, prevValue)
+
+        return {
+            value,
+            trend,
+            percentage,
+            period
+        }
+    }
 }
