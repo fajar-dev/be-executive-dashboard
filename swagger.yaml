@@ -1018,7 +1018,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /vp-access-business/growth/pipeline:
+  /vp-access-business/growth/pipeline-value:
     get:
       tags:
         - VP Access Business
