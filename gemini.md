@@ -62,8 +62,12 @@ export class FeatureModule {
 ## 4. Prinsip SOLID dan Clean Code
 - **S (Single Responsibility):** Controller hanya mengurus HTTP Context (parameter, validasi, memanggil service, mengirim output). Service mengurus manipulasi data (*logic* bisnis). Repository murni berisi query SQL.
 - **D (Dependency Inversion):** Implementasikan *interface* (seperti `IFeatureService`) agar antar-layer tidak *tightly-coupled*.
+- **DRY (Don't Repeat Yourself):** Jika ada logika atau kalkulasi yang dipakai berulang di berbagai fungsi/modul (seperti perhitungan persentase tren atau manipulasi tanggal), pindahkan ke dalam direktori `src/core/helpers/` (misal: `TrendHelper`, `DateHelper`). Jangan biarkan ada kode kalkulasi yang di-_copy-paste_.
+- **Sentralisasi Serializer:** Gunakan *method generic* di *Serializer* (seperti `metric(data: any)`) untuk memoles struktur *output* yang punya format berulang (seperti `{ value, trend, percentage, period }`). Hindari membuat *method* duplikat untuk setiap metrik jika isinya persis sama.
 
 ## 5. Aturan Penulisan Lanjutan
 - **Relative Path:** Perhatikan level direktori saat melakukan import (`../` atau `../../`). Gunakan *compiler* TypeScript untuk memvalidasi path Anda.
 - **Tipe Data (Typing):** Hindari penggunaan `any` secara implisit. Tentukan *type* setiap parameter dan *return value* untuk menjaga *safety* TypeScript (terutama saat *mapping* atau `reduce` data).
+- **JSDoc Comments:** Setiap method di Controller, Service, dan Repository harus dilengkapi dengan blok komentar JSDoc (`/** ... */`) yang mendeskripsikan secara jelas kegunaan fungsi, daftar `@param`, dan `@returns`.
 - **Format Respons:** Gunakan `ApiResponse.success` (atau formatter sejenis) yang disediakan di folder `core` untuk memastikan format JSON yang terkirim ke *client* selalu seragam.
+- **Validasi Cerdas:** Hindari membuat validasi parameter yang redundan di level *Controller* jika nilai tersebut sudah memiliki *default value* yang aman atau sudah ditangani secara *fallback* (*graceful fail*) di dalam fungsi *Helper*/*Service*.
