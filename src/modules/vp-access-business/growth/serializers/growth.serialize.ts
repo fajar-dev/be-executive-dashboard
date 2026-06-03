@@ -57,7 +57,7 @@ export class GrowthSerializer {
         }
     }
 
-    static pipeline(data: any) {
+    static pipelineValue(data: any) {
         return {
             value: data.value,
             trend: data.trend,

@@ -230,7 +230,7 @@ export class GrowthRepository implements IGrowthRepository {
         }
     }
 
-    async getPipeline(startDate: string, endDate: string): Promise<number> {
+    async getPipelineValue(startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.prospectDb.query<any[]>(
             `SELECT
                 SUM(poa.amount) value

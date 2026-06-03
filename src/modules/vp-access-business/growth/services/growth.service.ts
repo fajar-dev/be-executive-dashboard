@@ -303,7 +303,7 @@ export class GrowthService implements IGrowthService {
         }
     }
 
-    async getPipeline(periodType: string): Promise<{
+    async getPipelineValue(periodType: string): Promise<{
         value: number
         trend: 'up' | 'down'
         percentage: number
@@ -312,8 +312,8 @@ export class GrowthService implements IGrowthService {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
 
         const [value, prevValue] = await Promise.all([
-            this.growthRepository.getPipeline(startDate, endDate),
-            this.growthRepository.getPipeline(prevStartDate, prevEndDate)
+            this.growthRepository.getPipelineValue(startDate, endDate),
+            this.growthRepository.getPipelineValue(prevStartDate, prevEndDate)
         ])
 
         let percentage = 0
