@@ -57,6 +57,7 @@ export class NusaworkService implements INusaworkService {
                 name: emp.full_name,
                 email: emp.email,
                 photoProfile: emp.photo_profile,
+                jobPosition: emp.job_position,
             }))
     }
 
@@ -76,6 +77,7 @@ export class NusaworkService implements INusaworkService {
                 name: emp.full_name,
                 email: emp.email,
                 photoProfile: emp.photo_profile,
+                jobPosition: emp.job_position,
             }))
     }
 }

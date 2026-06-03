@@ -14,6 +14,7 @@ export async function syncExecutiveJob(userRepository: IUserRepository): Promise
             name: e.name,
             email: e.email,
             photo: e.photoProfile,
+            jobPosition: e.jobPosition,
         }))
     )
 
@@ -31,6 +32,7 @@ export async function syncAdminJob(userRepository: IUserRepository): Promise<voi
             name: a.name,
             email: a.email,
             photo: a.photoProfile,
+            jobPosition: a.jobPosition,
         }))
     )
 

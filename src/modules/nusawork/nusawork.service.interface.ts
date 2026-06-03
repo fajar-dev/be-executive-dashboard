@@ -4,6 +4,7 @@ export interface NusaworkEmployee {
     name: string
     email: string
     photoProfile: string
+    jobPosition?: string
 }
 
 export interface INusaworkService {
