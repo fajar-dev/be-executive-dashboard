@@ -10,10 +10,6 @@ export class RetentionController {
         const branchId = c.req.query('branchId') || '020'
         const period = c.req.query('period') || 'month'
 
-        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-        }
-
         const result = await this.service.getChurnRevenue(branchId, period)
         return ApiResponse.success(c, RetentionSerializer.churnRevenue(result), 'Churn revenue retrieved successfully')
     }
@@ -22,10 +18,6 @@ export class RetentionController {
         const branchId = c.req.query('branchId') || '020'
         const period = c.req.query('period') || 'month'
 
-        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-        }
-
         const result = await this.service.getCustomerLose(branchId, period)
         return ApiResponse.success(c, RetentionSerializer.customerLose(result), 'Customer lose retrieved successfully')
     }
@@ -33,10 +25,6 @@ export class RetentionController {
     async getWirelessMigration(c: Context) {
         const branchId = c.req.query('branchId') || '020'
         const period = c.req.query('period') || 'month'
-
-        if (!['last', 'month', 'quarter', 'year'].includes(period)) {
-            return ApiResponse.error(c, 'Invalid period parameter. Use last, month, quarter, or year.', 400)
-        }
 
         const result = await this.service.getWirelessMigration(branchId, period)
         return ApiResponse.success(c, RetentionSerializer.wirelessMigration(result), 'Wireless migration metrics retrieved successfully')
