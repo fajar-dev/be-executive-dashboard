@@ -26,6 +26,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
 
     // Growth Routes
     routes.get('/growth/new-mrc', (c) => growth.getNewMrc(c))
+    routes.get('/growth/new-customer', (c) => growth.getNewCustomer(c))
     routes.get('/growth/revenue', (c) => growth.getRevenue(c))
     routes.get('/growth/revenue-achievement', (c) => growth.getRevenueAchievement(c))
     routes.get('/growth/leads', (c) => growth.getLeads(c))

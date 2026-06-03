@@ -31,6 +31,15 @@ export class GrowthSerializer {
         }
     }
 
+    static newCustomer(data: any) {
+        return {
+            value: data.value,
+            trend: data.trend,
+            percentage: data.percentage,
+            period: data.period
+        }
+    }
+
     static leads(data: any) {
         return {
             value: data.value,

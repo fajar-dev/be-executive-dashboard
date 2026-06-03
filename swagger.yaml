@@ -846,6 +846,47 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/new-customer:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get new customer metrics
+      description: Returns new customer metrics including value, trend, and percentage.
+      operationId: getGrowthNewCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g. 020)
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: New customer metrics successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthNewCustomerResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /vp-access-business/growth/revenue:
     get:
       tags:
@@ -2953,6 +2994,23 @@ components:
           type: number
           format: float
           example: 10.5
+        period:
+          type: string
+          example: "May"
+    GrowthNewCustomerResponse:
+      type: object
+      properties:
+        value:
+          type: integer
+          example: 15
+        trend:
+          type: string
+          enum: [up, down]
+          example: "up"
+        percentage:
+          type: number
+          format: float
+          example: 5.6
         period:
           type: string
           example: "May"

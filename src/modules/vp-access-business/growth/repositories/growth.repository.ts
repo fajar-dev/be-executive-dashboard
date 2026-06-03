@@ -359,4 +359,71 @@ export class GrowthRepository implements IGrowthRepository {
         )
         return rows[0] || null
     }
+
+    async getNewCustomer(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                SUM((t.credit - IFNULL(d.discount, 0)) / 1.11) AS total_dpp
+            FROM (
+                SELECT
+                    nci.AI ai,
+                    nci.Credit credit,
+                    MAX(IFNULL(nci2.JournalDate, nci2.TransDate)) receipt_date,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY cit.CustServId
+                    ) AS rn
+                FROM CustomerInvoiceTemp cit
+                LEFT JOIN NewCustomerInvoice nci 
+                    ON cit.InvoiceNum = nci.Id 
+                    AND cit.Urut = nci.No
+                LEFT JOIN NewCustomerInvoiceBatch ncib 
+                    ON ncib.AI = nci.AI
+                LEFT JOIN (
+                    SELECT 
+                        ncib.batchNo,
+                        nci.*,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY ncib.batchNo 
+                            ORDER BY nci.Date DESC
+                        ) AS RowNum
+                    FROM NewCustomerInvoice nci
+                    LEFT JOIN NewCustomerInvoiceBatch ncib 
+                        ON ncib.AI = nci.AI
+                    WHERE nci.Type LIKE 'RA%'
+                ) nci2 
+                    ON nci2.batchNo = ncib.batchNo
+                LEFT JOIN Services s 
+                    ON s.ServiceId = cit.ServiceId
+                LEFT JOIN Customer c 
+                    ON c.CustId = cit.CustId
+                WHERE cit.RInvoiceNum = 0
+                AND cit.InvProrata = 0
+                AND c.BranchId = ?
+                AND s.ServiceCategory = 'access_business'
+                GROUP BY nci.AI
+            ) t
+            LEFT JOIN (
+                SELECT
+                    nci.AI ai,
+                    ncid.Debet discount
+                FROM CustomerInvoiceDiscount cid
+                LEFT JOIN NewCustomerInvoice ncid 
+                    ON ncid.Id = cid.Id
+                    AND ncid.Type = 'discount'
+                LEFT JOIN CustomerInvoiceTemp cit 
+                    ON cit.InvoiceNum = cid.InvoiceNum
+                    AND cit.Urut = cid.Urut
+                LEFT JOIN NewCustomerInvoice nci 
+                    ON nci.Id = cid.InvoiceNum
+                    AND nci.No = cid.Urut
+                WHERE cit.RInvoiceNum = 0
+            ) d 
+                ON d.ai = t.ai
+            WHERE t.rn = 1
+            AND DATE(t.receipt_date) >= ?
+            AND DATE(t.receipt_date) <= ?`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total_dpp || 0)
+    }
 }

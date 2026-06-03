@@ -10,4 +10,5 @@ export interface IGrowthRepository {
     getPipelineStage(startDate: string, endDate: string): Promise<any>
     getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]>
     getTarget(year: number): Promise<any>
+    getNewCustomer(branchId: string, startDate: string, endDate: string): Promise<number>
 }
