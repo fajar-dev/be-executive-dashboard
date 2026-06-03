@@ -3,9 +3,21 @@ import { IRetentionService } from '../interfaces/retention.service.interface'
 import { DateHelper } from '../../../../core/helpers/date'
 import { TrendHelper } from '../../../../core/helpers/trend'
 
+/**
+ * Service class for handling retention business logic
+ * Responsible for orchestrating data retrieval from repositories and calculating trends/percentages
+ */
 export class RetentionService implements IRetentionService {
     constructor(private readonly retentionRepository: IRetentionRepository) {}
 
+    /**
+     * Calculate churn revenue metrics
+     * Compares the absolute revenue lost from churns between current and previous periods
+     * 
+     * @param {string} branchId - The branch identifier (e.g., '020')
+     * @param {string} periodType - The period to query ('month', 'quarter', 'year', 'last')
+     * @returns {Promise<{trend: 'up' | 'down', percentage: number, revenue: number, period: string}>}
+     */
     async getChurnRevenue(branchId: string, periodType: string): Promise<{
         trend: 'up' | 'down'
         percentage: number
@@ -29,6 +41,14 @@ export class RetentionService implements IRetentionService {
         }
     }
 
+    /**
+     * Calculate lost customers and their breakdown by service group
+     * Groups churned customers by their service type and compares against previous period
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{total: any, detail: any[]}>} Object containing total loss and detailed breakdown sorted by highest loss
+     */
     async getCustomerLose(branchId: string, periodType: string): Promise<{
         total: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
         detail: { service_group: string; value: number; trend: 'up' | 'down'; percentage: number }[]
@@ -85,6 +105,14 @@ export class RetentionService implements IRetentionService {
         }
     }
 
+    /**
+     * Calculate wireless to fiber migration progress
+     * Retrieves total wireless customers, count of migrated customers, and the migration percentage rate
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{totalCustomer: any, migrated: any, migrationRate: any}>}
+     */
     async getWirelessMigration(branchId: string, periodType: string): Promise<{
         totalCustomer: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
         migrated: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
@@ -140,6 +168,13 @@ export class RetentionService implements IRetentionService {
         }
     }
 
+    /**
+     * Build month-by-month churn rate comparison for the current year vs previous year
+     * Iterates from January up to the current month to construct the historical data array
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<any[]>} Array of monthly churn rate data points
+     */
     async getChurnRate(branchId: string): Promise<any[]> {
         const currentPeriod = DateHelper.getCurrentPeriod()
         const currentYear = Number(currentPeriod.substring(0, 4))
@@ -189,10 +224,24 @@ export class RetentionService implements IRetentionService {
         return data
     }
 
+    /**
+     * Retrieve count of contracts expiring in upcoming intervals
+     * Separates counts into 30, 60, and 90 days buckets
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<{total: number, total_30: number, total_60: number, total_90: number}>}
+     */
     async getContractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }> {
         return await this.retentionRepository.contractExpiring(branchId)
     }
 
+    /**
+     * Calculate retention-related ticket volume and trends
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getTicket(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -211,6 +260,13 @@ export class RetentionService implements IRetentionService {
         }
     }
 
+    /**
+     * Calculate customer service usage/bandwidth utilization metrics
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<{value: number, trend: 'up' | 'down', percentage: number, period: string}>}
+     */
     async getUsage(branchId: string, periodType: string): Promise<{ value: number; trend: 'up' | 'down'; percentage: number; period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
 
@@ -229,6 +285,12 @@ export class RetentionService implements IRetentionService {
         }
     }
 
+    /**
+     * Calculate the distribution of monthly vs annual payment preferences
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<{monthly: number, annual: number}>} Percentage split between monthly and annual payments
+     */
     async getPayment(branchId: string): Promise<{ monthly: number; annual: number }> {
         const monthlyPercent = await this.retentionRepository.payment(branchId)
         

@@ -1,11 +1,24 @@
 import { type Pool } from 'mysql2/promise'
 import { IRetentionRepository } from '../interfaces/retention.repository.interface'
 
+/**
+ * Repository for handling retention database queries
+ * Provides methods for interacting with the main operational database (nisDb)
+ */
 export class RetentionRepository implements IRetentionRepository {
     constructor(
         private readonly nisDb: Pool
     ) {}
 
+    /**
+     * Query churned revenue
+     * Aggregates revenue generated from customer services that are now in 'NA' (churn) status
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total revenue lost to churn
+     */
     async churnRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -35,6 +48,15 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Calculate general churn rate
+     * Calculates the ratio of churned customers against the total active customer base
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<{rate: number, churn: number, active: number}>} Rate and raw counts
+     */
     async churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, churn: number, active: number }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -80,6 +102,15 @@ export class RetentionRepository implements IRetentionRepository {
         }
     }
 
+    /**
+     * Query lost customers by service group
+     * Groups churned customers by their service type description
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<any[]>} Breakdown of lost customers by group
+     */
     async customerLose(branchId: string, startDate: string, endDate: string): Promise<any[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -106,6 +137,13 @@ export class RetentionRepository implements IRetentionRepository {
         return rows
     }
 
+    /**
+     * Count total active wireless customers
+     * Used as a baseline to measure migration progress
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<number>} Total wireless customer count
+     */
     async wirelessCustomer(branchId: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -125,6 +163,15 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Count customers migrated from wireless to fiber
+     * Looks at package change history records
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Number of migrated customers
+     */
     async wirelessMigration(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -149,6 +196,15 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total || 0)
     }
 
+    /**
+     * Calculate wireless migration rate
+     * Calculates the percentage of wireless customers who have migrated to fiber
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Migration percentage rate
+     */
     async migrationWirelessPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -189,6 +245,13 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.percent || 0)
     }
 
+    /**
+     * Query count of contracts expiring soon
+     * Uses DATEDIFF to bucket upcoming expirations into 30, 60, and 90 days windows
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<{total: number, total_30: number, total_60: number, total_90: number}>}
+     */
     async contractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -262,6 +325,15 @@ export class RetentionRepository implements IRetentionRepository {
         }
     }
 
+    /**
+     * Query count of customers with frequent tickets
+     * Customers with >= 2 tickets in a month are flagged for retention risk
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total distinct customers flagged for high tickets
+     */
     async ticket(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -293,6 +365,15 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total_service || 0)
     }
 
+    /**
+     * Query count of customers with low usage
+     * Customers with usage < 500MB are flagged for low utilization risk
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total distinct customers flagged for low usage
+     */
     async usage(branchId: string, startDate: string, endDate: string): Promise<number> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
@@ -324,6 +405,13 @@ export class RetentionRepository implements IRetentionRepository {
         return Number(rows[0]?.total_service || 0)
     }
 
+    /**
+     * Query percentage of customers on monthly billing cycle
+     * Compares active customers on a 1-month invoice type vs the overall active customer base
+     * 
+     * @param {string} branchId - The branch identifier
+     * @returns {Promise<number | null>} Percentage of monthly payers
+     */
     async payment(branchId: string): Promise<number | null> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
