@@ -1179,6 +1179,115 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/setting/target:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get target revenue allocation
+      description: Returns the detailed target revenue allocation for a specific year.
+      operationId: getSettingTarget
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          description: Year (defaults to current year)
+          required: false
+          schema:
+            type: number
+            example: 2026
+      responses:
+        "200":
+          description: Target revenue retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SettingTargetResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - VP Access Business
+      summary: Save target revenue allocation
+      description: Saves or updates the target revenue allocation for a specific year.
+      operationId: saveSettingTarget
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          description: Year (defaults to current year)
+          required: false
+          schema:
+            type: number
+            example: 2026
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingTargetPayload"
+      responses:
+        "200":
+          description: Target saved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        nullable: true
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /vp-access-business/setting/target/log:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get target revenue modification logs
+      description: Returns the history of changes made to the target revenue allocation.
+      operationId: getSettingTargetLog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          description: Year filter
+          required: false
+          schema:
+            type: number
+            example: 2026
+      responses:
+        "200":
+          description: Target logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/SettingTargetLogResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   # ────────────────────────────────────────────
   # VP ACCESS BUSINESS - RETENTION
   # ────────────────────────────────────────────
@@ -2975,3 +3084,94 @@ components:
         annual:
           type: number
           example: 34.5
+
+    UserReference:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        photo:
+          type: string
+          nullable: true
+        jobPosition:
+          type: string
+          nullable: true
+
+    SettingTargetPayload:
+      type: object
+      properties:
+        year:
+          type: number
+        yearlyTarget:
+          type: number
+        jan:
+          type: number
+        feb:
+          type: number
+        mar:
+          type: number
+        apr:
+          type: number
+        may:
+          type: number
+        jun:
+          type: number
+        jul:
+          type: number
+        aug:
+          type: number
+        sep:
+          type: number
+        oct:
+          type: number
+        nov:
+          type: number
+        dec:
+          type: number
+        isLocked:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+
+    SettingTargetResponse:
+      allOf:
+        - $ref: "#/components/schemas/SettingTargetPayload"
+        - type: object
+          properties:
+            updatedAt:
+              type: string
+              format: date-time
+              nullable: true
+            updatedBy:
+              $ref: "#/components/schemas/UserReference"
+
+    SettingTargetLogResponse:
+      type: object
+      properties:
+        id:
+          type: number
+        year:
+          type: number
+        reason:
+          type: string
+          nullable: true
+        oldValue:
+          $ref: "#/components/schemas/SettingTargetPayload"
+        newValue:
+          $ref: "#/components/schemas/SettingTargetPayload"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdBy:
+          $ref: "#/components/schemas/UserReference"
+        updatedBy:
+          $ref: "#/components/schemas/UserReference"
