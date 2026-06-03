@@ -2996,6 +2996,9 @@ components:
         percentage:
           type: number
           example: 93.33
+        trendPercentage:
+          type: number
+          example: 5.6
         trend:
           type: string
           enum: [up, down]

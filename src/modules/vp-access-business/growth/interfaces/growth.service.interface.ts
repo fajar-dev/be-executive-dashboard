@@ -11,6 +11,7 @@ export interface IGrowthService {
         target: number
         revenue: number
         percentage: number
+        trendPercentage: number
         trend: 'up' | 'down'
         period: string
     }>

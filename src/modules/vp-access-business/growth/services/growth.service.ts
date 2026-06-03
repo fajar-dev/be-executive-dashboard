@@ -1,3 +1,4 @@
+
 import { IGrowthRepository } from '../interfaces/growth.repository.interface'
 import { IGrowthService } from '../interfaces/growth.service.interface'
 import { DateHelper } from '../../../../core/helpers/date'
@@ -140,7 +141,7 @@ export class GrowthService implements IGrowthService {
         return data
     }
 
-    async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trend: 'up' | 'down', period: string }> {
+    async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trendPercentage: number, trend: 'up' | 'down', period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = this.getDatesForPeriod(periodType)
         
         const start = new Date(startDate)
@@ -169,12 +170,21 @@ export class GrowthService implements IGrowthService {
         ])
 
         const percentage = target > 0 ? (revenue / target) * 100 : 0
+        
+        let trendPercentage = 0
+        if (prevRevenue > 0) {
+            trendPercentage = ((revenue - prevRevenue) / prevRevenue) * 100
+        } else if (revenue > 0) {
+            trendPercentage = 100
+        }
+        
         const trend = revenue >= prevRevenue ? 'up' : 'down'
 
         return {
             target,
             revenue,
             percentage,
+            trendPercentage,
             trend,
             period
         }

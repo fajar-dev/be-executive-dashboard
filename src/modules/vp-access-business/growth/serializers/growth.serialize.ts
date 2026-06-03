@@ -25,6 +25,7 @@ export class GrowthSerializer {
             target: data.target,
             revenue: data.revenue,
             percentage: data.percentage,
+            trendPercentage: data.trendPercentage,
             trend: data.trend,
             period: data.period
         }
