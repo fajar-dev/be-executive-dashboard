@@ -646,37 +646,55 @@ export class RetentionRepository implements IRetentionRepository {
                 LEFT JOIN NewCustomerInvoice nci 
                     ON cit.InvoiceNum = nci.Id 
                     AND cit.Urut = nci.No
+                LEFT JOIN NewCustomerInvoiceBatch ncib 
+                    ON ncib.AI = nci.AI
+                LEFT JOIN (
+                    SELECT 
+                        ncib.batchNo,
+                        nci.*,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY ncib.batchNo 
+                            ORDER BY nci.Date DESC
+                        ) AS RowNum
+                    FROM NewCustomerInvoice nci
+                    LEFT JOIN NewCustomerInvoiceBatch ncib 
+                        ON ncib.AI = nci.AI
+                    WHERE nci.Type LIKE 'RA%'
+                ) nci2 
+                    ON nci2.batchNo = ncib.batchNo
                 LEFT JOIN Services s 
                     ON s.ServiceId = cit.ServiceId
-                LEFT JOIN CustomerServices cs 
-                    ON cs.CustServId = cit.CustServId
                 LEFT JOIN Customer c 
-                    ON c.CustId = cs.CustId
-                LEFT JOIN NewCustomerInvoice nci2
-                    ON nci2.Id = nci.Id
-                    AND nci2.No = nci.No
-                WHERE c.BranchId = ?
+                    ON c.CustId = cit.CustId
+                WHERE cit.RInvoiceNum = 0
+                AND cit.InvProrata = 0
+                AND c.BranchId = ?
                 AND s.ServiceCategory = 'access_business'
-                AND DATE(nci.PayDate) >= ?
-                AND DATE(nci.PayDate) <= ?
+                AND nci.AccCode LIKE '400%'
+                AND DATE(nci.InsertDate) >= ?
+                AND DATE(nci.InsertDate) <= ?
             ) t
             LEFT JOIN (
-                SELECT 
-                    nci3.AI, 
-                    SUM(COALESCE(dd.Amount, 0)) AS discount
-                FROM NewCustomerInvoice nci3
-                LEFT JOIN Discount_Detail dd 
-                    ON nci3.AI = dd.invoiceAI
-                LEFT JOIN Discount d 
-                    ON dd.DiscountId = d.id 
-                    AND d.status = 2
-                WHERE DATE(nci3.PayDate) >= ?
-                AND DATE(nci3.PayDate) <= ?
-                GROUP BY nci3.AI
-            ) d ON t.ai = d.AI
-            WHERE t.rn = 1`,
-            [branchId, startDate, endDate, startDate, endDate]
+                SELECT
+                    nci.AI ai,
+                    ncid.Debet discount
+                FROM CustomerInvoiceDiscount cid
+                LEFT JOIN NewCustomerInvoice ncid 
+                    ON ncid.Id = cid.Id
+                    AND ncid.Type = 'discount'
+                LEFT JOIN CustomerInvoiceTemp cit 
+                    ON cit.InvoiceNum = cid.InvoiceNum
+                    AND cit.Urut = cid.Urut
+                LEFT JOIN NewCustomerInvoice nci 
+                    ON nci.Id = cid.InvoiceNum
+                    AND nci.No = cid.Urut
+                WHERE cit.RInvoiceNum = 0
+            ) d 
+                ON d.ai = t.ai
+            WHERE t.rn = 1;`,
+            [branchId, startDate, endDate]
         )
+
         return {
             mrc: Number(rows[0]?.mrc || 0),
             mrc_unpaid: Number(rows[0]?.mrc_unpaid || 0),
