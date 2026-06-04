@@ -48,6 +48,76 @@ export class GrowthService implements IGrowthService {
     }
 
     /**
+     * Get Net MRC Growth
+     * Calculates the net MRC based on New MRC minus Churn MRC
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing net MRC value, trend, and detail values
+     */
+    async getNetMrc(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        newMrc: {
+            value: number
+            trend: 'up' | 'down'
+            percentage: number
+        }
+        churnMrc: {
+            value: number
+            trend: 'up' | 'down'
+            percentage: number
+        }
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentNewMrcFull, prevNewMrcFull,
+            currentChurnMrc, prevChurnMrc
+        ] = await Promise.all([
+            this.growthRepository.getNewMrc(branchId, startDate, endDate),
+            this.growthRepository.getNewMrc(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getChurnMrc(branchId, startDate, endDate),
+            this.growthRepository.getChurnMrc(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const currentNewMrc = currentNewMrcFull.mrc
+        const prevNewMrc = prevNewMrcFull.mrc
+
+        const newMrcTrend = TrendHelper.calculate(currentNewMrc, prevNewMrc)
+        // Churn trend uses inverted logic: if current > prev, it's 'down' (worse) or 'up' (better)?
+        // Wait, the UI shows Churn MRC trend. Usually we just use standard TrendHelper.
+        // Wait, standard TrendHelper uses: (current > prev) -> 'up'.
+        // Let's use TrendHelper with true flag for inverted? UI handles color. UI says "↑ 8.3%" red color.
+        // That means trend="up" but UI makes it red if it's churn.
+        const churnMrcTrend = TrendHelper.calculate(currentChurnMrc, prevChurnMrc)
+
+        const currentNetMrc = currentNewMrc - currentChurnMrc
+        const prevNetMrc = prevNewMrc - prevChurnMrc
+
+        const netMrcTrend = TrendHelper.calculate(currentNetMrc, prevNetMrc)
+
+        return {
+            value: currentNetMrc,
+            trend: netMrcTrend.trend,
+            percentage: netMrcTrend.percentage,
+            period,
+            newMrc: {
+                value: currentNewMrc,
+                trend: newMrcTrend.trend,
+                percentage: newMrcTrend.percentage
+            },
+            churnMrc: {
+                value: currentChurnMrc,
+                trend: churnMrcTrend.trend,
+                percentage: churnMrcTrend.percentage
+            }
+        }
+    }
+
+    /**
      * Get Total MRC Year-to-Date (YTD)
      * Calculates the total MRC accumulated from the start of the current year up to the current date
      * Compares with the same period in the previous year to determine trend and percentage growth

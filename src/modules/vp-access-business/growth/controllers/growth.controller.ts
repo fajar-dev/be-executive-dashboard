@@ -99,6 +99,21 @@ export class GrowthController {
     }
 
     /**
+     * Get Net MRC metrics
+     * Calculates New MRC minus Churn MRC
+     * 
+     * @param {Context} c - Hono request context containing query params (branchId, period)
+     * @returns {Promise<Response>} JSON response containing net mrc and detailed components
+     */
+    async getNetMrc(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getNetMrc(branchId, period)
+        
+        return ApiResponse.success(c, result, 'Net MRC retrieved successfully')
+    }
+
+    /**
      * Get generated opportunity metrics
      * Retrieves the count of new opportunities created across all branches
      * 

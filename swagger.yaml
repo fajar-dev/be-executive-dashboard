@@ -846,6 +846,77 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/net-mrc:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get Net MRC Growth
+      description: Returns actual net MRC, calculated as New MRC minus Churn MRC.
+      operationId: getGrowthNetMrc
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Net MRC successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          value:
+                            type: number
+                          trend:
+                            type: string
+                            enum: [up, down]
+                          percentage:
+                            type: number
+                          period:
+                            type: string
+                          newMrc:
+                            type: object
+                            properties:
+                              value:
+                                type: number
+                              trend:
+                                type: string
+                                enum: [up, down]
+                              percentage:
+                                type: number
+                          churnMrc:
+                            type: object
+                            properties:
+                              value:
+                                type: number
+                              trend:
+                                type: string
+                                enum: [up, down]
+                              percentage:
+                                type: number
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /vp-access-business/growth/total-mrc-ytd:
     get:
       tags:

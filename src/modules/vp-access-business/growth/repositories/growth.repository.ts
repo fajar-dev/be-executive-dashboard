@@ -440,6 +440,42 @@ export class GrowthRepository implements IGrowthRepository {
     }
 
     /**
+     * Aggregates revenue lost from churned customers (NA status)
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} startDate - Query start date
+     * @param {string} endDate - Query end date
+     * @returns {Promise<number>} Total churn MRC
+     */
+    async getChurnMrc(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                    SUM(gj.Kredit - gj.Debet) total
+                FROM GeneralJournal gj
+                LEFT JOIN Panjar_Penjualan_Breakdown ppb ON
+                    ppb.id = gj.SumberId 
+                    AND gj.Sumber = 'pnjr'
+                LEFT JOIN NewCustomerInvoice nci ON
+                    nci.AI = IFNULL(ppb.invoiceAI, gj.SumberId)
+                LEFT JOIN CustomerInvoiceTemp cit ON
+                    cit.InvoiceNum = nci.Id
+                    AND cit.Urut = nci.No
+                LEFT JOIN CustomerServices cs ON
+                    cs.CustServId = cit.CustServId
+                LEFT JOIN Services s ON
+                    s.ServiceId = cit.ServiceId
+                WHERE gj.KodeCabang = ?
+                AND s.ServiceCategory = 'access_business'
+                AND gj.NoPerkiraan LIKE '400%'
+                AND gj.TglTransaksi >= ?
+                AND gj.TglTransaksi <= ?
+                AND cs.CustStatus = 'NA'`,
+            [branchId, startDate, endDate]
+        )
+        return Number(rows[0]?.total || 0)
+    }
+
+    /**
      * Query sales target for a specific year
      * Retrieves the yearly and monthly revenue targets from the dashboard database
      * 
