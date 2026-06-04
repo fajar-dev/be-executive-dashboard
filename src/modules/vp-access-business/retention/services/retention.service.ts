@@ -306,4 +306,209 @@ export class RetentionService implements IRetentionService {
             annual: 100 - monthlyPercent
         }
     }
+
+    /**
+     * Get Net MRC Growth
+     * Calculates the net MRC based on New MRC minus Churn MRC
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing net MRC value, trend, and detail values
+     */
+    async getNetMrc(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+        newMrc: {
+            value: number
+            trend: 'up' | 'down'
+            percentage: number
+        }
+        churnMrc: {
+            value: number
+            trend: 'up' | 'down'
+            percentage: number
+        }
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentNewMrcFull, prevNewMrcFull,
+            currentChurnMrc, prevChurnMrc
+        ] = await Promise.all([
+            this.retentionRepository.getNewMrc(branchId, startDate, endDate),
+            this.retentionRepository.getNewMrc(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.churnRevenue(branchId, startDate, endDate),
+            this.retentionRepository.churnRevenue(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const currentNewMrc = currentNewMrcFull.mrc
+        const prevNewMrc = prevNewMrcFull.mrc
+
+        const newMrcTrend = TrendHelper.calculate(currentNewMrc, prevNewMrc)
+        const churnMrcTrend = TrendHelper.calculate(currentChurnMrc, prevChurnMrc)
+
+        const currentNetMrc = currentNewMrc - currentChurnMrc
+        const prevNetMrc = prevNewMrc - prevChurnMrc
+
+        const netMrcTrend = TrendHelper.calculate(currentNetMrc, prevNetMrc)
+
+        return {
+            value: currentNetMrc,
+            trend: netMrcTrend.trend,
+            percentage: netMrcTrend.percentage,
+            period,
+            newMrc: {
+                value: currentNewMrc,
+                trend: newMrcTrend.trend,
+                percentage: newMrcTrend.percentage
+            },
+            churnMrc: {
+                value: currentChurnMrc,
+                trend: churnMrcTrend.trend,
+                percentage: churnMrcTrend.percentage
+            }
+        }
+    }
+
+    /**
+     * Calculate forecast churn based on at-risk metrics
+     * Aggregates MRC from customers who are blocked, contracts ending, have high tickets, or low usage
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast churn total, details, and customer lose
+     */
+    async getForecastChurn(branchId: string, periodType: string): Promise<{
+        forecastMrc: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
+        details: { blocked: number; contractEnd: number; ticketIssues: number; lowUsage: number }
+        customerLose: { service_group: string; total_churn: number }[]
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentBlocked, currentContract, currentTicket, currentUsage, currentCustomerLose,
+            prevBlocked, prevContract, prevTicket, prevUsage
+        ] = await Promise.all([
+            this.retentionRepository.getForecastChurnBlocked(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnContract(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnTicket(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnUsage(branchId, startDate, endDate),
+            this.retentionRepository.customerLose(branchId, startDate, endDate),
+
+            this.retentionRepository.getForecastChurnBlocked(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnContract(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnTicket(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const calculateUniqueTotal = (lists: {csid: number, mrc: number}[][]) => {
+            const uniqueMap = new Map<number, number>()
+            for (const list of lists) {
+                for (const item of list) {
+                    uniqueMap.set(item.csid, item.mrc)
+                }
+            }
+            let total = 0
+            uniqueMap.forEach((mrc) => {
+                total += mrc
+            })
+            return total
+        }
+
+        const sumList = (list: {csid: number, mrc: number}[]) => list.reduce((sum, item) => sum + item.mrc, 0)
+
+        const totalCurrent = calculateUniqueTotal([currentBlocked, currentContract, currentTicket, currentUsage])
+        const totalPrev = calculateUniqueTotal([prevBlocked, prevContract, prevTicket, prevUsage])
+
+        const { trend, percentage } = TrendHelper.calculate(totalCurrent, totalPrev)
+
+        return {
+            forecastMrc: {
+                value: totalCurrent,
+                trend,
+                percentage,
+                period
+            },
+            details: {
+                blocked: sumList(currentBlocked),
+                contractEnd: sumList(currentContract),
+                ticketIssues: sumList(currentTicket),
+                lowUsage: sumList(currentUsage)
+            },
+            customerLose: currentCustomerLose.map(item => ({
+                service_group: item.service_group || 'Unknown',
+                total_churn: Number(item.total_churn)
+            }))
+        }
+    }
+
+    /**
+     * Calculate forecast net MRC
+     * Formula: Forecast New MRC - Forecast Churn MRC
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast net MRC, trend, and percentage
+     */
+    async getForecastNetMrc(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentNewMrc, prevNewMrc,
+            currentBlocked, currentContract, currentTicket, currentUsage,
+            prevBlocked, prevContract, prevTicket, prevUsage
+        ] = await Promise.all([
+            // Forecast New MRC
+            this.retentionRepository.getForecastMrc(startDate, endDate),
+            this.retentionRepository.getForecastMrc(prevStartDate, prevEndDate),
+
+            // Forecast Churn MRC current
+            this.retentionRepository.getForecastChurnBlocked(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnContract(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnTicket(branchId, startDate, endDate),
+            this.retentionRepository.getForecastChurnUsage(branchId, startDate, endDate),
+
+            // Forecast Churn MRC prev
+            this.retentionRepository.getForecastChurnBlocked(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnContract(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnTicket(branchId, prevStartDate, prevEndDate),
+            this.retentionRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const calculateUniqueTotal = (lists: {csid: number, mrc: number}[][]) => {
+            const uniqueMap = new Map<number, number>()
+            for (const list of lists) {
+                for (const item of list) {
+                    uniqueMap.set(item.csid, item.mrc)
+                }
+            }
+            let total = 0
+            uniqueMap.forEach((mrc) => {
+                total += mrc
+            })
+            return total
+        }
+
+        const currentChurnMrc = calculateUniqueTotal([currentBlocked, currentContract, currentTicket, currentUsage])
+        const prevChurnMrc = calculateUniqueTotal([prevBlocked, prevContract, prevTicket, prevUsage])
+
+        const currentNetMrc = currentNewMrc - currentChurnMrc
+        const prevNetMrc = prevNewMrc - prevChurnMrc
+
+        const { trend, percentage } = TrendHelper.calculate(currentNetMrc, prevNetMrc)
+
+        return {
+            value: currentNetMrc,
+            trend,
+            percentage,
+            period
+        }
+    }
 }

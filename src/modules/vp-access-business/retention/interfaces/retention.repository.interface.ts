@@ -9,4 +9,11 @@ export interface IRetentionRepository {
     ticket(branchId: string, startDate: string, endDate: string): Promise<number>
     usage(branchId: string, startDate: string, endDate: string): Promise<number>
     payment(branchId: string): Promise<number | null>
+
+    getForecastChurnBlocked(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]>
+    getForecastChurnContract(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]>
+    getForecastChurnTicket(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]>
+    getForecastChurnUsage(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]>
+    getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }>
+    getForecastMrc(startDate: string, endDate: string): Promise<number>
 }

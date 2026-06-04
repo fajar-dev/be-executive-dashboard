@@ -846,13 +846,13 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /vp-access-business/growth/net-mrc:
+  /vp-access-business/retention/net-mrc:
     get:
       tags:
         - VP Access Business
       summary: Get Net MRC Growth
       description: Returns actual net MRC, calculated as New MRC minus Churn MRC.
-      operationId: getGrowthNetMrc
+      operationId: getRetentionNetMrc
       security:
         - BearerAuth: []
       parameters:
@@ -1341,13 +1341,13 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /vp-access-business/growth/forecast-churn:
+  /vp-access-business/retention/forecast-churn:
     get:
       tags:
         - VP Access Business
       summary: Get forecast churn
       description: Returns forecast churn based on customers at risk.
-      operationId: getGrowthForecastChurn
+      operationId: getRetentionForecastChurn
       security:
         - BearerAuth: []
       parameters:
@@ -1382,13 +1382,13 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /vp-access-business/growth/forecast-net-mrc:
+  /vp-access-business/retention/forecast-net-mrc:
     get:
       tags:
         - VP Access Business
       summary: Get forecast net MRC
       description: Returns forecast net MRC (Forecast New MRC - Forecast Churn MRC).
-      operationId: getGrowthForecastNetMrc
+      operationId: getRetentionForecastNetMrc
       security:
         - BearerAuth: []
       parameters:

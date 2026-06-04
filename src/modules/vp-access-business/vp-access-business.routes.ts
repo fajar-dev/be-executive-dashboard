@@ -15,7 +15,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     const growthModule = new GrowthModule(nisPool, nusaprospectPool, dashboardPool)
     const growth = growthModule.controller
 
-    const retentionModule = new RetentionModule(nisPool)
+    const retentionModule = new RetentionModule(nisPool, dashboardPool, nusaprospectPool)
     const retention = retentionModule.controller
 
     const serviceQualityModule = new ServiceQualityModule(nisPool)
@@ -26,7 +26,6 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
 
     // Growth Routes
     routes.get('/growth/new-mrc', authMid, (c) => growth.getNewMrc(c))
-    routes.get('/growth/net-mrc', authMid, (c) => growth.getNetMrc(c))
     routes.get('/growth/total-mrc-ytd', authMid, (c) => growth.getTotalMrcYtd(c))
     routes.get('/growth/new-customer', authMid, (c) => growth.getNewCustomer(c))
     routes.get('/growth/revenue', authMid, (c) => growth.getRevenue(c))
@@ -39,13 +38,14 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/pipeline-stage', authMid, (c) => growth.getPipelineStage(c))
     routes.get('/growth/forecast-revenue', authMid, (c) => growth.getForecastRevenue(c))
     routes.get('/growth/forecast-mrc', authMid, (c) => growth.getForecastMrc(c))
-    routes.get('/growth/forecast-churn', authMid, (c) => growth.getForecastChurn(c))
-    routes.get('/growth/forecast-net-mrc', authMid, (c) => growth.getForecastNetMrc(c))
     routes.get('/growth/cycle', authMid, (c) => growth.getCycle(c))
     routes.get('/growth/discount', authMid, (c) => growth.getDiscount(c))
     routes.get('/growth/arpu', authMid, (c) => growth.getArpu(c))
 
     // Retention Routes
+    routes.get('/retention/net-mrc', authMid, (c) => retention.getNetMrc(c))
+    routes.get('/retention/forecast-churn', authMid, (c) => retention.getForecastChurn(c))
+    routes.get('/retention/forecast-net-mrc', authMid, (c) => retention.getForecastNetMrc(c))
     routes.get('/retention/contract-expiring', authMid, (c) => retention.getContractExpiring(c))
     routes.get('/retention/ticket', authMid, (c) => retention.getTicket(c))
     routes.get('/retention/usage', authMid, (c) => retention.getUsage(c))

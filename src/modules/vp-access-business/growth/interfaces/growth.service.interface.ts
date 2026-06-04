@@ -99,21 +99,4 @@ export interface IGrowthService {
         percentage: number
         period: string
     }>
-    getForecastChurn(branchId: string, periodType: string): Promise<{
-        forecastMrc: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
-        details: { blocked: number; contractEnd: number; ticketIssues: number; lowUsage: number }
-        customerLose: { service_group: string; total_churn: number }[]
-    }>
-    getForecastNetMrc(branchId: string, periodType: string): Promise<{
-        value: number
-        trend: 'up' | 'down'
-        percentage: number
-        period: string
-    }>
-    getNetMrc(branchId: string, periodType: string): Promise<{
-        value: number
-        trend: 'up' | 'down'
-        percentage: number
-        period: string
-    }>
 }

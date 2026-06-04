@@ -8,8 +8,8 @@ export class RetentionModule {
     public readonly service: RetentionService
     public readonly repository: RetentionRepository
 
-    constructor(nisPool: Pool) {
-        this.repository = new RetentionRepository(nisPool)
+    constructor(nisPool: Pool, dashboardPool: Pool, prospectPool: Pool) {
+        this.repository = new RetentionRepository(nisPool, dashboardPool, prospectPool)
         this.service = new RetentionService(this.repository)
         this.controller = new RetentionController(this.service)
     }
