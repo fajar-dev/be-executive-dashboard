@@ -104,4 +104,10 @@ export interface IGrowthService {
         details: { blocked: number; contractEnd: number; ticketIssues: number; lowUsage: number }
         customerLose: { service_group: string; total_churn: number }[]
     }>
+    getForecastNetMrc(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }>
 }

@@ -210,6 +210,21 @@ export class GrowthController {
     }
 
     /**
+     * Get forecast net MRC metrics
+     * Formula: Forecast New MRC - Forecast Churn MRC
+     * 
+     * @param {Context} c - Hono request context containing query params (branchId, period)
+     * @returns {Promise<Response>} JSON response containing forecast net MRC and trend
+     */
+    async getForecastNetMrc(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getForecastNetMrc(branchId, period)
+        
+        return ApiResponse.success(c, GrowthSerializer.metric(result), 'Forecast net MRC retrieved successfully')
+    }
+
+    /**
      * Get average sales cycle metrics
      * Calculates the average days taken to close won opportunities
      * 

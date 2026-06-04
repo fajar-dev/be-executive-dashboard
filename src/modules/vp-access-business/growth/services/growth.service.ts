@@ -635,4 +635,58 @@ export class GrowthService implements IGrowthService {
             }))
         }
     }
+
+    /**
+     * Calculate forecast net MRC
+     * Formula: Forecast New MRC - Forecast Churn MRC
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast net MRC, trend, and percentage
+     */
+    async getForecastNetMrc(branchId: string, periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentNewMrc, prevNewMrc,
+            currentBlocked, currentContract, currentTicket, currentUsage,
+            prevBlocked, prevContract, prevTicket, prevUsage
+        ] = await Promise.all([
+            // Forecast New MRC
+            this.growthRepository.getForecastMrc(startDate, endDate),
+            this.growthRepository.getForecastMrc(prevStartDate, prevEndDate),
+
+            // Forecast Churn MRC current
+            this.growthRepository.getForecastChurnBlocked(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnContract(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnTicket(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnUsage(branchId, startDate, endDate),
+
+            // Forecast Churn MRC prev
+            this.growthRepository.getForecastChurnBlocked(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnContract(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnTicket(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const currentChurnMrc = currentBlocked + currentContract + currentTicket + currentUsage
+        const prevChurnMrc = prevBlocked + prevContract + prevTicket + prevUsage
+
+        const currentNetMrc = currentNewMrc - currentChurnMrc
+        const prevNetMrc = prevNewMrc - prevChurnMrc
+
+        const { trend, percentage } = TrendHelper.calculate(currentNetMrc, prevNetMrc)
+
+        return {
+            value: currentNetMrc,
+            trend,
+            percentage,
+            period
+        }
+    }
 }
