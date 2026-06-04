@@ -195,6 +195,21 @@ export class GrowthController {
     }
 
     /**
+     * Get forecast churn metrics
+     * Aggregates MRC from customers at risk of churning and loss details
+     * 
+     * @param {Context} c - Hono request context containing query params (branchId, period)
+     * @returns {Promise<Response>} JSON response containing forecast churn and details
+     */
+    async getForecastChurn(c: Context) {
+        const branchId = c.req.query('branchId') || '020'
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getForecastChurn(branchId, period)
+        
+        return ApiResponse.success(c, result, 'Forecast churn retrieved successfully')
+    }
+
+    /**
      * Get average sales cycle metrics
      * Calculates the average days taken to close won opportunities
      * 

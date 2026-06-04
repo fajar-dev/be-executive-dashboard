@@ -1270,6 +1270,47 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /vp-access-business/growth/forecast-churn:
+    get:
+      tags:
+        - VP Access Business
+      summary: Get forecast churn
+      description: Returns forecast churn based on customers at risk.
+      operationId: getGrowthForecastChurn
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: branchId
+          in: query
+          description: Branch ID (e.g., '020')
+          required: false
+          schema:
+            type: string
+            default: "020"
+        - name: period
+          in: query
+          description: Period filter (last, month, quarter, year)
+          required: false
+          schema:
+            type: string
+            default: "month"
+      responses:
+        "200":
+          description: Forecast churn successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/GrowthForecastChurnResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /vp-access-business/growth/cycle:
     get:
       tags:
@@ -3224,6 +3265,37 @@ components:
         period:
           type: string
           example: "May"
+    GrowthForecastChurnResponse:
+      type: object
+      properties:
+        forecastMrc:
+          $ref: "#/components/schemas/GrowthMetricResponse"
+        details:
+          type: object
+          properties:
+            blocked:
+              type: number
+              example: 5000000
+            contractEnd:
+              type: number
+              example: 5000000
+            ticketIssues:
+              type: number
+              example: 3000000
+            lowUsage:
+              type: number
+              example: 2000000
+        customerLose:
+          type: array
+          items:
+            type: object
+            properties:
+              service_group:
+                type: string
+                example: "Dedicated"
+              total_churn:
+                type: integer
+                example: 5
     GrowthRevenueResponseItem:
       type: object
       properties:

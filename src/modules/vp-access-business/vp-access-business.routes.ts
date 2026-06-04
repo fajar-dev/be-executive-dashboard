@@ -38,6 +38,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/pipeline-stage', authMid, (c) => growth.getPipelineStage(c))
     routes.get('/growth/forecast-revenue', authMid, (c) => growth.getForecastRevenue(c))
     routes.get('/growth/forecast-mrc', authMid, (c) => growth.getForecastMrc(c))
+    routes.get('/growth/forecast-churn', authMid, (c) => growth.getForecastChurn(c))
     routes.get('/growth/cycle', authMid, (c) => growth.getCycle(c))
     routes.get('/growth/discount', authMid, (c) => growth.getDiscount(c))
     routes.get('/growth/arpu', authMid, (c) => growth.getArpu(c))

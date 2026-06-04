@@ -576,4 +576,63 @@ export class GrowthService implements IGrowthService {
             period
         }
     }
+
+    /**
+     * Calculate forecast churn based on at-risk metrics
+     * Aggregates MRC from customers who are blocked, contracts ending, have high tickets, or low usage
+     * 
+     * @param {string} branchId - The branch identifier
+     * @param {string} periodType - The period to query
+     * @returns {Promise<any>} Object containing forecast churn total, details, and customer lose
+     */
+    async getForecastChurn(branchId: string, periodType: string): Promise<{
+        forecastMrc: { value: number; trend: 'up' | 'down'; percentage: number; period: string }
+        details: { blocked: number; contractEnd: number; ticketIssues: number; lowUsage: number }
+        customerLose: { service_group: string; total_churn: number }[]
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [
+            currentBlocked, currentContract, currentTicket, currentUsage, currentCustomerLose,
+            prevBlocked, prevContract, prevTicket, prevUsage
+        ] = await Promise.all([
+            this.growthRepository.getForecastChurnBlocked(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnContract(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnTicket(branchId, startDate, endDate),
+            this.growthRepository.getForecastChurnUsage(branchId, startDate, endDate),
+            this.growthRepository.getCustomerLoseByServiceGroup(branchId, startDate, endDate),
+
+            this.growthRepository.getForecastChurnBlocked(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnContract(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnTicket(branchId, prevStartDate, prevEndDate),
+            this.growthRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
+        ])
+
+        const totalCurrent = currentBlocked + currentContract + currentTicket + currentUsage
+        const totalPrev = prevBlocked + prevContract + prevTicket + prevUsage
+
+        // "down" is conceptually better for churn, but standard TrendHelper sets up as better if val > prev
+        // Since churn is bad, lower is better. We will let the frontend handle semantics,
+        // but trend math usually: if (current > prev) -> up
+        const { trend, percentage } = TrendHelper.calculate(totalCurrent, totalPrev)
+
+        return {
+            forecastMrc: {
+                value: totalCurrent,
+                trend,
+                percentage,
+                period
+            },
+            details: {
+                blocked: currentBlocked,
+                contractEnd: currentContract,
+                ticketIssues: currentTicket,
+                lowUsage: currentUsage
+            },
+            customerLose: currentCustomerLose.map(item => ({
+                service_group: item.service_group || 'Unknown',
+                total_churn: Number(item.total_churn)
+            }))
+        }
+    }
 }
