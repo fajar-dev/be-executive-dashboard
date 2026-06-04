@@ -638,14 +638,15 @@ export class GrowthRepository implements IGrowthRepository {
         return Number(rows[0]?.value || 0)
     }
 
-    async getForecastChurnBlocked(branchId: string, startDate: string, endDate: string): Promise<number> {
+    async getForecastChurnBlocked(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                SUM((cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
+                cs.CustServId as csid,
+                ((cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
                     cs.InvoiceType != 8,
                     itm.Month,
                     1
-                )) mrc
+                )) as mrc
             FROM CustomerServices cs
             LEFT JOIN Customer c ON
                 c.CustId = cs.CustId
@@ -656,17 +657,18 @@ export class GrowthRepository implements IGrowthRepository {
             AND (cs.CustBlockDate + INTERVAL 30 DAY) > ?`,
             [branchId, endDate]
         )
-        return Number(rows[0]?.mrc || 0)
+        return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
-    async getForecastChurnContract(branchId: string, startDate: string, endDate: string): Promise<number> {
+    async getForecastChurnContract(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                SUM((t.Subscription - CAST(t.Discount AS UNSIGNED)) / IF(
+                t.csid,
+                ((t.Subscription - CAST(t.Discount AS UNSIGNED)) / IF(
                     t.InvoiceType != 8,
                     itm.Month,
                     1
-                )) mrc
+                )) as mrc
             FROM (
                 SELECT 
                     dc.CustServId csid,
@@ -713,22 +715,23 @@ export class GrowthRepository implements IGrowthRepository {
             AND DATE(t.expired_date) <= ?`,
             [branchId, startDate, endDate]
         )
-        return Number(rows[0]?.mrc || 0)
+        return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
-    async getForecastChurnTicket(branchId: string, startDate: string, endDate: string): Promise<number> {
+    async getForecastChurnTicket(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                SUM(t.mrc) mrc
+                t.csid,
+                t.mrc
             FROM (
                 SELECT
-                    t.CustServId csid,
+                    t.CustServId as csid,
                     COUNT(t.TtsId) total_ticket,
-                    (cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
+                    ((cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
                         cs.InvoiceType != 8,
                         itm.Month,
                         1
-                    ) mrc
+                    )) as mrc
                 FROM Tts t
                 LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
                 LEFT JOIN Customer c ON c.CustId = cs.CustId
@@ -746,17 +749,18 @@ export class GrowthRepository implements IGrowthRepository {
             WHERE t.total_ticket >= 2`,
             [branchId, startDate, endDate]
         )
-        return Number(rows[0]?.mrc || 0)
+        return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
-    async getForecastChurnUsage(branchId: string, startDate: string, endDate: string): Promise<number> {
+    async getForecastChurnUsage(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
-                SUM((cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
+                t.csid,
+                ((cs.Subscription - CAST(cs.Discount AS UNSIGNED)) / IF(
                     cs.InvoiceType != 8,
                     itm.Month,
                     1
-                )) mrc
+                )) as mrc
             FROM (
                 SELECT 
                     td.csid,
@@ -778,7 +782,7 @@ export class GrowthRepository implements IGrowthRepository {
             AND c.BranchId = ?`,
             [startDate, endDate, branchId]
         )
-        return Number(rows[0]?.mrc || 0)
+        return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
     async getCustomerLoseByServiceGroup(branchId: string, startDate: string, endDate: string): Promise<{ service_group: string, total_churn: number }[]> {

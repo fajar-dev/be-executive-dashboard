@@ -608,12 +608,25 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
         ])
 
-        const totalCurrent = currentBlocked + currentContract + currentTicket + currentUsage
-        const totalPrev = prevBlocked + prevContract + prevTicket + prevUsage
+        const calculateUniqueTotal = (lists: {csid: number, mrc: number}[][]) => {
+            const uniqueMap = new Map<number, number>()
+            for (const list of lists) {
+                for (const item of list) {
+                    uniqueMap.set(item.csid, item.mrc)
+                }
+            }
+            let total = 0
+            uniqueMap.forEach((mrc) => {
+                total += mrc
+            })
+            return total
+        }
 
-        // "down" is conceptually better for churn, but standard TrendHelper sets up as better if val > prev
-        // Since churn is bad, lower is better. We will let the frontend handle semantics,
-        // but trend math usually: if (current > prev) -> up
+        const sumList = (list: {csid: number, mrc: number}[]) => list.reduce((sum, item) => sum + item.mrc, 0)
+
+        const totalCurrent = calculateUniqueTotal([currentBlocked, currentContract, currentTicket, currentUsage])
+        const totalPrev = calculateUniqueTotal([prevBlocked, prevContract, prevTicket, prevUsage])
+
         const { trend, percentage } = TrendHelper.calculate(totalCurrent, totalPrev)
 
         return {
@@ -624,10 +637,10 @@ export class GrowthService implements IGrowthService {
                 period
             },
             details: {
-                blocked: currentBlocked,
-                contractEnd: currentContract,
-                ticketIssues: currentTicket,
-                lowUsage: currentUsage
+                blocked: sumList(currentBlocked),
+                contractEnd: sumList(currentContract),
+                ticketIssues: sumList(currentTicket),
+                lowUsage: sumList(currentUsage)
             },
             customerLose: currentCustomerLose.map(item => ({
                 service_group: item.service_group || 'Unknown',
@@ -674,8 +687,22 @@ export class GrowthService implements IGrowthService {
             this.growthRepository.getForecastChurnUsage(branchId, prevStartDate, prevEndDate)
         ])
 
-        const currentChurnMrc = currentBlocked + currentContract + currentTicket + currentUsage
-        const prevChurnMrc = prevBlocked + prevContract + prevTicket + prevUsage
+        const calculateUniqueTotal = (lists: {csid: number, mrc: number}[][]) => {
+            const uniqueMap = new Map<number, number>()
+            for (const list of lists) {
+                for (const item of list) {
+                    uniqueMap.set(item.csid, item.mrc)
+                }
+            }
+            let total = 0
+            uniqueMap.forEach((mrc) => {
+                total += mrc
+            })
+            return total
+        }
+
+        const currentChurnMrc = calculateUniqueTotal([currentBlocked, currentContract, currentTicket, currentUsage])
+        const prevChurnMrc = calculateUniqueTotal([prevBlocked, prevContract, prevTicket, prevUsage])
 
         const currentNetMrc = currentNewMrc - currentChurnMrc
         const prevNetMrc = prevNewMrc - prevChurnMrc
