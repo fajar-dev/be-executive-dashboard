@@ -1,5 +1,5 @@
 import { CacheHelper } from '../core/helpers/cache'
-import { redisClient } from '../config/redis.db'
+import { redisClient } from '../config/redis'
 
 /**
  * Daily cache prefill scheduler

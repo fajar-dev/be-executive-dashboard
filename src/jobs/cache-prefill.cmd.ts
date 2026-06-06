@@ -1,4 +1,4 @@
-import { redisClient, redisCheckConnection } from '../config/redis.db'
+import { redisClient, redisCheckConnection } from '../config/redis'
 import { invalidateAllCache } from './cache-prefill.scheduler'
 
 /**

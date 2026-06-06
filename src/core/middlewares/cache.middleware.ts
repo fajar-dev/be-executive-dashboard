@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { CacheHelper } from '../helpers/cache'
-import { redisClient } from '../../config/redis.db'
+import { redisClient } from '../../config/redis'
 
 /**
  * Create a Hono cache middleware for Redis-based response caching

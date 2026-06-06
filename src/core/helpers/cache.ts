@@ -1,4 +1,4 @@
-import { redisClient } from '../../config/redis.db'
+import { redisClient } from '../../config/redis'
 import { config } from '../../config/config'
 
 /**

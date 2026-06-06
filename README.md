@@ -10,6 +10,7 @@ REST API backend for the Nusanet Executive Dashboard. Built with **Bun** + **Hon
 | Framework | [Hono](https://hono.dev) |
 | Language | TypeScript |
 | Database | MySQL 8 (via `mysql2`) |
+| Cache | Redis (via `ioredis`) |
 | Auth | JWT + Google OAuth + IS5 |
 | Validation | Zod (`@hono/zod-validator`) |
 | API Docs | Swagger UI (`@hono/swagger-ui`) |
@@ -18,7 +19,8 @@ REST API backend for the Nusanet Executive Dashboard. Built with **Bun** + **Hon
 
 - [Bun](https://bun.sh) >= 1.0
 - MySQL 8.0
-- Access to NIS & Dashboard databases
+- Redis >= 6.0
+- Access to NIS, NusaFiber, NusaProspect & Dashboard databases
 
 ## Getting Started
 
@@ -69,6 +71,21 @@ NUSAFIBER_DB_USER=
 NUSAFIBER_DB_PASSWORD=
 NUSAFIBER_DB_NAME=nusafiber
 NUSAFIBER_DB_POOL=10
+
+# NusaProspect DB (read-only)
+NUSAPROSPECT_DB_HOST=
+NUSAPROSPECT_DB_PORT=3306
+NUSAPROSPECT_DB_USER=
+NUSAPROSPECT_DB_PASS=
+NUSAPROSPECT_DB_NAME=bis_tenant_nusanet
+NUSAPROSPECT_DB_POOL=10
+
+# Redis Cache
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+REDIS_CACHE_TTL=86400           # 24 hours in seconds
 
 # Google OAuth
 GOOGLE_CLIENT_ID=
@@ -122,19 +139,54 @@ Base path: `/api`
 
 > `period` defaults to the current month (YYYYMM format, e.g. `202604`).
 
+## Redis Cache
+
+Snapshot data from external databases (NIS, NusaFiber, NusaProspect) is cached in Redis with a configurable TTL (default: 24 hours).
+
+### How it works
+
+1. **Cache middleware** intercepts GET requests and checks Redis first
+2. On **MISS**, the request proceeds to the handler; the response is cached automatically
+3. On **HIT**, the cached response is returned directly (skipping DB queries)
+4. A **daily scheduler** invalidates all cache at 00:01 so fresh data is fetched on the next request
+5. If Redis is unavailable, the app continues without caching (graceful degradation)
+
+### Cached endpoints
+
+- All `GET /api/direksi/general/*` endpoints
+- All `GET /api/vp-access-business/growth/*` endpoints
+- All `GET /api/vp-access-business/retention/*` endpoints
+- All `GET /api/vp-access-business/service-quality/*` endpoints
+- `GET /api/vp-access-business/setting/revenue`
+
+### Not cached
+
+- `GET /setting/target`
+- `GET /setting/target/log`
+- `POST /setting/target`
+
+### Manual cache invalidation
+
+```bash
+bun run cache-prefill
+```
+
 ## Project Structure
 
 ```
 src/
-├── config/           # Database connections & app config
+├── config/           # Database & Redis connections, app config
 ├── core/
 │   ├── exceptions/   # Custom exception classes
-│   ├── helpers/      # Auth, date, response, formatter utilities
-│   └── middlewares/  # JWT auth middleware
+│   ├── helpers/      # Auth, date, response, cache, formatter utilities
+│   └── middlewares/  # JWT auth & cache middlewares
+├── jobs/             # Scheduled jobs (sync, cache prefill)
 ├── modules/
 │   ├── auth/         # Authentication (IS5, Google, JWT)
-│   ├── general/      # Dashboard metrics & serializers
+│   ├── direksi/      # Director-level dashboard (general metrics)
+│   ├── vp-access-business/  # VP Access Business (growth, retention, service quality, setting)
 │   ├── additional/   # Utility endpoints (period)
+│   ├── nusawork/     # NusaWork integration
 │   ├── user/         # User service & serializer
 │   └── is5/          # IS5 external auth integration
 ├── routes/

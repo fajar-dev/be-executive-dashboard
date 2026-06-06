@@ -10,7 +10,7 @@ import { nusafiberCheckConnection } from './config/nusafiber.db'
 import { swaggerUI } from '@hono/swagger-ui'
 import { serveStatic } from 'hono/bun'
 import { nusaprospectCheckConnection } from './config/nusaprospect.db'
-import { redisCheckConnection } from './config/redis.db'
+import { redisCheckConnection } from './config/redis'
 import { startCacheScheduler } from './jobs/cache-prefill.scheduler'
 
 // Check Database Connections
