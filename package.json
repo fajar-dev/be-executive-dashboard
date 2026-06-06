@@ -3,7 +3,8 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "build": "bun build --minify --outfile dist/index.js --target bun src/index.ts",
-    "sync-executive": "bun run src/jobs/sync-executive.cmd.ts"
+    "sync-executive": "bun run src/jobs/sync-executive.cmd.ts",
+    "cache-prefill": "bun run src/jobs/cache-prefill.cmd.ts"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.6.1",
@@ -11,6 +12,7 @@
     "axios": "^1.15.2",
     "google-auth-library": "^10.6.2",
     "hono": "^4.12.14",
+    "ioredis": "^5.11.1",
     "mysql2": "^3.22.2"
   },
   "devDependencies": {
