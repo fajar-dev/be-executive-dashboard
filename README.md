@@ -4,16 +4,16 @@ REST API backend for the Nusanet Executive Dashboard. Built with **Bun** + **Hon
 
 ## Tech Stack
 
-| Layer | Library |
-|---|---|
-| Runtime | [Bun](https://bun.sh) |
-| Framework | [Hono](https://hono.dev) |
-| Language | TypeScript |
-| Database | MySQL 8 (via `mysql2`) |
-| Cache | Redis (via `ioredis`) |
-| Auth | JWT + Google OAuth + IS5 |
-| Validation | Zod (`@hono/zod-validator`) |
-| API Docs | Swagger UI (`@hono/swagger-ui`) |
+| Layer      | Library                         |
+| ---------- | ------------------------------- |
+| Runtime    | [Bun](https://bun.sh)           |
+| Framework  | [Hono](https://hono.dev)        |
+| Language   | TypeScript                      |
+| Database   | MySQL 8 (via `mysql2`)          |
+| Cache      | Redis (via `ioredis`)           |
+| Auth       | JWT + Google OAuth + IS5        |
+| Validation | Zod (`@hono/zod-validator`)     |
+| API Docs   | Swagger UI (`@hono/swagger-ui`) |
 
 ## Prerequisites
 
@@ -107,37 +107,6 @@ JWT_REFRESH_SECRET=
 ## API Endpoints
 
 Base path: `/api`
-
-### Auth
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/auth/login` | — | Login via IS5 credentials |
-| POST | `/auth/google` | — | Login via Google OAuth token |
-| POST | `/auth/refresh` | — | Refresh access token |
-| GET | `/auth/me` | Bearer | Get current user profile |
-
-### General (all require Bearer token)
-
-| Method | Path | Query Params | Description |
-|---|---|---|---|
-| GET | `/general/noc` | — | NOC status metrics |
-| GET | `/general/revenue` | `period` (YYYYMM) | Revenue summary |
-| GET | `/general/revenue/period` | `startPeriod`, `endPeriod` | Revenue across date range |
-| GET | `/general/revenue/monthly` | `period` | Monthly revenue trend |
-| GET | `/general/isp` | `period` | ISP subscriber stats |
-| GET | `/general/nusawork` | `period` | NusaWork HR stats |
-| GET | `/general/homeconnect` | `period` | HomeConnect stats |
-| GET | `/general/alerts` | — | Active alerts |
-| GET | `/general/health` | `period` | Health metrics |
-
-### Additional
-
-| Method | Path | Query Params | Description |
-|---|---|---|---|
-| GET | `/additional/period` | `period` (YYYYMM) | Period breakdown details |
-
-> `period` defaults to the current month (YYYYMM format, e.g. `202604`).
 
 ## Redis Cache
 

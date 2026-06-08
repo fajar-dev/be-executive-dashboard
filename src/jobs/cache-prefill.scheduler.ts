@@ -1,5 +1,6 @@
 import { CacheHelper } from '../core/helpers/cache'
 import { redisClient } from '../config/redis'
+import { config } from '../config/config'
 
 /**
  * Daily cache prefill scheduler
@@ -37,6 +38,11 @@ export async function invalidateAllCache(): Promise<void> {
  * 3. The fresh result is then cached for another 24 hours via the cache middleware
  */
 export function startCacheScheduler(): void {
+    if (!config.redis.enabled) {
+        console.log('[CachePrefill] Cache disabled via CACHE_ENABLED env, scheduler skipped')
+        return
+    }
+
     if (redisClient.status !== 'ready') {
         console.warn('[CachePrefill] Redis not connected, scheduler disabled')
         return

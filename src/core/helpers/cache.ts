@@ -34,6 +34,8 @@ export class CacheHelper {
      * @returns {Promise<T | null>} Parsed cached data or null if miss
      */
     static async get<T>(key: string): Promise<T | null> {
+        if (!config.redis.enabled) return null
+
         try {
             const data = await redisClient.get(key)
             if (!data) return null
@@ -51,6 +53,8 @@ export class CacheHelper {
      * @param {number} ttl - Time-to-live in seconds (default: from config)
      */
     static async set(key: string, data: any, ttl?: number): Promise<void> {
+        if (!config.redis.enabled) return
+
         try {
             const expiry = ttl || config.redis.ttl
             await redisClient.set(key, JSON.stringify(data), 'EX', expiry)
@@ -89,6 +93,10 @@ export class CacheHelper {
      * @returns {Promise<T>} Cached or freshly-fetched data
      */
     static async wrap<T>(key: string, fetcher: () => Promise<T>, ttl?: number): Promise<T> {
+        if (!config.redis.enabled) {
+            return fetcher()
+        }
+
         const cached = await this.get<T>(key)
         if (cached !== null) {
             return cached

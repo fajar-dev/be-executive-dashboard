@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
 import { CacheHelper } from '../helpers/cache'
 import { redisClient } from '../../config/redis'
+import { config } from '../../config/config'
 
 /**
  * Create a Hono cache middleware for Redis-based response caching
@@ -11,8 +12,8 @@ import { redisClient } from '../../config/redis'
  */
 export const cacheMiddleware = (prefix: string): MiddlewareHandler => {
     return async (c, next) => {
-        // Skip caching if Redis is not connected
-        if (redisClient.status !== 'ready') {
+        // Skip caching if disabled via env or Redis is not connected
+        if (!config.redis.enabled || redisClient.status !== 'ready') {
             await next()
             return
         }

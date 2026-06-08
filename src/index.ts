@@ -20,11 +20,15 @@ nusafiberCheckConnection()
 nusaprospectCheckConnection()
 
 // Check Redis Connection & Start Cache Scheduler
-redisCheckConnection().then((connected) => {
-    if (connected) {
-        startCacheScheduler()
-    }
-})
+if (config.redis.enabled) {
+    redisCheckConnection().then((connected) => {
+        if (connected) {
+            startCacheScheduler()
+        }
+    })
+} else {
+    console.log('Cache disabled')
+}
 
 const app = new Hono()
 
