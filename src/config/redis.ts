@@ -8,6 +8,7 @@ import { config } from './config'
 export const redisClient = new Redis({
     host: config.redis.host,
     port: config.redis.port,
+    username: config.redis.username,
     password: config.redis.password || undefined,
     db: config.redis.db,
     maxRetriesPerRequest: 3,
