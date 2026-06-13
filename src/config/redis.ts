@@ -8,8 +8,7 @@ import { config } from './config'
 export const redisClient = new Redis({
     host: config.redis.host,
     port: config.redis.port,
-    username: config.redis.username,
-    password: config.redis.password || undefined,
+    password: config.redis.password,
     db: config.redis.db,
     maxRetriesPerRequest: 3,
     retryStrategy(times: number) {
@@ -33,7 +32,7 @@ export async function redisCheckConnection(): Promise<boolean> {
         return true
     } catch (error) {
         console.error('Redis connection FAILED:', error)
-        console.warn('⚠️  Application will continue without cache')
+        console.warn('Application will continue without cache')
         return false
     }
 }

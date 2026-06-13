@@ -64,7 +64,6 @@ export const config = {
         enabled: (process.env.CACHE_ENABLED || 'true').toLowerCase() === 'true',
         host: process.env.REDIS_HOST || '127.0.0.1',
         port: Number(process.env.REDIS_PORT) || 6379,
-        username: process.env.REDIS_USERNAME || '',
         password: process.env.REDIS_PASSWORD || '',
         db: Number(process.env.REDIS_DB) || 0,
         ttl: Number(process.env.REDIS_CACHE_TTL) || 86400,
