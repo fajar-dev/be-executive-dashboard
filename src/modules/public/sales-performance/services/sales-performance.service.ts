@@ -32,7 +32,7 @@ export class SalesPerformanceService implements ISalesPerformanceService {
 
         const daysInMonth = new Date(year, month, 0).getDate()
 
-        return staffList.map(staff => {
+        const results = staffList.map(staff => {
             const dayMap = activationMap.get(staff.employeeId) || new Map()
             const data: number[] = []
 
@@ -48,6 +48,13 @@ export class SalesPerformanceService implements ISalesPerformanceService {
                 organizationName: staff.organizationName,
                 data
             }
+        })
+
+        // Sort by total activations descending
+        return results.sort((a, b) => {
+            const totalA = a.data.reduce((sum, v) => sum + v, 0)
+            const totalB = b.data.reduce((sum, v) => sum + v, 0)
+            return totalB - totalA
         })
     }
 
