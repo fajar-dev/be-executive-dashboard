@@ -18,15 +18,15 @@ export const setupDireksiRoutes = (authMid: MiddlewareHandler) => {
     const cacheMid = cacheMiddleware('direksi')
 
     // General Routes
-    routes.get('/general/noc', authMid, cacheMid, (c) => general.getNocStatus(c))
+    routes.get('/general/noc', authMid, (c) => general.getNocStatus(c))
     routes.get('/general/revenue', authMid, cacheMid, (c) => general.getRevenueStats(c))
     routes.get('/general/revenue/period', authMid, cacheMid, (c) => general.getRevenuePeriod(c))
     routes.get('/general/revenue/monthly', authMid, cacheMid, (c) => general.getRevenueMonthly(c))
     routes.get('/general/isp', authMid, cacheMid, (c) => general.getIspStats(c))
     routes.get('/general/nusawork', authMid, cacheMid, (c) => general.getNusaWorkStats(c))
     routes.get('/general/homeconnect', authMid, cacheMid, (c) => general.getHomeConnectStats(c))
-    routes.get('/general/alerts', cacheMid, (c) => general.getAlerts(c))
-    routes.get('/general/health', authMid, cacheMid, (c) => general.getHealthMetrics(c))
+    routes.get('/general/alerts', (c) => general.getAlerts(c))
+    routes.get('/general/health', authMid, (c) => general.getHealthMetrics(c))
 
     return routes
 }

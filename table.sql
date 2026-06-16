@@ -47,3 +47,21 @@ CREATE TABLE `vp_access_business_target_log` (
     FOREIGN KEY (`created_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `sales_home` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `employee_id` varchar(255) NOT NULL UNIQUE,
+    `name` varchar(255) NOT NULL,
+    `email` varchar(255) NOT NULL UNIQUE,
+    `photo_profile` varchar(255) NULL,
+    `job_position` varchar(255) NULL,
+    `organization_name` varchar(255) NULL,
+    `job_level` varchar(255) NULL,
+    `branch_id` varchar(255) NULL,
+    `manager_id` int(11) NULL,
+    `status` varchar(255) NULL,
+    `created_at` timestamp NULL DEFAULT current_timestamp(),
+    `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`manager_id`) REFERENCES `sales_home`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

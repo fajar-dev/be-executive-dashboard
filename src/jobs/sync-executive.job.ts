@@ -1,5 +1,6 @@
 import { NusaworkService } from '../modules/nusawork/nusawork.service'
 import { type IUserRepository } from '../modules/user/user.repository.interface'
+import { ISalesHomeRepository } from '../modules/public/sales-performance/interfaces/sales-home.repository.interface'
 
 const nusaworkService = new NusaworkService()
 
@@ -37,4 +38,28 @@ export async function syncAdminJob(userRepository: IUserRepository): Promise<voi
     )
 
     console.log(`[SyncAdmin] Synced ${admins.length} admins`)
+}
+
+export async function syncSalesHomeJob(salesHomeRepository: ISalesHomeRepository): Promise<void> {
+    console.log('[SyncSalesHome] Starting sync...')
+
+    const salesHome = await nusaworkService.getSalesHome()
+
+    await salesHomeRepository.upsert(
+        salesHome.map(s => ({
+            id: s.id,
+            employeeId: s.employeeId,
+            name: s.name,
+            email: s.email,
+            photoProfile: s.photoProfile,
+            jobPosition: s.jobPosition,
+            organizationName: s.organizationName,
+            jobLevel: s.jobLevel,
+            branchId: s.branchId,
+            managerId: s.managerId,
+            status: s.status,
+        }))
+    )
+
+    console.log(`[SyncSalesHome] Synced ${salesHome.length} sales home`)
 }

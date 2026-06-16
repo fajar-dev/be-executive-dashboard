@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { config } from '../../config/config'
-import { INusaworkService, NusaworkEmployee } from './nusawork.service.interface'
+import { INusaworkService, NusaworkEmployee, NusaworkSalesHome } from './nusawork.service.interface'
 
 export class NusaworkService implements INusaworkService {
     private readonly http: AxiosInstance = axios.create({
@@ -79,5 +79,62 @@ export class NusaworkService implements INusaworkService {
                 photoProfile: emp.photo_profile,
                 jobPosition: emp.job_position,
             }))
+    }
+
+    /**
+     * Ambil daftar account manager digital business dari Nusawork.
+     */
+    async getSalesHome(): Promise<NusaworkSalesHome[]> {
+        const employees = await this.getEmployees()
+        const employeeMap = new Map<string, any>(employees.map((e: any) => [e.user_id, e]))
+
+        // Ambil account manager
+        const accountManagers = employees.filter((emp: any) => 
+            emp.job_position && emp.job_position.includes('Account Manager')
+        )
+        
+        const relevantEmployees = new Map<string, any>()
+
+        // Traverse upwards until VP Internet Access Home
+        for (const am of accountManagers) {
+            let current = am
+            const path: any[] = []
+            let isValidPath = false
+            while (current) {
+                // If we hit someone already in the valid set, this whole branch is valid
+                if (relevantEmployees.has(current.user_id)) {
+                    isValidPath = true
+                    break
+                }
+                if (current.job_position === 'VP Internet Access Home') {
+                    isValidPath = true
+                    break
+                }
+                path.push(current)
+                // Jika sampai ke atas (self-reporting or no manager) dan belum ketemu VP -> Invalid
+                if (!current.id_report_to_value || current.id_report_to_value === current.user_id) {
+                    break
+                }
+                // Move up
+                current = employeeMap.get(current.id_report_to_value)
+            }
+            if (isValidPath) {
+                path.forEach(emp => relevantEmployees.set(emp.user_id, emp))
+            }
+        }
+
+        return Array.from(relevantEmployees.values()).map((emp: any) => ({
+            id: emp.user_id,
+            employeeId: emp.employee_id,
+            name: emp.full_name,
+            email: emp.email,
+            photoProfile: emp.photo_profile,
+            jobPosition: emp.job_position,
+            organizationName: emp.organization_name,
+            jobLevel: emp.job_level,
+            branchId: emp.branch_id,
+            managerId: emp.id_report_to_value,
+            status: emp.status_join,
+        }))        
     }
 }

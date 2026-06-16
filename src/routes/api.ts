@@ -9,6 +9,7 @@ import { AuthController } from '../modules/auth/auth.controller'
 import { GoogleLoginSchema, LoginSchema, RefreshTokenSchema } from '../modules/auth/validators/auth.validator'
 import { setupDireksiRoutes } from '../modules/direksi/direksi.routes'
 import { setupVpAccessBusinessRoutes } from '../modules/vp-access-business/vp-access-business.routes'
+import { setupPublicRoutes } from '../modules/public/public.routes'
 import { AdditionalController } from '../modules/additional/additional.controller'
 import { authMiddleware } from '../core/middlewares/auth.middleware'
 import { validationHook } from '../core/helpers/validator'
@@ -36,6 +37,9 @@ routes.route('direksi/', setupDireksiRoutes(authMid))
 
 // VP Access Business Routes
 routes.route('vp-access-business/', setupVpAccessBusinessRoutes(authMid))
+
+// Public Routes
+routes.route('public/', setupPublicRoutes())
 
 // Additional Routes
 routes.get('/additional/period', (c) => additional.getPeriod(c))
