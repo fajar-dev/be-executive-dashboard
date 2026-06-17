@@ -58,11 +58,21 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                 COUNT(cs.CustServId) AS total
             FROM CustomerServices cs
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
+            LEFT JOIN (
+                SELECT cscsl_inner.custServId, cscsl_inner.prevStatus
+                FROM CustomerServiceChangeStatusLog cscsl_inner
+                INNER JOIN (
+                    SELECT custServId, MIN(ai) AS minAi
+                    FROM CustomerServiceChangeStatusLog
+                    GROUP BY custServId
+                ) oldest ON oldest.custServId = cscsl_inner.custServId AND oldest.minAi = cscsl_inner.ai
+            ) cscsl ON cscsl.custServId = cs.CustServId
             WHERE s.ServiceCategory = 'access_home'
                 AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
                 AND cs.CustStatus = 'AC'
                 AND cs.CustActivationDate BETWEEN ? AND ?
                 AND cs.SalesId IN (?)
+                AND (cscsl.custServId IS NULL OR cscsl.prevStatus != 'AC')
             GROUP BY cs.SalesId, DAY(cs.CustActivationDate)`,
             [startDate, endDate, employeeIds]
         )
