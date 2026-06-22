@@ -69,6 +69,7 @@ export class NusaworkService implements INusaworkService {
                 emp.employee_id === '0202589' ||
                 emp.employee_id === '0201325' || 
                 emp.employee_id === '0201001' ||
+                emp.employee_id === '0202478' ||
                 emp.organization_name === 'BIS'
             )
             .map((emp: any): NusaworkEmployee => ({
