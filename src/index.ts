@@ -46,6 +46,9 @@ app.route('/api', api)
 app.get('/api/swagger.yaml', serveStatic({ path: './swagger.yaml' }))
 app.get('/api/docs', swaggerUI({ url: '/api/swagger.yaml' }))
 
+// Static File Serving (uploads)
+app.use('/uploads/*', serveStatic({ root: './' }))
+
 
 // Global Error Handler
 app.onError((err, c) => {

@@ -13,6 +13,8 @@ import { setupPublicRoutes } from '../modules/public/public.routes'
 import { AdditionalController } from '../modules/additional/additional.controller'
 import { authMiddleware } from '../core/middlewares/auth.middleware'
 import { validationHook } from '../core/helpers/validator'
+import { feedbackController } from '../modules/feedback/feedback.module'
+import { StoreFeedbackValidator } from '../modules/feedback/validators/feedback.validator'
 const routes = new Hono()
 
 // Dependency Injection
@@ -43,5 +45,9 @@ routes.route('public/', setupPublicRoutes())
 
 // Additional Routes
 routes.get('/additional/period', (c) => additional.getPeriod(c))
+
+// Feedback
+routes.get("/feedback", authMid, (c) => feedbackController.index(c))
+routes.post("/feedback", authMid, zValidator("form", StoreFeedbackValidator, validationHook), (c) => feedbackController.store(c))
 
 export default routes
