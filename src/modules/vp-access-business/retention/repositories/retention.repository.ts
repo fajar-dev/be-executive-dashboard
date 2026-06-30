@@ -60,42 +60,94 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<{rate: number, churn: number, active: number}>} Rate and raw counts
      */
     async churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, churn: number, active: number }> {
+        const date = new Date(startDate)
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const year2 = String(date.getFullYear()).slice(-2)
+        const year4 = String(date.getFullYear())
+
+        // Check if querying the current month (snapshot not yet available)
+        const now = new Date()
+        const isCurrentMonth = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
+
+        if (isCurrentMonth) {
+            // Use live CustomerServices for the current running period
+            const [rows] = await this.nisDb.query<any[]>(
+                `SELECT
+                        *,
+                        (na.total_churn / ac.total_active) * 100 churn_rate
+                    FROM (
+                        SELECT
+                            COUNT(1) total_active
+                        FROM CustomerServices cs
+                        LEFT JOIN Customer c ON
+                            c.CustId = cs.CustId
+                        LEFT JOIN Services s ON
+                            s.ServiceId = cs.ServiceId
+                        WHERE cs.CustStatus IN ('AC', 'FR')
+                        AND s.ServiceCategory = 'access_business'
+                        AND c.BranchId = ?
+                    ) ac
+                    JOIN (
+                        SELECT
+                            COUNT(1) total_churn
+                        FROM CustomerServices cs
+                        LEFT JOIN Customer c ON
+                            c.CustId = cs.CustId
+                        LEFT JOIN Services s ON
+                            s.ServiceId = cs.ServiceId
+                        WHERE cs.CustStatus IN ('NA', 'BL')
+                        AND s.ServiceCategory = 'access_business'
+                        AND c.BranchId = ?
+                        AND (
+                            (YEAR(cs.CustUnregDate) = ? AND MONTH(cs.CustUnregDate) = ?)
+                            OR (YEAR(cs.CustBlockDate) = ? AND MONTH(cs.CustBlockDate) = ?)
+                        )
+                    ) na
+                    `,
+                [branchId, branchId, year4, month, year4, month]
+            )
+            return {
+                rate: Number(rows[0]?.churn_rate || 0),
+                churn: Number(rows[0]?.total_churn || 0),
+                active: Number(rows[0]?.total_active || 0)
+            }
+        }
+
+        // Use snapshot for past periods
+        const snapshotPeriod = `${month}${year2}`
+
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     *,
                     (na.total_churn / ac.total_active) * 100 churn_rate
                 FROM (
                     SELECT
-                        COUNT(1) total_active
-                    FROM CustomerServices cs
+                        COUNT(DISTINCT cse.CustServId) total_active
+                    FROM CustomerServiceExcerpt cse
                     LEFT JOIN Customer c ON
-                        c.CustId = cs.CustId
+                        c.CustId = cse.CustId
                     LEFT JOIN Services s ON
-                        s.ServiceId = cs.ServiceId
+                        s.ServiceId = cse.ServiceId
                     WHERE s.ServiceCategory = 'access_business'
                     AND c.BranchId = ?
-                    AND (cs.CustRegDate <= ?)
-                    AND (cs.CustUnregDate IS NULL OR cs.CustUnregDate >= ?)
-                    AND (cs.CustBlockDate IS NULL OR cs.CustBlockDate >= ?)
+                    AND cse.Period = ?
+                    AND cse.CustStatus IN ('AC', 'FR')
                 ) ac
                 JOIN (
                     SELECT
-                        COUNT(1) total_churn
-                    FROM CustomerServices cs
+                        COUNT(DISTINCT cse.CustServId) total_churn
+                    FROM CustomerServiceExcerpt cse
                     LEFT JOIN Customer c ON
-                        c.CustId = cs.CustId
+                        c.CustId = cse.CustId
                     LEFT JOIN Services s ON
-                        s.ServiceId = cs.ServiceId
-                    WHERE cs.CustStatus IN ('NA', 'BL')
-                    AND s.ServiceCategory = 'access_business'
+                        s.ServiceId = cse.ServiceId
+                    WHERE s.ServiceCategory = 'access_business'
                     AND c.BranchId = ?
-                    AND (
-                        (cs.CustUnregDate >= ? AND cs.CustUnregDate <= ?)
-                        OR (cs.CustBlockDate >= ? AND cs.CustBlockDate <= ?)
-                    )
+                    AND cse.Period = ?
+                    AND cse.CustStatus = 'NA'
                 ) na
                 `,
-            [branchId, endDate, startDate, startDate, branchId, startDate, endDate, startDate, endDate]
+            [branchId, snapshotPeriod, branchId, snapshotPeriod]
         )
         return {
             rate: Number(rows[0]?.churn_rate || 0),
