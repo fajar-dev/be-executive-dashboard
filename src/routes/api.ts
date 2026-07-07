@@ -10,6 +10,7 @@ import { GoogleLoginSchema, LoginSchema, RefreshTokenSchema } from '../modules/a
 import { setupDireksiRoutes } from '../modules/direksi/direksi.routes'
 import { setupVpAccessBusinessRoutes } from '../modules/vp-access-business/vp-access-business.routes'
 import { setupPublicRoutes } from '../modules/public/public.routes'
+import { setupVpAccessHomeRoutes } from '../modules/vp-access-home/vp-access-home.routes'
 import { AdditionalController } from '../modules/additional/additional.controller'
 import { authMiddleware } from '../core/middlewares/auth.middleware'
 import { validationHook } from '../core/helpers/validator'
@@ -39,6 +40,9 @@ routes.route('direksi/', setupDireksiRoutes(authMid))
 
 // VP Access Business Routes
 routes.route('vp-access-business/', setupVpAccessBusinessRoutes(authMid))
+
+// VP Access Home Routes
+routes.route('vp-access-home/', setupVpAccessHomeRoutes())
 
 // Public Routes
 routes.route('public/', setupPublicRoutes())
