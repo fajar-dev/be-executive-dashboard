@@ -237,4 +237,17 @@ export class GrowthController {
         
         return ApiResponse.success(c, GrowthSerializer.arpu(result), 'ARPU metrics retrieved successfully')
     }
+
+    /**
+     * Get monthly snapshot of Account Manager counts
+     * Retrieves month-by-month count of active AMs for the current year
+     * 
+     * @param {Context} c - Hono request context
+     * @returns {Promise<Response>} JSON response containing array of monthly AM counts
+     */
+    async getAmSnapshot(c: Context) {
+        const period = c.req.query('period') || 'month'
+        const result = await this.service.getAmSnapshot(period)
+        return ApiResponse.success(c, GrowthSerializer.amSnapshot(result), 'AM snapshot retrieved successfully')
+    }
 }

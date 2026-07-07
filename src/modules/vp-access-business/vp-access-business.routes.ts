@@ -45,6 +45,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/cycle', authMid, cacheMid, (c) => growth.getCycle(c))
     routes.get('/growth/discount', authMid, cacheMid, (c) => growth.getDiscount(c))
     routes.get('/growth/arpu', authMid, cacheMid, (c) => growth.getArpu(c))
+    routes.get('/growth/am-snapshot', authMid, cacheMid, (c) => growth.getAmSnapshot(c))
 
     // Retention Routes
     routes.get('/retention/net-mrc', authMid, cacheMid, (c) => retention.getNetMrc(c))
