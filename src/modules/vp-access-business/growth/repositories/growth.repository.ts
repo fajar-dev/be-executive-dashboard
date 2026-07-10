@@ -248,8 +248,10 @@ export class GrowthRepository implements IGrowthRepository {
             FROM group_users gu
             LEFT JOIN groups g ON
                 g.id = gu.group_id
-            WHERE gu.group_id IN (57, 21, 43)
-            OR g.group_parent_id IN (57, 21, 43)`
+            WHERE (gu.group_id IN (57, 21, 43)
+            OR g.group_parent_id IN (57, 21, 43))
+            AND DATE(gu.created_at) <= ?`,
+            [endDate]
         )
 
         const [activityRows] = await this.prospectDb.query<any[]>(
@@ -261,8 +263,9 @@ export class GrowthRepository implements IGrowthRepository {
                 FROM group_users gu
                 LEFT JOIN groups g ON
                     g.id = gu.group_id
-                WHERE gu.group_id IN (57, 21, 43)
-                OR g.group_parent_id IN (57, 21, 43)
+                WHERE (gu.group_id IN (57, 21, 43)
+                OR g.group_parent_id IN (57, 21, 43))
+                AND DATE(gu.created_at) <= ?
             ) u
             LEFT JOIN customer_log_calls clc ON
                 IFNULL(clc.assigned_to_id, clc.created_by) = u.user_id
@@ -276,7 +279,7 @@ export class GrowthRepository implements IGrowthRepository {
                 pci.user_uuid = u.user_id
                 AND DATE(pci.created_at) >= ?
                 AND DATE(pci.created_at) <= ?`,
-            [startDate, endDate, startDate, endDate, startDate, endDate]
+            [endDate, startDate, endDate, startDate, endDate, startDate, endDate]
         )
 
         return {
@@ -672,6 +675,28 @@ export class GrowthRepository implements IGrowthRepository {
             [startDate, endDate]
         )
         return Number(rows[0]?.value || 0)
+    }
+    
+    /**
+     * Query Account Manager count snapshot at a specific date
+     * Counts users in AM groups who were created on or before the given date
+     * 
+     * @param {string} endDate - The snapshot end date
+     * @returns {Promise<number>} Number of AMs at that point in time
+     */
+    async getAmCountSnapshot(endDate: string): Promise<number> {
+        const [rows] = await this.prospectDb.query<any[]>(
+            `SELECT
+                COUNT(DISTINCT gu.user_uuid) total
+            FROM group_users gu
+            LEFT JOIN groups g ON
+                g.id = gu.group_id
+            WHERE (gu.group_id IN (57, 21, 43)
+            OR g.group_parent_id IN (57, 21, 43))
+            AND DATE(gu.created_at) <= ?`,
+            [endDate]
+        )
+        return Number(rows[0]?.total || 0)
     }
 
 }

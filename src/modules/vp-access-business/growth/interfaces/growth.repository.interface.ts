@@ -14,4 +14,5 @@ export interface IGrowthRepository {
     getArpu(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number }[]>
     getForecastRevenue(startDate: string, endDate: string): Promise<number>
     getForecastMrc(startDate: string, endDate: string): Promise<number>
+    getAmCountSnapshot(endDate: string): Promise<number>
 }

@@ -78,4 +78,13 @@ export class GrowthSerializer {
             }))
         }
     }
+
+    static amSnapshot(data: any) {
+        return {
+            value: data.value,
+            trend: data.trend,
+            percentage: data.percentage,
+            period: data.period
+        }
+    }
 }

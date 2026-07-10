@@ -577,5 +577,36 @@ export class GrowthService implements IGrowthService {
         }
     }
 
+    /**
+     * Calculate Account Manager count snapshot and trend
+     * Retrieves the current count, compares with the previous period,
+     * and includes month-by-month history for the current year.
+     * 
+     * @param {string} periodType - The period to query ('month', 'quarter', 'year')
+     * @returns {Promise<any>} Metric object with value, trend, percentage, and historical details
+     */
+    async getAmSnapshot(periodType: string): Promise<{
+        value: number
+        trend: 'up' | 'down'
+        percentage: number
+        period: string
+    }> {
+        const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
+
+        const [currentCount, prevCount] = await Promise.all([
+            this.growthRepository.getAmCountSnapshot(endDate),
+            this.growthRepository.getAmCountSnapshot(prevEndDate)
+        ])
+
+        const { trend, percentage } = TrendHelper.calculate(currentCount, prevCount)
+
+        return {
+            value: currentCount,
+            trend,
+            percentage,
+            period
+        }
+    }
+
 
 }

@@ -33,7 +33,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/total-mrc-ytd', authMid, cacheMid, (c) => growth.getTotalMrcYtd(c))
     routes.get('/growth/new-customer', authMid, cacheMid, (c) => growth.getNewCustomer(c))
     routes.get('/growth/revenue', authMid, cacheMid, (c) => growth.getRevenue(c))
-    routes.get('/growth/revenue-achievement', authMid, cacheMid, (c) => growth.getRevenueAchievement(c))
+    routes.get('/growth/revenue-achievement', authMid, (c) => growth.getRevenueAchievement(c))
     routes.get('/growth/leads', authMid, cacheMid, (c) => growth.getLeads(c))
     routes.get('/growth/opportunity', authMid, cacheMid, (c) => growth.getOpportunity(c))
     routes.get('/growth/win-rate', authMid, cacheMid, (c) => growth.getWinRate(c))
@@ -45,6 +45,7 @@ export const setupVpAccessBusinessRoutes = (authMid: MiddlewareHandler) => {
     routes.get('/growth/cycle', authMid, cacheMid, (c) => growth.getCycle(c))
     routes.get('/growth/discount', authMid, cacheMid, (c) => growth.getDiscount(c))
     routes.get('/growth/arpu', authMid, cacheMid, (c) => growth.getArpu(c))
+    routes.get('/growth/am-snapshot', authMid, cacheMid, (c) => growth.getAmSnapshot(c))
 
     // Retention Routes
     routes.get('/retention/net-mrc', authMid, cacheMid, (c) => retention.getNetMrc(c))
