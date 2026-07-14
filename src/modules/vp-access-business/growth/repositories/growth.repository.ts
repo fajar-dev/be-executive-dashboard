@@ -23,87 +23,145 @@ export class GrowthRepository implements IGrowthRepository {
      */
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT
-                COALESCE(SUM(((t.credit - IFNULL(d.discount, 0)) / 1.11) / t.inv_period), 0) AS mrc,
-                COALESCE(SUM(
-                    CASE
-                        WHEN t.batch_no IS NULL
-                        THEN ((t.credit - IFNULL(d.discount, 0)) / 1.11) / t.inv_period
-                        ELSE 0
-                    END
-                ), 0) AS mrc_unpaid,
-                COALESCE(SUM(
-                    CASE
-                        WHEN t.batch_no IS NOT NULL
-                        THEN ((t.credit - IFNULL(d.discount, 0)) / 1.11) / t.inv_period
-                        ELSE 0
-                    END
-                ), 0) AS mrc_paid
-            FROM (
+            `WITH params AS (
                 SELECT
-                    nci.AI ai,
-                    nci.Credit credit,
+                    ? AS branch_id,
+                    CAST(? AS DATE) AS start_date,
+                    DATE_ADD(CAST(? AS DATE), INTERVAL 1 DAY) AS end_date
+            ),
+            invoice_data AS (
+                SELECT
+                    nci.AI AS ai,
+                    nci.Credit AS credit,
                     IF(
                         cit.InvoiceType != 8,
                         itm.Month,
                         1
-                    ) inv_period,
-                    nci2.batchNo batch_no,
+                    ) AS inv_period,
+                    IFNULL(
+                        nci2.JournalDate,
+                        nci2.TransDate
+                    ) AS paid_date,
+                    IFNULL(
+                        nci.InsertDate,
+                        nci.Date
+                    ) AS inv_date,
+                    nci2.batchNo AS batch_no,
                     ROW_NUMBER() OVER (
                         PARTITION BY cit.CustServId
+                        ORDER BY cit.Date ASC
                     ) AS rn
                 FROM CustomerInvoiceTemp cit
+                CROSS JOIN params p
                 LEFT JOIN InvoiceTypeMonth itm
                     ON itm.InvoiceType = cit.InvoiceType
-                LEFT JOIN NewCustomerInvoice nci 
-                    ON cit.InvoiceNum = nci.Id 
-                    AND cit.Urut = nci.No
-                LEFT JOIN NewCustomerInvoiceBatch ncib 
+                LEFT JOIN NewCustomerInvoice nci
+                    ON nci.Id = cit.InvoiceNum
+                    AND nci.No = cit.Urut
+                LEFT JOIN NewCustomerInvoiceBatch ncib
                     ON ncib.AI = nci.AI
                 LEFT JOIN (
-                    SELECT 
+                    SELECT
                         ncib.batchNo,
                         nci.*,
                         ROW_NUMBER() OVER (
-                            PARTITION BY ncib.batchNo 
+                            PARTITION BY ncib.batchNo
                             ORDER BY nci.Date DESC
                         ) AS RowNum
                     FROM NewCustomerInvoice nci
-                    LEFT JOIN NewCustomerInvoiceBatch ncib 
+                    LEFT JOIN NewCustomerInvoiceBatch ncib
                         ON ncib.AI = nci.AI
                     WHERE nci.Type LIKE 'RA%'
-                ) nci2 
+                ) nci2
                     ON nci2.batchNo = ncib.batchNo
-                LEFT JOIN Services s 
+                    AND nci2.RowNum = 1
+                LEFT JOIN Services s
                     ON s.ServiceId = cit.ServiceId
-                LEFT JOIN Customer c 
+                LEFT JOIN Customer c
                     ON c.CustId = cit.CustId
                 WHERE cit.RInvoiceNum = 0
-                AND cit.InvProrata = 0
-                AND c.BranchId = ?
-                AND s.ServiceCategory = 'access_business'
-                AND nci.AccCode LIKE '400%'
-                AND DATE(nci.InsertDate) >= ?
-                AND DATE(nci.InsertDate) <= ?
-            ) t
-            LEFT JOIN (
+                    AND cit.InvProrata = 0
+                    AND c.BranchId = p.branch_id
+                    AND s.ServiceCategory = 'access_business'
+                    AND nci.AccCode LIKE '400%'
+            ),
+            discount_data AS (
                 SELECT
-                    nci.AI ai,
-                    ncid.Debet discount
+                    nci.AI AS ai,
+                    ncid.Debet AS discount
                 FROM CustomerInvoiceDiscount cid
-                LEFT JOIN NewCustomerInvoice ncid 
+                LEFT JOIN NewCustomerInvoice ncid
                     ON ncid.Id = cid.Id
                     AND ncid.Type = 'discount'
-                LEFT JOIN CustomerInvoiceTemp cit 
+                LEFT JOIN CustomerInvoiceTemp cit
                     ON cit.InvoiceNum = cid.InvoiceNum
                     AND cit.Urut = cid.Urut
-                LEFT JOIN NewCustomerInvoice nci 
+                LEFT JOIN NewCustomerInvoice nci
                     ON nci.Id = cid.InvoiceNum
                     AND nci.No = cid.Urut
                 WHERE cit.RInvoiceNum = 0
-            ) d 
-                ON d.ai = t.ai
-            WHERE t.rn = 1;`,
+            ),
+            mrc_data AS (
+                SELECT
+                    t.ai,
+                    t.paid_date,
+                    t.inv_date,
+                    t.batch_no,
+                    (
+                        (t.credit - IFNULL(d.discount, 0)) / 1.11
+                    ) / NULLIF(t.inv_period, 0) AS amount
+                FROM invoice_data t
+                LEFT JOIN discount_data d
+                    ON d.ai = t.ai
+                WHERE t.rn = 1
+            )
+            SELECT
+                /* Total paid + unpaid pada periode */
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN (
+                                m.paid_date >= p.start_date
+                                AND m.paid_date < p.end_date
+                            )
+                            OR (
+                                m.paid_date IS NULL
+                                AND m.inv_date >= p.start_date
+                                AND m.inv_date < p.end_date
+                            )
+                            THEN m.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS mrc,
+                /* New MRC yang sudah payment */
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN m.paid_date >= p.start_date
+                                AND m.paid_date < p.end_date
+                            THEN m.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS mrc_paid,
+                /* New MRC yang belum payment */
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN m.paid_date IS NULL
+                                AND m.inv_date >= p.start_date
+                                AND m.inv_date < p.end_date
+                            THEN m.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS mrc_unpaid
+            FROM mrc_data m
+            CROSS JOIN params p;`,
             [branchId, startDate, endDate]
         )
 
