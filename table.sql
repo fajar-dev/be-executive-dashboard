@@ -13,6 +13,7 @@ CREATE TABLE `users` (
 
 CREATE TABLE `vp_access_business_target` (
     `year` int(11) NOT NULL,
+    `branch` varchar(10) NOT NULL DEFAULT 'all',
     `yearly_target` bigint NOT NULL DEFAULT 0,
     `jan` bigint NOT NULL DEFAULT 0,
     `feb` bigint NOT NULL DEFAULT 0,
@@ -29,13 +30,14 @@ CREATE TABLE `vp_access_business_target` (
     `is_locked` tinyint(1) NOT NULL DEFAULT 0,
     `updated_by` int(11) NOT NULL,
     `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-    PRIMARY KEY (`year`),
+    PRIMARY KEY (`year`, `branch`),
     FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `vp_access_business_target_log` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `year` int(11) NOT NULL,
+    `branch` varchar(10) NOT NULL DEFAULT 'all',
     `old_value` json NOT NULL,
     `new_value` json DEFAULT NULL,
     `created_by` int(11) NOT NULL,

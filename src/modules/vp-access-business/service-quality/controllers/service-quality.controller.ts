@@ -20,7 +20,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing ticket count and trend
      */
     async getTicket(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getTicket(branchId, period)
         
@@ -35,7 +35,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing complaint count and trend
      */
     async getComplaint(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getComplaint(branchId, period)
         
@@ -50,7 +50,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing resolved count and trend
      */
     async getSolved(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getSolved(branchId, period)
         
@@ -65,7 +65,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing resolution rate and trend
      */
     async getSolvedPercentage(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getSolvedPercentage(branchId, period)
         
@@ -80,7 +80,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing issue count and trend
      */
     async getIssue(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getIssue(branchId, period)
         
@@ -95,7 +95,7 @@ export class ServiceQualityController {
      * @returns {Promise<Response>} JSON response containing incident count and trend
      */
     async getIncident(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getIncident(branchId, period)
         

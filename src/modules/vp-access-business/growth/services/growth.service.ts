@@ -161,7 +161,7 @@ export class GrowthService implements IGrowthService {
         const end = new Date(endDate)
         const year = start.getFullYear()
 
-        const targetData = await this.growthRepository.getTarget(year)
+        const targetData = await this.growthRepository.getTarget(branchId, year)
         
         let target = 0
         if (targetData) {

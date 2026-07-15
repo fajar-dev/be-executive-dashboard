@@ -18,7 +18,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing trend, percentage, and detailed MRC value
      */
     async getNewMrc(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getNewMrc(branchId, period)
         
@@ -34,7 +34,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing total MRC YTD metrics and breakdown
      */
     async getTotalMrcYtd(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const result = await this.service.getTotalMrcYtd(branchId)
         
         return ApiResponse.success(c, GrowthSerializer.metric(result), 'Total MRC YTD metrics retrieved successfully')
@@ -48,7 +48,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing array of monthly revenue data
      */
     async getRevenue(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const result = await this.service.getRevenue(branchId)
         
         return ApiResponse.success(c, GrowthSerializer.revenue(result), 'Revenue metrics retrieved successfully')
@@ -62,7 +62,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing revenue, target, and achievement percentage
      */
     async getRevenueAchievement(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getRevenueAchievement(branchId, period)
         
@@ -77,7 +77,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing count, trend, and percentage
      */
     async getNewCustomer(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getNewCustomer(branchId, period)
         
@@ -216,7 +216,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing total discount value and detailed breakdown
      */
     async getDiscount(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getDiscount(branchId, period)
         
@@ -231,7 +231,7 @@ export class GrowthController {
      * @returns {Promise<Response>} JSON response containing ARPU value and breakdown by service group
      */
     async getArpu(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getArpu(branchId, period)
         

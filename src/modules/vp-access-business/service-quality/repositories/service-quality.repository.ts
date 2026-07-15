@@ -1,5 +1,6 @@
 import { type Pool } from 'mysql2/promise'
 import { IServiceQualityRepository } from '../interfaces/service-quality.repository.interface'
+import { BranchHelper } from '../../../../core/helpers/branch'
 
 /**
  * Repository for handling service quality database queries
@@ -20,6 +21,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Total tickets
      */
     async ticket(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(DISTINCT t.TtsId) total
@@ -29,10 +31,11 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
             WHERE t.Status != 'Cancel'
             AND s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(t.PostedTime) >= ? 
             AND DATE(t.PostedTime) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -47,6 +50,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Total complaints
      */
     async complaint(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(DISTINCT t.TtsId) total
@@ -57,10 +61,11 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
             WHERE t.TtsTypeId = 2
             AND t.Status != 'Cancel'
             AND s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(t.PostedTime) >= ? 
             AND DATE(t.PostedTime) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -75,6 +80,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Total solved tickets
      */
     async solved(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(DISTINCT t.TtsId) total
@@ -84,10 +90,11 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
             WHERE t.Status = 'Call'
             AND s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(t.PostedTime) >= ? 
             AND DATE(t.PostedTime) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -102,6 +109,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Solved percentage
      */
     async solvedPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 IFNULL(
@@ -114,10 +122,11 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
             LEFT JOIN Customer c ON c.CustId = cs.CustId
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
             WHERE s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(t.PostedTime) >= ? 
             AND DATE(t.PostedTime) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.percentage || 0)
     }
@@ -132,6 +141,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Percentage of customers with multiple issues
      */
     async issue(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 IFNULL((SUM(
@@ -152,12 +162,13 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
                 LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
                 WHERE n.status != 'Cancel'
                 AND s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND DATE(n.datetime) >= ? 
                 AND DATE(n.datetime) <= ?
                 GROUP BY ncs.cs_id
             ) t`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.percent || 0)
     }
@@ -172,6 +183,7 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
      * @returns {Promise<number>} Total incident count
      */
     async incident(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(DISTINCT n.id) total
@@ -182,10 +194,11 @@ export class ServiceQualityRepository implements IServiceQualityRepository {
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
             WHERE n.status != 'Cancel'
             AND s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(n.datetime) >= ? 
             AND DATE(n.datetime) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
