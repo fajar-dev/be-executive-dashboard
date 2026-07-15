@@ -1,5 +1,6 @@
 import { type Pool } from 'mysql2/promise'
 import { IGrowthRepository } from '../interfaces/growth.repository.interface'
+import { BranchHelper } from '../../../../core/helpers/branch'
 
 /**
  * Repository for handling growth-related database queries
@@ -22,10 +23,10 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<{mrc: number, mrc_unpaid: number, mrc_paid: number}>} MRC breakdown
      */
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `WITH params AS (
                 SELECT
-                    ? AS branch_id,
                     CAST(? AS DATE) AS start_date,
                     DATE_ADD(CAST(? AS DATE), INTERVAL 1 DAY) AS end_date
             ),
@@ -81,7 +82,8 @@ export class GrowthRepository implements IGrowthRepository {
                     ON c.CustId = cit.CustId
                 WHERE cit.RInvoiceNum = 0
                     AND cit.InvProrata = 0
-                    AND c.BranchId = p.branch_id
+                    AND c.BranchId = '020'
+                    AND ${branch.sql}
                     AND s.ServiceCategory = 'access_business'
                     AND nci.AccCode LIKE '400%'
             ),
@@ -162,7 +164,7 @@ export class GrowthRepository implements IGrowthRepository {
                 ) AS mrc_unpaid
             FROM mrc_data m
             CROSS JOIN params p;`,
-            [branchId, startDate, endDate]
+            [startDate, endDate, ...branch.params]
         )
 
         return {
@@ -182,6 +184,7 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<number>} Total revenue
      */
     async getRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 SUM(gj.Kredit - gj.Debet) total
@@ -194,14 +197,18 @@ export class GrowthRepository implements IGrowthRepository {
             LEFT JOIN CustomerInvoiceTemp cit ON
                 cit.InvoiceNum = nci.Id
                 AND cit.Urut = nci.No
+            LEFT JOIN Customer c ON
+                c.CustId = cit.CustId
             LEFT JOIN Services s ON
                 s.ServiceId = cit.ServiceId
-            WHERE gj.KodeCabang = ?
+            WHERE gj.KodeCabang = '020'
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND s.ServiceCategory = 'access_business'
             AND gj.NoPerkiraan LIKE '400%'
             AND gj.TglTransaksi >= ?
             AND gj.TglTransaksi <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -477,6 +484,7 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<{serviceGroup: string, discount: number}[]>} Total discount per service group
      */
     async getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 sg.Description service_group,
@@ -487,11 +495,12 @@ export class GrowthRepository implements IGrowthRepository {
             LEFT JOIN Services s on s.ServiceId = cs.ServiceId
             LEFT JOIN ServiceGroup sg ON sg.ServiceGroup = s.ServiceGroup
             WHERE s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND DATE(cid.DateTime) >= ?
             AND DATE(cid.DateTime) <= ?
             GROUP BY s.ServiceGroup`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
 
         return rows.map(row => ({
@@ -509,6 +518,7 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<number>} Total churn MRC
      */
     async getChurnMrc(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     SUM(gj.Kredit - gj.Debet) total
@@ -523,15 +533,19 @@ export class GrowthRepository implements IGrowthRepository {
                     AND cit.Urut = nci.No
                 LEFT JOIN CustomerServices cs ON
                     cs.CustServId = cit.CustServId
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId
                 LEFT JOIN Services s ON
                     s.ServiceId = cit.ServiceId
-                WHERE gj.KodeCabang = ?
+                WHERE gj.KodeCabang = '020'
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND s.ServiceCategory = 'access_business'
                 AND gj.NoPerkiraan LIKE '400%'
                 AND gj.TglTransaksi >= ?
                 AND gj.TglTransaksi <= ?
                 AND cs.CustStatus = 'NA'`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -540,13 +554,32 @@ export class GrowthRepository implements IGrowthRepository {
      * Query sales target for a specific year
      * Retrieves the yearly and monthly revenue targets from the dashboard database
      * 
+     * @param {string} branch - The branch selector ('all', 'null', or a branch code)
      * @param {number} year - The year to query
      * @returns {Promise<any>} Target configuration object
      */
-    async getTarget(year: number): Promise<any> {
+    async getTarget(branch: string, year: number): Promise<any> {
+        if (branch === 'all') {
+            const branches = ['null', '025', '062', '027', '029']
+            const [rows] = await this.dashboardDb.query<any[]>(
+                `SELECT 
+                    year,
+                    'all' as branch,
+                    SUM(yearly_target) as yearly_target,
+                    SUM(jan) as jan, SUM(feb) as feb, SUM(mar) as mar, SUM(apr) as apr,
+                    SUM(may) as may, SUM(jun) as jun, SUM(jul) as jul, SUM(aug) as aug,
+                    SUM(sep) as sep, SUM(oct) as oct, SUM(nov) as nov, SUM(\`dec\`) as \`dec\`,
+                    MIN(is_locked) as is_locked
+                 FROM vp_access_business_target 
+                 WHERE year = ? AND branch IN (?, ?, ?, ?, ?)
+                 GROUP BY year`,
+                [year, ...branches]
+            )
+            return rows[0] || null
+        }
         const [rows] = await this.dashboardDb.query<any[]>(
-            `SELECT * FROM vp_access_business_target WHERE year = ?`,
-            [year]
+            `SELECT * FROM vp_access_business_target WHERE year = ? AND branch = ?`,
+            [year, branch]
         )
         return rows[0] || null
     }
@@ -561,6 +594,7 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<number>} Total revenue from new customers
      */
     async getNewCustomer(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 SUM((t.credit - IFNULL(d.discount, 0)) / 1.11) AS total_dpp
@@ -598,7 +632,8 @@ export class GrowthRepository implements IGrowthRepository {
                     ON c.CustId = cit.CustId
                 WHERE cit.RInvoiceNum = 0
                 AND cit.InvProrata = 0
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND s.ServiceCategory = 'access_business'
                 GROUP BY nci.AI
             ) t
@@ -622,7 +657,7 @@ export class GrowthRepository implements IGrowthRepository {
             WHERE t.rn = 1
             AND DATE(t.receipt_date) >= ?
             AND DATE(t.receipt_date) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total_dpp || 0)
     }
@@ -637,6 +672,7 @@ export class GrowthRepository implements IGrowthRepository {
      * @returns {Promise<{serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number}[]>}
      */
     async getArpu(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 sg.Description AS service_group,
@@ -652,17 +688,21 @@ export class GrowthRepository implements IGrowthRepository {
             LEFT JOIN CustomerInvoiceTemp cit
                 ON cit.InvoiceNum = nci.Id
                 AND cit.Urut = nci.No
+            LEFT JOIN Customer c
+                ON c.CustId = cit.CustId
             LEFT JOIN Services s
                 ON s.ServiceId = cit.ServiceId
             LEFT JOIN ServiceGroup sg
                 ON sg.ServiceGroup = s.ServiceGroup
-            WHERE gj.KodeCabang = ?
+            WHERE gj.KodeCabang = '020'
+              AND c.BranchId = '020'
+              AND ${branch.sql}
               AND s.ServiceCategory = 'access_business'
               AND gj.NoPerkiraan LIKE '400%'
               AND DATE(gj.TglTransaksi) >= ?
               AND DATE(gj.TglTransaksi) <= ?
             GROUP BY s.ServiceGroup, sg.Description`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
 
         return rows.map(row => ({

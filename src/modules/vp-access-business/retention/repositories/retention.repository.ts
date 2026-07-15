@@ -1,5 +1,6 @@
 import { type Pool } from 'mysql2/promise'
 import { IRetentionRepository } from '../interfaces/retention.repository.interface'
+import { BranchHelper } from '../../../../core/helpers/branch'
 
 /**
  * Repository for handling retention database queries
@@ -22,6 +23,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Total revenue lost to churn
      */
     async churnRevenue(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     SUM(gj.Kredit - gj.Debet) total
@@ -36,16 +38,20 @@ export class RetentionRepository implements IRetentionRepository {
                     AND cit.Urut = nci.No
                 LEFT JOIN CustomerServices cs ON
                     cs.CustServId = cit.CustServId
+                LEFT JOIN Customer c ON
+                    c.CustId = cs.CustId
                 LEFT JOIN Services s ON
                     s.ServiceId = cit.ServiceId
-                WHERE gj.KodeCabang = ?
+                WHERE gj.KodeCabang = '020'
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND s.ServiceCategory = 'access_business'
                 AND gj.NoPerkiraan LIKE '400%'
                 AND gj.TglTransaksi >= ?
                 AND gj.TglTransaksi <= ?
                 AND cs.CustStatus = 'NA'
                 `,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -60,6 +66,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<{rate: number, churn: number, active: number}>} Rate and raw counts
      */
     async churnRate(branchId: string, startDate: string, endDate: string): Promise<{ rate: number, churn: number, active: number }> {
+        const branch = BranchHelper.displayFilter(branchId)
         const date = new Date(startDate)
         const month = String(date.getMonth() + 1).padStart(2, '0')
         const year2 = String(date.getFullYear()).slice(-2)
@@ -85,7 +92,8 @@ export class RetentionRepository implements IRetentionRepository {
                             s.ServiceId = cs.ServiceId
                         WHERE cs.CustStatus IN ('AC', 'FR')
                         AND s.ServiceCategory = 'access_business'
-                        AND c.BranchId = ?
+                        AND c.BranchId = '020'
+                        AND ${branch.sql}
                     ) ac
                     JOIN (
                         SELECT
@@ -97,14 +105,15 @@ export class RetentionRepository implements IRetentionRepository {
                             s.ServiceId = cs.ServiceId
                         WHERE cs.CustStatus IN ('NA', 'BL')
                         AND s.ServiceCategory = 'access_business'
-                        AND c.BranchId = ?
+                        AND c.BranchId = '020'
+                        AND ${branch.sql}
                         AND (
                             (YEAR(cs.CustUnregDate) = ? AND MONTH(cs.CustUnregDate) = ?)
                             OR (YEAR(cs.CustBlockDate) = ? AND MONTH(cs.CustBlockDate) = ?)
                         )
                     ) na
                     `,
-                [branchId, branchId, year4, month, year4, month]
+                [...branch.params, ...branch.params, year4, month, year4, month]
             )
             return {
                 rate: Number(rows[0]?.churn_rate || 0),
@@ -129,7 +138,8 @@ export class RetentionRepository implements IRetentionRepository {
                     LEFT JOIN Services s ON
                         s.ServiceId = cse.ServiceId
                     WHERE s.ServiceCategory = 'access_business'
-                    AND c.BranchId = ?
+                    AND c.BranchId = '020'
+                    AND ${branch.sql}
                     AND cse.Period = ?
                     AND cse.CustStatus IN ('AC', 'FR')
                 ) ac
@@ -142,12 +152,13 @@ export class RetentionRepository implements IRetentionRepository {
                     LEFT JOIN Services s ON
                         s.ServiceId = cse.ServiceId
                     WHERE s.ServiceCategory = 'access_business'
-                    AND c.BranchId = ?
+                    AND c.BranchId = '020'
+                    AND ${branch.sql}
                     AND cse.Period = ?
                     AND cse.CustStatus = 'NA'
                 ) na
                 `,
-            [branchId, snapshotPeriod, branchId, snapshotPeriod]
+            [...branch.params, snapshotPeriod, ...branch.params, snapshotPeriod]
         )
         return {
             rate: Number(rows[0]?.churn_rate || 0),
@@ -166,6 +177,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<any[]>} Breakdown of lost customers by group
      */
     async customerLose(branchId: string, startDate: string, endDate: string): Promise<any[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     sg.Description service_group,
@@ -179,14 +191,15 @@ export class RetentionRepository implements IRetentionRepository {
                     sg.ServiceGroup = s.ServiceGroup
                 WHERE cs.CustStatus IN ('NA', 'BL')
                 AND s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND (
                     (cs.CustUnregDate >= ? AND cs.CustUnregDate <= ?)
                     OR (cs.CustBlockDate >= ? AND cs.CustBlockDate <= ?)
                 )
                 GROUP BY s.ServiceGroup, sg.Description
                 `,
-            [branchId, startDate, endDate, startDate, endDate]
+            [...branch.params, startDate, endDate, startDate, endDate]
         )
         return rows
     }
@@ -199,6 +212,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Total wireless customer count
      */
     async wirelessCustomer(branchId: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(1) total
@@ -211,8 +225,9 @@ export class RetentionRepository implements IRetentionRepository {
                 sg.ServiceGroup = s.ServiceGroup
             WHERE cs.CustStatus IN ('AC', 'FR')
             AND s.ServiceGroup IN ('VB', 'WL')
-            AND c.BranchId = ?`,
-            [branchId]
+            AND c.BranchId = '020'
+            AND ${branch.sql}`,
+            [...branch.params]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -227,6 +242,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Number of migrated customers
      */
     async wirelessMigration(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     COUNT(1) total
@@ -242,10 +258,11 @@ export class RetentionRepository implements IRetentionRepository {
                         c.CustId = cs.CustId
                 WHERE sf.ServiceGroup IN ('VB', 'WL')
                 AND st.ServiceGroup IN ('FD')
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND DATE(cp.EfectiveFrom) >= ? 
                 AND DATE(cp.EfectiveFrom) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total || 0)
     }
@@ -260,6 +277,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Migration percentage rate
      */
     async migrationWirelessPercentage(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                     IFNULL(mg.total / NULLIF(cr.total + mg.total, 0) * 100, 0) percent
@@ -277,7 +295,8 @@ export class RetentionRepository implements IRetentionRepository {
                     LEFT JOIN Customer c ON
                         c.CustId = cs.CustId
                     WHERE sf.ServiceGroup IN ('VB', 'WL')
-                    AND c.BranchId = ?
+                    AND c.BranchId = '020'
+                    AND ${branch.sql}
                     AND DATE(cp.EfectiveFrom) >= ?
                     AND DATE(cp.EfectiveFrom) <= ?
                 ) mg
@@ -291,10 +310,11 @@ export class RetentionRepository implements IRetentionRepository {
                         c.CustId = cs.CustId
                     WHERE s.ServiceGroup IN ('VB', 'WL')
                     AND cs.CustStatus IN ('AC', 'FR')
-                    AND c.BranchId = ?
+                    AND c.BranchId = '020'
+                    AND ${branch.sql}
                 ) cr
                 `,
-            [branchId, startDate, endDate, branchId]
+            [...branch.params, startDate, endDate, ...branch.params]
         )
         return Number(rows[0]?.percent || 0)
     }
@@ -307,6 +327,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<{total: number, total_30: number, total_60: number, total_90: number}>}
      */
     async contractExpiring(branchId: string): Promise<{ total: number; total_30: number; total_60: number; total_90: number }> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(1) total,
@@ -366,10 +387,11 @@ export class RetentionRepository implements IRetentionRepository {
                 LEFT JOIN Services s 
                     ON s.ServiceId = cs.ServiceId
                 WHERE s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
             ) t
             WHERE DATEDIFF(t.expired_date, NOW()) BETWEEN 0 AND 90`,
-            [branchId]
+            [...branch.params]
         )
         return {
             total: Number(rows[0]?.total || 0),
@@ -389,6 +411,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Total distinct customers flagged for high tickets
      */
     async ticket(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(1) AS total_service
@@ -408,13 +431,14 @@ export class RetentionRepository implements IRetentionRepository {
                 WHERE t.TtsTypeId = 2
                 AND t.Status != 'Cancel'
                 AND s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND DATE(t.PostedTime) >= ? 
                 AND DATE(t.PostedTime) <= ?
                 GROUP BY t.CustServId, YEAR(t.PostedTime), MONTH(t.PostedTime)
             ) t
             WHERE t.total_ticket >= 2`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return Number(rows[0]?.total_service || 0)
     }
@@ -429,6 +453,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number>} Total distinct customers flagged for low usage
      */
     async usage(branchId: string, startDate: string, endDate: string): Promise<number> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COUNT(1) AS total_service
@@ -453,8 +478,9 @@ export class RetentionRepository implements IRetentionRepository {
                 ON s.ServiceId = cs.ServiceId
             WHERE t.total_usage < 500
               AND s.ServiceCategory = 'access_business'
-              AND c.BranchId = ?`,
-            [startDate, endDate, branchId]
+              AND c.BranchId = '020'
+              AND ${branch.sql}`,
+            [startDate, endDate, ...branch.params]
         )
         return Number(rows[0]?.total_service || 0)
     }
@@ -467,6 +493,7 @@ export class RetentionRepository implements IRetentionRepository {
      * @returns {Promise<number | null>} Percentage of monthly payers
      */
     async payment(branchId: string): Promise<number | null> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 IFNULL((csm.total / NULLIF(cst.total, 0)) * 100, 0) as percent
@@ -481,7 +508,8 @@ export class RetentionRepository implements IRetentionRepository {
                 LEFT JOIN InvoiceTypeMonth itm
                     ON itm.InvoiceType = cs.InvoiceType
                 WHERE s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND cs.CustStatus = 'AC'
                 AND IF(	
                         cs.InvoiceType != 8,
@@ -500,10 +528,11 @@ export class RetentionRepository implements IRetentionRepository {
                 LEFT JOIN InvoiceTypeMonth itm
                     ON itm.InvoiceType = cs.InvoiceType
                 WHERE s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND cs.CustStatus = 'AC'
             ) cst`,
-            [branchId, branchId]
+            [...branch.params, ...branch.params]
         )
         
         if (rows[0]?.percent === null || rows[0]?.percent === undefined) {
@@ -514,6 +543,7 @@ export class RetentionRepository implements IRetentionRepository {
     }
 
     async getForecastChurnBlocked(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 cs.CustServId as csid,
@@ -528,15 +558,17 @@ export class RetentionRepository implements IRetentionRepository {
             LEFT JOIN InvoiceTypeMonth itm
                 ON itm.InvoiceType = cs.InvoiceType
             WHERE cs.CustStatus = 'BL'
-            AND c.BranchId = ?
+            AND c.BranchId = '020'
+            AND ${branch.sql}
             AND (cs.CustBlockDate + INTERVAL 30 DAY) >= ?
             AND (cs.CustBlockDate + INTERVAL 30 DAY) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
     async getForecastChurnContract(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 t.csid,
@@ -583,18 +615,20 @@ export class RetentionRepository implements IRetentionRepository {
                 LEFT JOIN Services s 
                     ON s.ServiceId = cs.ServiceId
                 WHERE s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
             ) t
             LEFT JOIN InvoiceTypeMonth itm
                 ON itm.InvoiceType = t.InvoiceType
             WHERE DATE(t.expired_date) >= ?
             AND DATE(t.expired_date) <= ?`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
     async getForecastChurnTicket(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 t.csid,
@@ -617,18 +651,20 @@ export class RetentionRepository implements IRetentionRepository {
                 WHERE t.TtsTypeId = 2
                 AND t.Status != 'Cancel'
                 AND s.ServiceCategory = 'access_business'
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND DATE(t.PostedTime) >= ?
                 AND DATE(t.PostedTime) <= ?
                 GROUP BY t.CustServId
             ) t
             WHERE t.total_ticket >= 2`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
         return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
     async getForecastChurnUsage(branchId: string, startDate: string, endDate: string): Promise<{ csid: number, mrc: number }[]> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 t.csid,
@@ -655,13 +691,15 @@ export class RetentionRepository implements IRetentionRepository {
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
             WHERE t.total_usage < 500
             AND s.ServiceCategory = 'access_business'
-            AND c.BranchId = ?`,
-            [startDate, endDate, branchId]
+            AND c.BranchId = '020'
+            AND ${branch.sql}`,
+            [startDate, endDate, ...branch.params]
         )
         return rows.map(r => ({ csid: Number(r.csid), mrc: Number(r.mrc || 0) }))
     }
 
     async getNewMrc(branchId: string, startDate: string, endDate: string): Promise<{ mrc: number; mrc_unpaid: number; mrc_paid: number }> {
+        const branch = BranchHelper.displayFilter(branchId)
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 COALESCE(SUM(((t.credit - IFNULL(d.discount, 0)) / 1.11) / t.inv_period), 0) AS mrc,
@@ -720,7 +758,8 @@ export class RetentionRepository implements IRetentionRepository {
                     ON c.CustId = cit.CustId
                 WHERE cit.RInvoiceNum = 0
                 AND cit.InvProrata = 0
-                AND c.BranchId = ?
+                AND c.BranchId = '020'
+                AND ${branch.sql}
                 AND s.ServiceCategory = 'access_business'
                 AND nci.AccCode LIKE '400%'
                 AND DATE(nci.InsertDate) >= ?
@@ -744,7 +783,7 @@ export class RetentionRepository implements IRetentionRepository {
             ) d 
                 ON d.ai = t.ai
             WHERE t.rn = 1;`,
-            [branchId, startDate, endDate]
+            [...branch.params, startDate, endDate]
         )
 
         return {

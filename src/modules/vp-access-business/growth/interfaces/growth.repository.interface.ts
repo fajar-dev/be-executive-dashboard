@@ -9,7 +9,7 @@ export interface IGrowthRepository {
     getCycle(startDate: string, endDate: string): Promise<number>
     getPipelineStage(startDate: string, endDate: string): Promise<any>
     getDiscount(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, discount: number }[]>
-    getTarget(year: number): Promise<any>
+    getTarget(branch: string, year: number): Promise<any>
     getNewCustomer(branchId: string, startDate: string, endDate: string): Promise<number>
     getArpu(branchId: string, startDate: string, endDate: string): Promise<{ serviceGroup: string, jumlahService: number, totalRevenue: number, avgPerService: number }[]>
     getForecastRevenue(startDate: string, endDate: string): Promise<number>

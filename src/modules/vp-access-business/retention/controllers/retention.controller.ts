@@ -18,7 +18,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing trend, percentage, and revenue value
      */
     async getChurnRevenue(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
 
         const result = await this.service.getChurnRevenue(branchId, period)
@@ -33,7 +33,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing total loss and detailed breakdown
      */
     async getCustomerLose(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getCustomerLose(branchId, period)
         
@@ -48,7 +48,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing net mrc and detailed components
      */
     async getNetMrc(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getNetMrc(branchId, period)
         
@@ -63,7 +63,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing forecast churn and details
      */
     async getForecastChurn(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getForecastChurn(branchId, period)
         
@@ -78,7 +78,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing forecast net MRC and trend
      */
     async getForecastNetMrc(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getForecastNetMrc(branchId, period)
         
@@ -93,7 +93,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing total customer, migrated count, and migration rate
      */
     async getWirelessMigration(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
 
         const result = await this.service.getWirelessMigration(branchId, period)
@@ -108,7 +108,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing month-by-month churn comparison
      */
     async getChurnRate(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const result = await this.service.getChurnRate(branchId)
         
         return ApiResponse.success(c, RetentionSerializer.churnRate(result), 'Churn rate retrieved successfully')
@@ -122,7 +122,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing expiration intervals
      */
     async getContractExpiring(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const result = await this.service.getContractExpiring(branchId)
         
         return ApiResponse.success(c, RetentionSerializer.contractExpiring(result), 'Contract expiring metrics retrieved successfully')
@@ -136,7 +136,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing ticket count and trend
      */
     async getTicket(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getTicket(branchId, period)
         
@@ -151,7 +151,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing usage statistics and trend
      */
     async getUsage(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const period = c.req.query('period') || 'month'
         const result = await this.service.getUsage(branchId, period)
         
@@ -166,7 +166,7 @@ export class RetentionController {
      * @returns {Promise<Response>} JSON response containing monthly vs annual percentages
      */
     async getPayment(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branchId = c.req.query('displayBranchId') || ''
         const result = await this.service.getPayment(branchId)
         
         return ApiResponse.success(c, RetentionSerializer.payment(result), 'Payment metrics retrieved successfully')

@@ -8,6 +8,7 @@ export interface UserReference {
 
 export interface TargetRevenuePayload {
     year: number
+    branch?: string
     yearly_target: number
     jan: number
     feb: number
@@ -29,7 +30,7 @@ export interface TargetRevenuePayload {
 
 export interface ISettingRepository {
     getRevenue(branchId: string, year: number): Promise<{ total: number, details: { month: number, total: number }[] }>
-    getTarget(year: number): Promise<TargetRevenuePayload | null>
-    getTargetLog(year?: number): Promise<any[]>
-    saveTarget(year: number, payload: TargetRevenuePayload, userId: number): Promise<void>
+    getTarget(branch: string, year: number): Promise<TargetRevenuePayload | null>
+    getTargetLog(branch?: string, year?: number): Promise<any[]>
+    saveTarget(branch: string, year: number, payload: TargetRevenuePayload, userId: number): Promise<void>
 }

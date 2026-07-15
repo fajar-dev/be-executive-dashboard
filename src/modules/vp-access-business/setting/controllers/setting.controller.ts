@@ -17,10 +17,10 @@ export class SettingController {
      * @returns {Promise<Response>} JSON response containing revenue and targets per month
      */
     async getRevenue(c: Context) {
-        const branchId = c.req.query('branchId') || '020'
+        const branch = c.req.query('displayBranchId') || 'all'
         const currentYear = new Date().getFullYear()
         const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : currentYear
-        const result = await this.service.getRevenue(branchId, year)
+        const result = await this.service.getRevenue(branch, year)
         return ApiResponse.success(c, SettingSerializer.revenue(result), 'Target revenue retrieved successfully')
     }
 
@@ -31,11 +31,12 @@ export class SettingController {
      * @returns {Promise<Response>} JSON response containing the target settings
      */
     async getTarget(c: Context) {
+        const branch = c.req.query('displayBranchId') || 'all'
         const currentYear = new Date().getFullYear()
         const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : currentYear
 
-        const result = await this.service.getTarget(year)
-        
+        const result = await this.service.getTarget(branch, year)
+
         return ApiResponse.success(c, SettingSerializer.target(result), 'Target retrieved successfully')
     }
 
@@ -46,11 +47,13 @@ export class SettingController {
      * @returns {Promise<Response>} JSON response containing list of target modification logs
      */
     async getTargetLog(c: Context) {
+        // Empty/absent branch => logs across all branches (not the 'all' target row)
+        const branch = c.req.query('displayBranchId') || undefined
         const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : undefined
 
-        const result = await this.service.getTargetLog(year)
+        const result = await this.service.getTargetLog(branch, year)
         const serialized = SettingSerializer.targetLog(result)
-        
+
         return ApiResponse.success(c, serialized, 'Target log retrieved successfully')
     }
 
@@ -61,12 +64,19 @@ export class SettingController {
      * @returns {Promise<Response>} Success confirmation
      */
     async saveTarget(c: Context) {
+        const branch = c.req.query('displayBranchId') || 'all'
+        if (branch === 'all') {
+            return c.json({
+                success: false,
+                message: "Target untuk pilihan 'All' tidak dapat diubah langsung karena merupakan gabungan dari seluruh cabang. Silakan pilih cabang spesifik."
+            }, 400)
+        }
         const currentYear = new Date().getFullYear()
         const year = c.req.query('year') ? parseInt(c.req.query('year') as string, 10) : currentYear
         const payload = await c.req.json()
         const user = c.get('user')
         const userId = user?.id || 1 // Fallback to 1 if user ID not found in context
-        await this.service.saveTarget(year, payload, userId)
+        await this.service.saveTarget(branch, year, payload, userId)
         return ApiResponse.success(c, null, 'Target saved successfully')
     }
 }

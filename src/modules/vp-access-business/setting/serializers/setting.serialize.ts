@@ -10,6 +10,7 @@ export class SettingSerializer {
         if (!data) return null
         return {
             year: data.year,
+            branch: data.branch,
             yearlyTarget: data.yearly_target,
             jan: data.jan,
             feb: data.feb,
@@ -44,6 +45,7 @@ export class SettingSerializer {
             return {
                 id: item.id,
                 year: item.year,
+                branch: item.branch,
                 reason: item.reason,
                 oldValue: oldVal && Object.keys(oldVal).length > 0 ? {
                     yearlyTarget: oldVal.yearly_target,
