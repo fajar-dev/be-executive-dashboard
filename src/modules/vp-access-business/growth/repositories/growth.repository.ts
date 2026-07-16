@@ -575,7 +575,26 @@ export class GrowthRepository implements IGrowthRepository {
                  GROUP BY year`,
                 [year, ...branches]
             )
-            return rows[0] || null
+            const r = rows[0]
+            if (!r) return null
+            return {
+                year: r.year,
+                branch: 'all',
+                yearly_target: Number(r.yearly_target || 0),
+                jan: Number(r.jan || 0),
+                feb: Number(r.feb || 0),
+                mar: Number(r.mar || 0),
+                apr: Number(r.apr || 0),
+                may: Number(r.may || 0),
+                jun: Number(r.jun || 0),
+                jul: Number(r.jul || 0),
+                aug: Number(r.aug || 0),
+                sep: Number(r.sep || 0),
+                oct: Number(r.oct || 0),
+                nov: Number(r.nov || 0),
+                dec: Number(r.dec || 0),
+                is_locked: Number(r.is_locked || 0)
+            }
         }
         const [rows] = await this.dashboardDb.query<any[]>(
             `SELECT * FROM vp_access_business_target WHERE year = ? AND branch = ?`,

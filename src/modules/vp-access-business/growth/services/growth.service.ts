@@ -157,20 +157,18 @@ export class GrowthService implements IGrowthService {
     async getRevenueAchievement(branchId: string, periodType: string): Promise<{ target: number, revenue: number, percentage: number, trendPercentage: number, trend: 'up' | 'down', period: string }> {
         const { startDate, endDate, prevStartDate, prevEndDate, period } = DateHelper.getDatesForPeriod(periodType)
         
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        const year = start.getFullYear()
+        const startYear = parseInt(startDate.split('-')[0], 10)
+        const startMonth = parseInt(startDate.split('-')[1], 10) - 1
+        const endMonth = parseInt(endDate.split('-')[1], 10) - 1
 
-        const targetData = await this.growthRepository.getTarget(branchId, year)
+        const targetData = await this.growthRepository.getTarget(branchId, startYear)
         
         let target = 0
         if (targetData) {
             if (periodType === 'year') {
-                target = targetData.yearly_target
+                target = Number(targetData.yearly_target || 0)
             } else {
                 const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-                const startMonth = start.getMonth()
-                const endMonth = end.getMonth()
                 for (let i = startMonth; i <= endMonth; i++) {
                     target += Number(targetData[monthKeys[i]] || 0)
                 }
