@@ -787,8 +787,8 @@ export class GrowthRepository implements IGrowthRepository {
             AND poa.amount_category_setting_id = 1
             AND po.id IS NOT NULL
             AND po.deleted_at IS NULL
-            AND DATE(po.created_at) >= ?
-            AND DATE(po.created_at) <= ?`,
+            AND DATE(po.close_date) >= ?
+            AND DATE(po.close_date) <= ?`,
             [startDate, endDate]
         )
         return Number(rows[0]?.value || 0)
