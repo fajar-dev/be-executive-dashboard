@@ -8,7 +8,7 @@ export class SalesPerformanceController {
 
     /**
      * Get daily sales performance data per staff member.
-     * Accepts optional query params: month, year, managerId.
+     * Accepts optional query params: month, year, managerId, branchId, type.
      * Defaults to current month/year if not provided.
      * 
      * @param {Context} c - Hono context object.
@@ -20,8 +20,12 @@ export class SalesPerformanceController {
         const year = Number(c.req.query('year')) || now.getFullYear()
         const managerIdParam = c.req.query('managerId')
         const managerId = managerIdParam ? Number(managerIdParam) : undefined
+        const branchIdParam = c.req.query('branchId')
+        const branchId = branchIdParam && branchIdParam !== 'all' ? branchIdParam : undefined
+        const typeParam = c.req.query('type')
+        const type = typeParam && typeParam !== 'all' ? typeParam : undefined
 
-        const data = await this.service.getSalesPerformance(month, year, managerId)
+        const data = await this.service.getSalesPerformance(month, year, managerId, branchId, type)
         return ApiResponse.success(
             c,
             SalesPerformanceSerializer.salesPerformance(data),
@@ -36,7 +40,10 @@ export class SalesPerformanceController {
      * @returns {Promise<Response>} HTTP Response with manager list.
      */
     async getManagers(c: Context) {
-        const data = await this.service.getManagers()
+        const typeParam = c.req.query('type')
+        const type = typeParam && typeParam !== 'all' ? typeParam : undefined
+
+        const data = await this.service.getManagers(type)
         return ApiResponse.success(
             c,
             SalesPerformanceSerializer.managers(data),

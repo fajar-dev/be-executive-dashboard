@@ -1,16 +1,16 @@
 import { type Pool } from 'mysql2/promise'
-import { ISalesHomeRepository, SalesHomeUpsertPayload } from '../interfaces/sales-home.repository.interface'
+import { ISalesRepository, SalesUpsertPayload } from '../interfaces/sales.repository.interface'
 
-export class SalesHomeRepository implements ISalesHomeRepository {
+export class SalesRepository implements ISalesRepository {
     constructor(private readonly db: Pool) {}
 
     /**
-     * Upsert a list of sales home employees.
-     * 
-     * @param {SalesHomeUpsertPayload[]} data - The list of employees to upsert.
+     * Upsert a list of sales employees (access_home and access_business).
+     *
+     * @param {SalesUpsertPayload[]} data - The list of employees to upsert.
      * @returns {Promise<void>} A promise that resolves when the operation is complete.
      */
-    async upsert(data: SalesHomeUpsertPayload[]): Promise<void> {
+    async upsert(data: SalesUpsertPayload[]): Promise<void> {
         if (!data.length) return
 
         const connection = await this.db.getConnection()
@@ -28,14 +28,15 @@ export class SalesHomeRepository implements ISalesHomeRepository {
                 d.jobLevel || null,
                 d.branchId || null,
                 d.managerId || null,
-                d.status || null
+                d.status || null,
+                d.type
             ])
 
             await connection.query(
-                `INSERT INTO sales_home (
-                    id, employee_id, name, email, photo_profile, 
-                    job_position, organization_name, job_level, 
-                    branch_id, manager_id, status
+                `INSERT INTO sales (
+                    id, employee_id, name, email, photo_profile,
+                    job_position, organization_name, job_level,
+                    branch_id, manager_id, status, type
                 ) VALUES ?
                 ON DUPLICATE KEY UPDATE
                     name = VALUES(name),
@@ -47,6 +48,7 @@ export class SalesHomeRepository implements ISalesHomeRepository {
                     branch_id = VALUES(branch_id),
                     manager_id = VALUES(manager_id),
                     status = VALUES(status),
+                    type = VALUES(type),
                     updated_at = CURRENT_TIMESTAMP`,
                 [values]
             )

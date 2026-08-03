@@ -7,7 +7,9 @@ export interface NusaworkEmployee {
     jobPosition?: string
 }
 
-export interface NusaworkSalesHome {
+export type SalesType = 'access_home' | 'access_business'
+
+export interface NusaworkSales {
     id: number
     employeeId: string
     name: string
@@ -19,11 +21,13 @@ export interface NusaworkSalesHome {
     branchId?: string
     managerId?: number
     status?: string
+    type: SalesType
 }
 
 export interface INusaworkService {
     getEmployees(): Promise<any[]>
     getExecutive(): Promise<NusaworkEmployee[]>
     getAdmin(): Promise<NusaworkEmployee[]>
-    getSalesHome(): Promise<NusaworkSalesHome[]>
+    getSalesHome(): Promise<NusaworkSales[]>
+    getSalesBusiness(): Promise<NusaworkSales[]>
 }

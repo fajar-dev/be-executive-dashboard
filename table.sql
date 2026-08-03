@@ -50,7 +50,7 @@ CREATE TABLE `vp_access_business_target_log` (
     FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `sales_home` (
+CREATE TABLE `sales` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `employee_id` varchar(255) NOT NULL UNIQUE,
     `name` varchar(255) NOT NULL,
@@ -62,8 +62,9 @@ CREATE TABLE `sales_home` (
     `branch_id` varchar(255) NULL,
     `manager_id` int(11) NULL,
     `status` varchar(255) NULL,
+    `type` varchar(50) NOT NULL DEFAULT 'access_home',
     `created_at` timestamp NULL DEFAULT current_timestamp(),
     `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
     PRIMARY KEY (`id`),
-    FOREIGN KEY (`manager_id`) REFERENCES `sales_home`(`id`)
+    FOREIGN KEY (`manager_id`) REFERENCES `sales`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
