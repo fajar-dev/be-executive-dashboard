@@ -51,7 +51,9 @@ export async function syncSalesJob(salesRepository: ISalesRepository): Promise<v
 
     const sales = [...salesHome, ...salesBusiness]
 
-    await salesRepository.upsert(
+    // Replace all: delete existing rows then insert the fresh crawl,
+    // so employees who left/moved don't linger as stale rows.
+    await salesRepository.replaceAll(
         sales.map(s => ({
             id: s.id,
             employeeId: s.employeeId,

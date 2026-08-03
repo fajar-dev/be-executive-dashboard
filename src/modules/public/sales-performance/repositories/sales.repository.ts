@@ -5,17 +5,26 @@ export class SalesRepository implements ISalesRepository {
     constructor(private readonly db: Pool) {}
 
     /**
-     * Upsert a list of sales employees (access_home and access_business).
+     * Replace the entire sales table with a fresh crawl (access_home and access_business).
+     * Deletes all existing rows, then inserts the provided list, atomically in one
+     * transaction so a failed insert never leaves the table empty.
      *
-     * @param {SalesUpsertPayload[]} data - The list of employees to upsert.
+     * @param {SalesUpsertPayload[]} data - The full list of employees to store.
      * @returns {Promise<void>} A promise that resolves when the operation is complete.
      */
-    async upsert(data: SalesUpsertPayload[]): Promise<void> {
-        if (!data.length) return
-
+    async replaceAll(data: SalesUpsertPayload[]): Promise<void> {
         const connection = await this.db.getConnection()
         try {
+            // Disabled so the self-referencing manager_id FK doesn't block delete/insert order.
             await connection.query('SET FOREIGN_KEY_CHECKS = 0')
+            await connection.beginTransaction()
+
+            await connection.query('DELETE FROM sales')
+
+            if (!data.length) {
+                await connection.commit()
+                return
+            }
 
             const values = data.map(d => [
                 d.id,
@@ -52,6 +61,11 @@ export class SalesRepository implements ISalesRepository {
                     updated_at = CURRENT_TIMESTAMP`,
                 [values]
             )
+
+            await connection.commit()
+        } catch (error) {
+            await connection.rollback()
+            throw error
         } finally {
             await connection.query('SET FOREIGN_KEY_CHECKS = 1')
             connection.release()
