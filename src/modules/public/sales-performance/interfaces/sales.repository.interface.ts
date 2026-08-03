@@ -20,10 +20,11 @@ export interface SalesUpsertPayload {
  */
 export interface ISalesRepository {
     /**
-     * Upsert a list of sales employees (both access_home and access_business).
+     * Replace the entire sales table with a fresh list (both access_home and access_business).
+     * Existing rows are deleted before the new list is inserted.
      *
-     * @param {SalesUpsertPayload[]} data - The list of employees to upsert.
+     * @param {SalesUpsertPayload[]} data - The full list of employees to store.
      * @returns {Promise<void>} A promise that resolves when the operation is complete.
      */
-    upsert(data: SalesUpsertPayload[]): Promise<void>
+    replaceAll(data: SalesUpsertPayload[]): Promise<void>
 }
