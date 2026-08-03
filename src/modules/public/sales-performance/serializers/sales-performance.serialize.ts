@@ -12,6 +12,7 @@ export class SalesPerformanceSerializer {
             name: item.name,
             photoProfile: item.photoProfile,
             organizationName: item.organizationName,
+            type: item.type,
             data: item.data
         }))
     }

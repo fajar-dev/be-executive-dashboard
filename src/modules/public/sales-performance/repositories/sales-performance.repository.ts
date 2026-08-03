@@ -8,19 +8,33 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     ) {}
 
     /**
-     * Get list of staff-level sales employees from sales_home table.
+     * Get list of staff-level sales employees from the sales table.
      * If managerId is provided, filters by manager_id as well.
-     * 
+     * If branchId is provided, filters by branch_id as well.
+     * If type is provided, filters by type (access_home / access_business) as well.
+     *
      * @param {number} [managerId] - Optional manager ID to filter by.
+     * @param {string} [branchId] - Optional branch ID to filter by.
+     * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ employeeId: string; name: string; photoProfile: string }>>} Staff list.
      */
-    async getStaffList(managerId?: number): Promise<Array<{ id: number; employeeId: string; name: string; photoProfile: string; organizationName: string }>> {
-        let query = `SELECT id, employee_id, name, photo_profile, organization_name FROM sales_home WHERE job_level = 'staff'`
+    async getStaffList(managerId?: number, branchId?: string, type?: string): Promise<Array<{ id: number; employeeId: string; name: string; photoProfile: string; organizationName: string; type: string }>> {
+        let query = `SELECT id, employee_id, name, photo_profile, organization_name, type FROM sales WHERE job_level = 'staff'`
         const params: any[] = []
 
         if (managerId) {
             query += ` AND manager_id = ?`
             params.push(managerId)
+        }
+
+        if (branchId) {
+            query += ` AND branch_id = ?`
+            params.push(branchId)
+        }
+
+        if (type) {
+            query += ` AND type = ?`
+            params.push(type)
         }
 
         query += ` ORDER BY name ASC`
@@ -32,7 +46,8 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
             employeeId: row.employee_id,
             name: row.name,
             photoProfile: row.photo_profile || '',
-            organizationName: row.organization_name || ''
+            organizationName: row.organization_name || '',
+            type: row.type || ''
         }))
     }
 
@@ -67,7 +82,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                     GROUP BY custServId
                 ) oldest ON oldest.custServId = cscsl_inner.custServId AND oldest.minAi = cscsl_inner.ai
             ) cscsl ON cscsl.custServId = cs.CustServId
-            WHERE s.ServiceCategory = 'access_home'
+            WHERE s.ServiceCategory IN ('access_home', 'access_business')
                 AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
                 AND cs.CustStatus = 'AC'
                 AND cs.CustActivationDate BETWEEN ? AND ?
@@ -85,18 +100,27 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
-     * Get list of manager-level employees from sales_home.
+     * Get list of manager-level employees from the sales table.
      * Filters by job_level IN ('Manager', 'General Manager').
-     * 
+     * If type is provided, filters by type (access_home / access_business) as well.
+     *
+     * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
-    async getManagers(): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
-        const [rows] = await this.dashboardDb.query<any[]>(
-            `SELECT id, name, employee_id, photo_profile 
-             FROM sales_home 
-             WHERE job_level IN ('Manager', 'General Manager')
-             ORDER BY name ASC`
-        )
+    async getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
+        let query = `SELECT id, name, employee_id, photo_profile
+             FROM sales
+             WHERE job_level IN ('Manager', 'General Manager')`
+        const params: any[] = []
+
+        if (type) {
+            query += ` AND type = ?`
+            params.push(type)
+        }
+
+        query += ` ORDER BY name ASC`
+
+        const [rows] = await this.dashboardDb.query<any[]>(query, params)
 
         return rows.map((row: any) => ({
             id: Number(row.id),

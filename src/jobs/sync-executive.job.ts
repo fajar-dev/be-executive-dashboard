@@ -1,6 +1,6 @@
 import { NusaworkService } from '../modules/nusawork/nusawork.service'
 import { type IUserRepository } from '../modules/user/user.repository.interface'
-import { ISalesHomeRepository } from '../modules/public/sales-performance/interfaces/sales-home.repository.interface'
+import { ISalesRepository } from '../modules/public/sales-performance/interfaces/sales.repository.interface'
 
 const nusaworkService = new NusaworkService()
 
@@ -40,13 +40,19 @@ export async function syncAdminJob(userRepository: IUserRepository): Promise<voi
     console.log(`[SyncAdmin] Synced ${admins.length} admins`)
 }
 
-export async function syncSalesHomeJob(salesHomeRepository: ISalesHomeRepository): Promise<void> {
-    console.log('[SyncSalesHome] Starting sync...')
+export async function syncSalesJob(salesRepository: ISalesRepository): Promise<void> {
+    console.log('[SyncSales] Starting sync...')
 
-    const salesHome = await nusaworkService.getSalesHome()
+    // Crawl both access_home and access_business sales, each stamped with its type.
+    const [salesHome, salesBusiness] = await Promise.all([
+        nusaworkService.getSalesHome(),
+        nusaworkService.getSalesBusiness(),
+    ])
 
-    await salesHomeRepository.upsert(
-        salesHome.map(s => ({
+    const sales = [...salesHome, ...salesBusiness]
+
+    await salesRepository.upsert(
+        sales.map(s => ({
             id: s.id,
             employeeId: s.employeeId,
             name: s.name,
@@ -58,8 +64,9 @@ export async function syncSalesHomeJob(salesHomeRepository: ISalesHomeRepository
             branchId: s.branchId,
             managerId: s.managerId,
             status: s.status,
+            type: s.type,
         }))
     )
 
-    console.log(`[SyncSalesHome] Synced ${salesHome.length} sales home`)
+    console.log(`[SyncSales] Synced ${sales.length} sales (${salesHome.length} home, ${salesBusiness.length} business)`)
 }
