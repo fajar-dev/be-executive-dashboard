@@ -53,8 +53,10 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
 
     /**
      * Count daily customer activations for a list of sales employee IDs in a given month/year.
-     * Queries the NIS CustomerServices table for access_home category activations.
-     * 
+     * Queries the NIS CustomerServices table for access_home and access_business services.
+     * The effective date differs per category: access_home uses CustRegDate,
+     * access_business uses CustActivationDate.
+     *
      * @param {string[]} employeeIds - List of sales employee IDs.
      * @param {number} month - Month number (1-12).
      * @param {number} year - Full year (e.g. 2026).
@@ -66,29 +68,22 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`
         const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
 
+        // Pick the date column based on service category.
+        const effectiveDate = `CASE WHEN s.ServiceCategory = 'access_business' THEN cs.CustActivationDate ELSE cs.CustRegDate END`
+
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 cs.SalesId AS sales_id,
-                DAY(cs.CustActivationDate) AS day_num,
+                DAY(${effectiveDate}) AS day_num,
                 COUNT(cs.CustServId) AS total
             FROM CustomerServices cs
             LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
-            LEFT JOIN (
-                SELECT cscsl_inner.custServId, cscsl_inner.prevStatus
-                FROM CustomerServiceChangeStatusLog cscsl_inner
-                INNER JOIN (
-                    SELECT custServId, MIN(ai) AS minAi
-                    FROM CustomerServiceChangeStatusLog
-                    GROUP BY custServId
-                ) oldest ON oldest.custServId = cscsl_inner.custServId AND oldest.minAi = cscsl_inner.ai
-            ) cscsl ON cscsl.custServId = cs.CustServId
             WHERE s.ServiceCategory IN ('access_home', 'access_business')
                 AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
                 AND cs.CustStatus = 'AC'
-                AND cs.CustActivationDate BETWEEN ? AND ?
+                AND (${effectiveDate}) BETWEEN ? AND ?
                 AND cs.SalesId IN (?)
-                AND (cscsl.custServId IS NULL OR cscsl.prevStatus != 'AC')
-            GROUP BY cs.SalesId, DAY(cs.CustActivationDate)`,
+            GROUP BY cs.SalesId, DAY(${effectiveDate})`,
             [startDate, endDate, employeeIds]
         )
 
