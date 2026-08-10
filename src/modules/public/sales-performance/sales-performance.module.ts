@@ -10,8 +10,8 @@ export class SalesPerformanceModule {
     public readonly repository: SalesPerformanceRepository
     public readonly salesRepository: SalesRepository
 
-    constructor(nisPool: Pool, dashboardPool: Pool) {
-        this.repository = new SalesPerformanceRepository(nisPool, dashboardPool)
+    constructor(nisPool: Pool, dashboardPool: Pool, nusaprospectPool: Pool) {
+        this.repository = new SalesPerformanceRepository(nisPool, dashboardPool, nusaprospectPool)
         this.salesRepository = new SalesRepository(dashboardPool)
         this.service = new SalesPerformanceService(this.repository)
         this.controller = new SalesPerformanceController(this.service)

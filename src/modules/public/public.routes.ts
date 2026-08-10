@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { nisPool } from '../../config/nis.db'
 import { dashboardPool } from '../../config/dashboard.db'
+import { nusaprospectPool } from '../../config/nusaprospect.db'
 import { SalesPerformanceModule } from './sales-performance/sales-performance.module'
 
 /**
@@ -13,7 +14,7 @@ export const setupPublicRoutes = () => {
     const routes = new Hono()
 
     // Module dependencies
-    const salesPerformanceModule = new SalesPerformanceModule(nisPool, dashboardPool)
+    const salesPerformanceModule = new SalesPerformanceModule(nisPool, dashboardPool, nusaprospectPool)
     const salesPerformance = salesPerformanceModule.controller
 
     // Sales Performance Routes

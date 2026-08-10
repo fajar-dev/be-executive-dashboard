@@ -20,22 +20,38 @@ export class SalesPerformanceService implements ISalesPerformanceService {
 
         if (!staffList.length) return []
 
-        const employeeIds = staffList.map(s => s.employeeId)
-        const dailyActivations = await this.repository.getDailyActivations(employeeIds, month, year)
+        // access_home counts come from NIS (keyed by employee_id);
+        // access_business counts come from NusaProspect (keyed by email).
+        const homeStaff = staffList.filter(s => s.type !== 'access_business')
+        const businessStaff = staffList.filter(s => s.type === 'access_business')
 
-        // Build lookup: salesId -> { day -> count }
-        const activationMap = new Map<string, Map<number, number>>()
-        for (const row of dailyActivations) {
-            if (!activationMap.has(row.salesId)) {
-                activationMap.set(row.salesId, new Map())
-            }
-            activationMap.get(row.salesId)!.set(row.day, row.count)
+        const [homeActivations, businessActivity] = await Promise.all([
+            homeStaff.length
+                ? this.repository.getHomeDailyRegistration(homeStaff.map(s => s.employeeId), month, year)
+                : Promise.resolve([]),
+            businessStaff.length
+                ? this.repository.getBusinessDailyActivity(businessStaff.map(s => s.email).filter(Boolean), month, year)
+                : Promise.resolve([])
+        ])
+
+        // Build lookups: home by employeeId, business by email -> { day -> count }
+        const homeMap = new Map<string, Map<number, number>>()
+        for (const row of homeActivations) {
+            if (!homeMap.has(row.salesId)) homeMap.set(row.salesId, new Map())
+            homeMap.get(row.salesId)!.set(row.day, row.count)
+        }
+        const businessMap = new Map<string, Map<number, number>>()
+        for (const row of businessActivity) {
+            if (!businessMap.has(row.email)) businessMap.set(row.email, new Map())
+            businessMap.get(row.email)!.set(row.day, row.count)
         }
 
         const daysInMonth = new Date(year, month, 0).getDate()
 
         const results = staffList.map(staff => {
-            const dayMap = activationMap.get(staff.employeeId) || new Map()
+            const dayMap = staff.type === 'access_business'
+                ? (businessMap.get(staff.email) || new Map())
+                : (homeMap.get(staff.employeeId) || new Map())
             const data: number[] = []
 
             for (let d = 1; d <= daysInMonth; d++) {
