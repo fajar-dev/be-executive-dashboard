@@ -4,7 +4,8 @@ import { ISalesPerformanceRepository } from '../interfaces/sales-performance.rep
 export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     constructor(
         private readonly nisDb: Pool,
-        private readonly dashboardDb: Pool
+        private readonly dashboardDb: Pool,
+        private readonly nusaprospectDb: Pool
     ) {}
 
     /**
@@ -18,8 +19,8 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
      * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ employeeId: string; name: string; photoProfile: string }>>} Staff list.
      */
-    async getStaffList(managerId?: number, branchId?: string, type?: string): Promise<Array<{ id: number; employeeId: string; name: string; photoProfile: string; organizationName: string; type: string }>> {
-        let query = `SELECT id, employee_id, name, photo_profile, organization_name, type FROM sales WHERE job_level = 'staff'`
+    async getStaffList(managerId?: number, branchId?: string, type?: string): Promise<Array<{ id: number; employeeId: string; email: string; name: string; photoProfile: string; organizationName: string; type: string }>> {
+        let query = `SELECT id, employee_id, email, name, photo_profile, organization_name, type FROM sales WHERE job_level = 'staff'`
         const params: any[] = []
 
         if (managerId) {
@@ -44,6 +45,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         return rows.map((row: any) => ({
             id: Number(row.id),
             employeeId: row.employee_id,
+            email: row.email || '',
             name: row.name,
             photoProfile: row.photo_profile || '',
             organizationName: row.organization_name || '',
@@ -52,43 +54,88 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
-     * Count daily customer activations for a list of sales employee IDs in a given month/year.
-     * Queries the NIS CustomerServices table for access_home and access_business services.
-     * The effective date differs per category: access_home uses CustRegDate,
-     * access_business uses CustActivationDate.
+     * Count daily access_home customer registrations for a list of sales employee IDs
+     * in a given month/year. Queries the NIS CustomerServices table, counted by CustRegDate.
+     * Keyed by SalesId (= sales employee_id).
      *
      * @param {string[]} employeeIds - List of sales employee IDs.
      * @param {number} month - Month number (1-12).
      * @param {number} year - Full year (e.g. 2026).
-     * @returns {Promise<Array<{ salesId: string; day: number; count: number }>>} Daily activation counts.
+     * @returns {Promise<Array<{ salesId: string; day: number; count: number }>>} Daily counts keyed by employee ID.
      */
-    async getDailyActivations(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>> {
+    async getHomeDailyRegistration(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>> {
         if (!employeeIds.length) return []
 
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`
         const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
 
-        // Pick the date column based on service category.
-        const effectiveDate = `CASE WHEN s.ServiceCategory = 'access_business' THEN cs.CustActivationDate ELSE cs.CustRegDate END`
-
         const [rows] = await this.nisDb.query<any[]>(
             `SELECT
                 cs.SalesId AS sales_id,
-                DAY(${effectiveDate}) AS day_num,
+                DAY(cs.CustRegDate) AS day_num,
                 COUNT(cs.CustServId) AS total
             FROM CustomerServices cs
-            LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
-            WHERE s.ServiceCategory IN ('access_home', 'access_business')
-                AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
+            INNER JOIN Services s ON s.ServiceId = cs.ServiceId
+                AND s.ServiceCategory = 'access_home'
+            WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
                 AND cs.CustStatus = 'AC'
-                AND (${effectiveDate}) BETWEEN ? AND ?
+                AND cs.CustRegDate BETWEEN ? AND ?
                 AND cs.SalesId IN (?)
-            GROUP BY cs.SalesId, DAY(${effectiveDate})`,
+            GROUP BY cs.SalesId, DAY(cs.CustRegDate)`,
             [startDate, endDate, employeeIds]
         )
 
         return rows.map((row: any) => ({
             salesId: String(row.sales_id),
+            day: Number(row.day_num),
+            count: Number(row.total)
+        }))
+    }
+
+    /**
+     * Count daily access_business activity for a list of sales emails in a given month/year.
+     * Queries the NusaProspect database: activity = customer_log_calls + prospect_tasks +
+     * prospect_check_ins, counted per created_at day. Sales are matched to NusaProspect users
+     * via tenant_users.email (= sales.email) -> tenant_users.user_uuid -> activity user id.
+     * Keyed by sales email.
+     *
+     * @param {string[]} emails - List of sales emails.
+     * @param {number} month - Month number (1-12).
+     * @param {number} year - Full year (e.g. 2026).
+     * @returns {Promise<Array<{ email: string; day: number; count: number }>>} Daily counts keyed by email.
+     */
+    async getBusinessDailyActivity(emails: string[], month: number, year: number): Promise<Array<{ email: string; day: number; count: number }>> {
+        if (!emails.length) return []
+
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+        const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
+
+        const [rows] = await this.nusaprospectDb.query<any[]>(
+            `SELECT
+                tu.email AS email,
+                a.day_num AS day_num,
+                COUNT(*) AS total
+            FROM tenant_users tu
+            JOIN (
+                SELECT IFNULL(clc.assigned_to_id, clc.created_by) AS user_id, DAY(clc.created_at) AS day_num
+                FROM customer_log_calls clc
+                WHERE DATE(clc.created_at) BETWEEN ? AND ?
+                UNION ALL
+                SELECT IFNULL(pt.assigned_to_id, pt.created_by) AS user_id, DAY(pt.created_at) AS day_num
+                FROM prospect_tasks pt
+                WHERE DATE(pt.created_at) BETWEEN ? AND ?
+                UNION ALL
+                SELECT pci.user_uuid AS user_id, DAY(pci.created_at) AS day_num
+                FROM prospect_check_ins pci
+                WHERE DATE(pci.created_at) BETWEEN ? AND ?
+            ) a ON a.user_id = tu.user_uuid
+            WHERE tu.email IN (?)
+            GROUP BY tu.email, a.day_num`,
+            [startDate, endDate, startDate, endDate, startDate, endDate, emails]
+        )
+
+        return rows.map((row: any) => ({
+            email: String(row.email),
             day: Number(row.day_num),
             count: Number(row.total)
         }))
