@@ -78,7 +78,6 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
             INNER JOIN Services s ON s.ServiceId = cs.ServiceId
                 AND s.ServiceCategory = 'access_home'
             WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                AND cs.CustStatus = 'AC'
                 AND cs.CustRegDate BETWEEN ? AND ?
                 AND cs.SalesId IN (?)
             GROUP BY cs.SalesId, DAY(cs.CustRegDate)`,
