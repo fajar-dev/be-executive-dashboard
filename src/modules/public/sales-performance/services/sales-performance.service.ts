@@ -27,7 +27,7 @@ export class SalesPerformanceService implements ISalesPerformanceService {
 
         const [homeActivations, businessActivity] = await Promise.all([
             homeStaff.length
-                ? this.repository.getHomeDailyRegistration(homeStaff.map(s => s.employeeId), month, year)
+                ? this.repository.getHomeDailyRegistrationActivation(homeStaff.map(s => s.employeeId), month, year)
                 : Promise.resolve([]),
             businessStaff.length
                 ? this.repository.getBusinessDailyActivity(businessStaff.map(s => s.email).filter(Boolean), month, year)
