@@ -13,14 +13,14 @@ export interface ISalesPerformanceRepository {
     getStaffList(managerId?: number, branchId?: string, type?: string): Promise<Array<{ id: number; employeeId: string; email: string; name: string; photoProfile: string; organizationName: string; type: string }>>
 
     /**
-     * Count daily access_home registrations (NIS) for a list of sales employee IDs.
+     * Count daily access_home registrations + activations (NIS) for a list of sales employee IDs.
      *
      * @param {string[]} employeeIds - List of sales employee IDs.
      * @param {number} month - Month number (1-12).
      * @param {number} year - Full year (e.g. 2026).
      * @returns {Promise<Array<{ salesId: string; day: number; count: number }>>} Daily counts keyed by employee ID.
      */
-    getHomeDailyRegistration(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>>
+    getHomeDailyRegistrationActivation(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>>
 
     /**
      * Count daily access_business activity (NusaProspect) for a list of sales emails.
