@@ -57,7 +57,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
      * Count daily access_home performance for a list of sales employee IDs. Four sources
      * are summed per sales per day (NIS); activations use the latest matching BL/FR -> AC
      * transition in CustomerServiceChangeStatusLog, counted by its startDate:
-     *  - New registrasi Home Reguler: access_home services, counted by CustRegDate
+     *  - New registrasi Home Reguler: access_home services, counted by CustRegDate NOT IN the NusaSelecta set
      *  - New Aktivasi Home Reguler:   BL -> AC, ServiceId NOT IN the NusaSelecta set
      *  - New Aktivasi NusaSelecta:    BL -> AC, ServiceId IN the NusaSelecta set
      *  - Upgrade NusaSelecta:         FR -> AC, ServiceId IN the NusaSelecta set
@@ -85,6 +85,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                 FROM CustomerServices cs
                 INNER JOIN Services s ON s.ServiceId = cs.ServiceId
                     AND s.ServiceCategory = 'access_home'
+                    AND s.ServiceId NOT IN ('NFSP100', 'NFSP200', 'NFSP300', 'NFSF030', 'NFSF001', 'NFSP030', 'NFST030', 'NFSM030')
                 WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
                     AND cs.CustRegDate BETWEEN ? AND ?
                     AND cs.SalesId IN (?)
@@ -159,6 +160,8 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                         SELECT custServId, MAX(ai) AS maxAi
                         FROM CustomerServiceChangeStatusLog
                         WHERE prevStatus = 'FR' AND status = 'AC'
+                            -- only real NusaFiber upgrades; exclude "Activation after receipt" reactivations
+                            AND description LIKE 'Activation from NUSAFIBER%'
                         GROUP BY custServId
                     ) latest ON latest.custServId = l.custServId AND latest.maxAi = l.ai
                 ) act ON act.custServId = cs.CustServId

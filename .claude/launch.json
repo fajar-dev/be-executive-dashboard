@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fe-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd /Users/fajar/Nusanet/vp-access-business-dashboard/fe && exec bun run dev"],
+      "port": 3000
+    }
+  ]
+}
