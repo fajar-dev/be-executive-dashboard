@@ -54,13 +54,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
-     * Count daily access_home performance for a list of sales employee IDs. Four sources
-     * are summed per sales per day (NIS); activations use the latest matching BL/FR -> AC
-     * transition in CustomerServiceChangeStatusLog, counted by its startDate:
-     *  - New registrasi Home Reguler: access_home services, counted by CustRegDate NOT IN the NusaSelecta set
-     *  - New Aktivasi Home Reguler:   BL -> AC, ServiceId NOT IN the NusaSelecta set
-     *  - New Aktivasi NusaSelecta:    BL -> AC, ServiceId IN the NusaSelecta set
-     *  - Upgrade NusaSelecta:         FR -> AC, ServiceId IN the NusaSelecta set
+     * Count daily access_home registrations for a list of sales employee IDs (NIS).
      * Keyed by SalesId (= sales employee_id).
      *
      * @param {string[]} employeeIds - List of sales employee IDs.
@@ -68,116 +62,25 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
      * @param {number} year - Full year (e.g. 2026).
      * @returns {Promise<Array<{ salesId: string; day: number; count: number }>>} Daily counts keyed by employee ID.
      */
-    async getHomeDailyRegistrationActivation(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>> {
+    async getHomeDailyRegistration(employeeIds: string[], month: number, year: number): Promise<Array<{ salesId: string; day: number; count: number }>> {
         if (!employeeIds.length) return []
 
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`
         const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
 
         const [rows] = await this.nisDb.query<any[]>(
-            `
-            SELECT sales_id, day_num, SUM(cnt) AS total FROM (
-                -- "New registrasi Home Reguler"
-                SELECT
-                    cs.SalesId AS sales_id,
-                    DAY(cs.CustRegDate) AS day_num,
-                    COUNT(cs.CustServId) AS cnt
-                FROM CustomerServices cs
-                INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                    AND s.ServiceCategory = 'access_home'
-                    AND s.ServiceId NOT IN ('NFSP100', 'NFSP200', 'NFSP300', 'NFSF030', 'NFSF001', 'NFSP030', 'NFST030', 'NFSM030')
-                WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                    AND cs.CustRegDate BETWEEN ? AND ?
-                    AND cs.SalesId IN (?)
-                GROUP BY cs.SalesId, DAY(cs.CustRegDate)
-
-                UNION ALL
-
-                -- "New Aktivasi Home Reguler"
-                SELECT
-                    cs.SalesId AS sales_id,
-                    DAY(act.startDate) AS day_num,
-                    COUNT(*) AS cnt
-                FROM CustomerServices cs
-                INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                    AND s.ServiceCategory = 'access_home'
-                INNER JOIN (
-                    SELECT l.custServId, l.startDate
-                    FROM CustomerServiceChangeStatusLog l
-                    INNER JOIN (
-                        SELECT custServId, MAX(ai) AS maxAi
-                        FROM CustomerServiceChangeStatusLog
-                        WHERE prevStatus = 'BL' AND status = 'AC'
-                        GROUP BY custServId
-                    ) latest ON latest.custServId = l.custServId AND latest.maxAi = l.ai
-                ) act ON act.custServId = cs.CustServId
-                WHERE cs.ServiceId NOT IN ('NFSP100', 'NFSP200', 'NFSP300', 'NFSF030', 'NFSF001', 'NFSP030', 'NFST030', 'NFSM030')
-                    AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                    AND DATE(act.startDate) BETWEEN ? AND ?
-                    AND cs.SalesId IN (?)
-                GROUP BY cs.SalesId, DAY(act.startDate)
-
-                UNION ALL
-
-                -- "New Aktivasi NusaSelecta"
-                SELECT
-                    cs.SalesId AS sales_id,
-                    DAY(act.startDate) AS day_num,
-                    COUNT(*) AS cnt
-                FROM CustomerServices cs
-                INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                    AND s.ServiceCategory = 'access_home'
-                INNER JOIN (
-                    SELECT l.custServId, l.startDate
-                    FROM CustomerServiceChangeStatusLog l
-                    INNER JOIN (
-                        SELECT custServId, MAX(ai) AS maxAi
-                        FROM CustomerServiceChangeStatusLog
-                        WHERE prevStatus = 'BL' AND status = 'AC'
-                        GROUP BY custServId
-                    ) latest ON latest.custServId = l.custServId AND latest.maxAi = l.ai
-                ) act ON act.custServId = cs.CustServId
-                WHERE cs.ServiceId IN ('NFSP100', 'NFSP200', 'NFSP300', 'NFSF030', 'NFSF001', 'NFSP030', 'NFST030', 'NFSM030')
-                    AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                    AND DATE(act.startDate) BETWEEN ? AND ?
-                    AND cs.SalesId IN (?)
-                GROUP BY cs.SalesId, DAY(act.startDate)
-
-                UNION ALL
-
-                -- "Upgrade NusaSelecta"
-                SELECT
-                    cs.SalesId AS sales_id,
-                    DAY(act.startDate) AS day_num,
-                    COUNT(*) AS cnt
-                FROM CustomerServices cs
-                INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                    AND s.ServiceCategory = 'access_home'
-                INNER JOIN (
-                    SELECT l.custServId, l.startDate
-                    FROM CustomerServiceChangeStatusLog l
-                    INNER JOIN (
-                        SELECT custServId, MAX(ai) AS maxAi
-                        FROM CustomerServiceChangeStatusLog
-                        WHERE prevStatus = 'FR' AND status = 'AC'
-                            -- only real NusaFiber upgrades; exclude "Activation after receipt" reactivations
-                            AND description LIKE 'Activation from NUSAFIBER%'
-                        GROUP BY custServId
-                    ) latest ON latest.custServId = l.custServId AND latest.maxAi = l.ai
-                ) act ON act.custServId = cs.CustServId
-                WHERE cs.ServiceId IN ('NFSP100', 'NFSP200', 'NFSP300', 'NFSF030', 'NFSF001', 'NFSP030', 'NFST030', 'NFSM030')
-                    AND cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                    AND DATE(act.startDate) BETWEEN ? AND ?
-                    AND cs.SalesId IN (?)
-                GROUP BY cs.SalesId, DAY(act.startDate)
-            ) x
-            GROUP BY sales_id, day_num`,
-            [
-                startDate, endDate, employeeIds, // New registrasi Home Reguler
-                startDate, endDate, employeeIds, // New Aktivasi Home Reguler
-                startDate, endDate, employeeIds, // New Aktivasi NusaSelecta
-                startDate, endDate, employeeIds  // Upgrade NusaSelecta
-            ]
+            `SELECT
+                cs.SalesId AS sales_id,
+                DAY(cs.CustRegDate) AS day_num,
+                COUNT(cs.CustServId) AS total
+            FROM CustomerServices cs
+            INNER JOIN Services s ON s.ServiceId = cs.ServiceId
+                AND s.ServiceCategory = 'access_home'
+            WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
+                AND cs.CustRegDate BETWEEN ? AND ?
+                AND cs.SalesId IN (?)
+            GROUP BY cs.SalesId, DAY(cs.CustRegDate)`,
+            [startDate, endDate, employeeIds]
         )
 
         return rows.map((row: any) => ({

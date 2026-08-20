@@ -25,9 +25,9 @@ export class SalesPerformanceService implements ISalesPerformanceService {
         const homeStaff = staffList.filter(s => s.type !== 'access_business')
         const businessStaff = staffList.filter(s => s.type === 'access_business')
 
-        const [homeActivations, businessActivity] = await Promise.all([
+        const [homeRegistrations, businessActivity] = await Promise.all([
             homeStaff.length
-                ? this.repository.getHomeDailyRegistrationActivation(homeStaff.map(s => s.employeeId), month, year)
+                ? this.repository.getHomeDailyRegistration(homeStaff.map(s => s.employeeId), month, year)
                 : Promise.resolve([]),
             businessStaff.length
                 ? this.repository.getBusinessDailyActivity(businessStaff.map(s => s.email).filter(Boolean), month, year)
@@ -36,7 +36,7 @@ export class SalesPerformanceService implements ISalesPerformanceService {
 
         // Build lookups: home by employeeId, business by email -> { day -> count }
         const homeMap = new Map<string, Map<number, number>>()
-        for (const row of homeActivations) {
+        for (const row of homeRegistrations) {
             if (!homeMap.has(row.salesId)) homeMap.set(row.salesId, new Map())
             homeMap.get(row.salesId)!.set(row.day, row.count)
         }
