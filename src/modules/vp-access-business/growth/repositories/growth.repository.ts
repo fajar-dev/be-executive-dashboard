@@ -118,19 +118,12 @@ export class GrowthRepository implements IGrowthRepository {
                 WHERE t.rn = 1
             )
             SELECT
-                /* Total paid + unpaid pada periode */
+                /* New MRC yang diambil dari paid saja */
                 COALESCE(
                     SUM(
                         CASE
-                            WHEN (
-                                m.paid_date >= p.start_date
+                            WHEN m.paid_date >= p.start_date
                                 AND m.paid_date < p.end_date
-                            )
-                            OR (
-                                m.paid_date IS NULL
-                                AND m.inv_date >= p.start_date
-                                AND m.inv_date < p.end_date
-                            )
                             THEN m.amount
                             ELSE 0
                         END
