@@ -34,8 +34,30 @@ export class SalesPerformanceController {
     }
 
     /**
+     * Get the detail list behind one cell (sales member on a specific day).
+     * Query params: salesId (required), day (required), month, year (default current).
+     *
+     * @param {Context} c - Hono context object.
+     * @returns {Promise<Response>} HTTP Response with { type, items }.
+     */
+    async getDetail(c: Context) {
+        const now = new Date()
+        const salesId = Number(c.req.query('salesId'))
+        const day = Number(c.req.query('day'))
+        const month = Number(c.req.query('month')) || (now.getMonth() + 1)
+        const year = Number(c.req.query('year')) || now.getFullYear()
+
+        if (!salesId || !day) {
+            return ApiResponse.success(c, { type: '', items: [] }, 'Detail retrieved')
+        }
+
+        const data = await this.service.getDetail(salesId, month, year, day)
+        return ApiResponse.success(c, data, 'Detail retrieved')
+    }
+
+    /**
      * Get list of manager-level employees.
-     * 
+     *
      * @param {Context} c - Hono context object.
      * @returns {Promise<Response>} HTTP Response with manager list.
      */

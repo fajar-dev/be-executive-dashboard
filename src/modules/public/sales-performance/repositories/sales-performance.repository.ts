@@ -140,6 +140,86 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
+     * Look up a single sales row (dashboard) by its id.
+     *
+     * @param {number} id - Sales table primary key.
+     * @returns {Promise<{ employeeId: string; email: string; type: string } | null>} Sales identity or null.
+     */
+    async getSalesById(id: number): Promise<{ employeeId: string; email: string; type: string } | null> {
+        const [rows] = await this.dashboardDb.query<any[]>(
+            `SELECT employee_id, email, type FROM sales WHERE id = ? LIMIT 1`,
+            [id]
+        )
+        if (!rows.length) return null
+        return { employeeId: rows[0].employee_id, email: rows[0].email || '', type: rows[0].type || '' }
+    }
+
+    /**
+     * Detail of access_home registrations for a sales employee on a specific date (NIS).
+     *
+     * @param {string} employeeId - Sales employee ID (= SalesId).
+     * @param {string} date - Date string 'YYYY-MM-DD'.
+     * @returns {Promise<Array<{ custServId: string; accountNumber: string; customerName: string; serviceId: string; date: string }>>}
+     */
+    async getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ custServId: string; customerId: string; customerName: string; accountName: string; serviceType: string; date: string }>> {
+        const [rows] = await this.nisDb.query<any[]>(
+            `SELECT
+                cs.CustServId AS custServId,
+                c.CustId AS customerId,
+                c.CustName AS customerName,
+                cs.CustAccName AS accountName,
+                s.ServiceType AS serviceType,
+                cs.CustRegDate AS regDate
+            FROM CustomerServices cs
+            INNER JOIN Services s ON s.ServiceId = cs.ServiceId
+                AND s.ServiceCategory = 'access_home'
+            LEFT JOIN Customer c ON c.CustId = cs.CustId
+            WHERE cs.SalesId = ?
+                AND DATE(cs.CustRegDate) = ?
+            ORDER BY cs.CustRegDate ASC`,
+            [employeeId, date]
+        )
+        return rows.map((row: any) => ({
+            custServId: String(row.custServId),
+            customerId: row.customerId != null ? String(row.customerId) : '',
+            customerName: row.customerName || '',
+            accountName: row.accountName || '',
+            serviceType: row.serviceType || '',
+            date: row.regDate
+        }))
+    }
+
+    /**
+     * Detail of access_business activity for a sales email on a specific date (NusaProspect).
+     * Activity = customer_log_calls + prospect_tasks + prospect_check_ins.
+     *
+     * @param {string} email - Sales email (matched to tenant_users.email).
+     * @param {string} date - Date string 'YYYY-MM-DD'.
+     * @returns {Promise<Array<{ type: string; at: string }>>}
+     */
+    async getBusinessActivityDetail(email: string, date: string): Promise<Array<{ type: string; at: string }>> {
+        if (!email) return []
+        const [rows] = await this.nusaprospectDb.query<any[]>(
+            `SELECT a.type AS type, a.at AS at
+            FROM tenant_users tu
+            JOIN (
+                SELECT IFNULL(clc.assigned_to_id, clc.created_by) AS user_id, 'Call' AS type, clc.created_at AS at
+                    FROM customer_log_calls clc WHERE DATE(clc.created_at) = ?
+                UNION ALL
+                SELECT IFNULL(pt.assigned_to_id, pt.created_by) AS user_id, 'Task' AS type, pt.created_at AS at
+                    FROM prospect_tasks pt WHERE DATE(pt.created_at) = ?
+                UNION ALL
+                SELECT pci.user_uuid AS user_id, 'Check-in' AS type, pci.created_at AS at
+                    FROM prospect_check_ins pci WHERE DATE(pci.created_at) = ?
+            ) a ON a.user_id = tu.user_uuid
+            WHERE tu.email = ?
+            ORDER BY a.at ASC`,
+            [date, date, date, email]
+        )
+        return rows.map((row: any) => ({ type: row.type, at: row.at }))
+    }
+
+    /**
      * Get list of manager-level employees from the sales table.
      * Filters by job_level IN ('Manager', 'General Manager').
      * If type is provided, filters by type (access_home / access_business) as well.
