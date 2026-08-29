@@ -15,6 +15,17 @@ export interface ISalesPerformanceService {
     getSalesPerformance(month: number, year: number, managerId?: number, branchId?: string, type?: string): Promise<Array<{ name: string; photoProfile: string; data: number[] }>>
 
     /**
+     * Retrieve the detail list behind one cell (sales member on a specific day).
+     *
+     * @param {number} salesId - Sales table id.
+     * @param {number} month - Month number (1-12).
+     * @param {number} year - Full year (e.g. 2026).
+     * @param {number} day - Day of month (1-31).
+     * @returns {Promise<{ type: string; items: any[] }>} Detail list keyed by sales type.
+     */
+    getDetail(salesId: number, month: number, year: number, day: number): Promise<{ type: string; items: any[] }>
+
+    /**
      * Retrieve list of managers, optionally filtered by type.
      *
      * @param {string} [type] - Optional sales type to filter by.

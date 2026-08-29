@@ -33,6 +33,21 @@ export interface ISalesPerformanceRepository {
     getBusinessDailyActivity(emails: string[], month: number, year: number): Promise<Array<{ email: string; day: number; count: number }>>
 
     /**
+     * Look up a single sales row (dashboard) by id.
+     */
+    getSalesById(id: number): Promise<{ employeeId: string; email: string; type: string } | null>
+
+    /**
+     * Detail of access_home registrations for a sales employee on a specific date (NIS).
+     */
+    getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ custServId: string; customerId: string; customerName: string; accountName: string; serviceType: string; date: string }>>
+
+    /**
+     * Detail of access_business activity for a sales email on a specific date (NusaProspect).
+     */
+    getBusinessActivityDetail(email: string, date: string): Promise<Array<{ type: string; at: string }>>
+
+    /**
      * Get list of manager-level employees from the sales table, optionally filtered by type.
      *
      * @param {string} [type] - Optional sales type to filter by.

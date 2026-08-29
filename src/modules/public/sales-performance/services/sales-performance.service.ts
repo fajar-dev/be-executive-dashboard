@@ -78,6 +78,31 @@ export class SalesPerformanceService implements ISalesPerformanceService {
     }
 
     /**
+     * Retrieve the detail list behind one cell (a sales member on a specific day).
+     * Home -> registrations that day; Business -> activities that day.
+     *
+     * @param {number} salesId - Sales table id (dashboard).
+     * @param {number} month - Month number (1-12).
+     * @param {number} year - Full year (e.g. 2026).
+     * @param {number} day - Day of month (1-31).
+     * @returns {Promise<{ type: string; items: any[] }>} Detail list keyed by sales type.
+     */
+    async getDetail(salesId: number, month: number, year: number, day: number): Promise<{ type: string; items: any[] }> {
+        const sales = await this.repository.getSalesById(salesId)
+        if (!sales) return { type: '', items: [] }
+
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+        if (sales.type === 'access_business') {
+            const items = await this.repository.getBusinessActivityDetail(sales.email, date)
+            return { type: 'access_business', items }
+        }
+
+        const items = await this.repository.getHomeRegistrationDetail(sales.employeeId, date)
+        return { type: 'access_home', items }
+    }
+
+    /**
      * Retrieve list of managers from the sales table, optionally filtered by type.
      *
      * @param {string} [type] - Optional sales type to filter by.

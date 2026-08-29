@@ -19,6 +19,7 @@ export const setupPublicRoutes = () => {
 
     // Sales Performance Routes
     routes.get('/sales-performance/manager', (c) => salesPerformance.getManagers(c))
+    routes.get('/sales-performance/detail', (c) => salesPerformance.getDetail(c))
     routes.get('/sales-performance', (c) => salesPerformance.getSalesPerformance(c))
 
     return routes
