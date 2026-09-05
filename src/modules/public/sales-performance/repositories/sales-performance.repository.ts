@@ -54,8 +54,11 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
-     * Count daily access_home registrations for a list of sales employee IDs (NIS).
-     * Keyed by SalesId (= sales employee_id).
+     * Daily paid new-registration (weighted) per sales employee (NIS).
+     * Each paid access_home invoice contributes a ServiceId weight (0.3 for
+     * NFSM030/NFST030/NFSP030/NFSP300/NFSF030/NFSF001/NFSP100; 0.5 for NFSP200;
+     * else 1), summed per sales per day and bucketed by the paid date
+     * (MAX paying-batch TransDate). Keyed by SalesId (= sales employee_id).
      *
      * @param {string[]} employeeIds - List of sales employee IDs.
      * @param {number} month - Month number (1-12).
@@ -68,19 +71,58 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`
         const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
 
+        // Paid new-registration (weighted) per sales per day. Each paid invoice (one
+        // row per nci.AI) contributes a weight by ServiceId; bucketed by paid date
+        // (MAX NewCustomerInvoice.TransDate of the paying batch).
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT
-                cs.SalesId AS sales_id,
-                DAY(cs.CustRegDate) AS day_num,
-                COUNT(cs.CustServId) AS total
-            FROM CustomerServices cs
-            INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                AND s.ServiceCategory = 'access_home'
-            WHERE cs.SalesId NOT IN ('0208801', 'CS', 'CRO')
-                AND cs.CustRegDate BETWEEN ? AND ?
-                AND cs.SalesId IN (?)
-            GROUP BY cs.SalesId, DAY(cs.CustRegDate)`,
-            [startDate, endDate, employeeIds]
+            `SELECT sales_id, DAY(paid_date) AS day_num, ROUND(SUM(weight), 1) AS total
+            FROM (
+                SELECT
+                    nci.AI AS ai,
+                    cs.SalesId AS sales_id,
+                    MAX(nci2.TransDate) AS paid_date,
+                    CASE
+                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 0.3
+                        WHEN s.ServiceId = 'NFSP200' THEN 0.5
+                        ELSE 1
+                    END AS weight
+                FROM CustomerInvoiceTemp cit
+                    LEFT JOIN InvoiceTypeMonth itm ON itm.InvoiceType = cit.InvoiceType
+                    LEFT JOIN NewCustomerInvoice nci ON cit.InvoiceNum = nci.Id AND nci.No = cit.Urut AND nci.Type = 'internet'
+                    LEFT JOIN NewCustomerInvoiceBatch ncib ON nci.AI = ncib.AI
+                    LEFT JOIN NewCustomerInvoiceBatch ncib2 ON ncib.batchNo = ncib2.batchNo AND ncib2.AI != ncib.AI AND ncib2.total > 0
+                    LEFT JOIN NewCustomerInvoice nci2 ON ncib2.AI = nci2.AI
+                    LEFT JOIN CustomerServices cs ON cit.CustServId = cs.CustServId
+                    LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
+                    LEFT JOIN Customer c ON c.CustId = cs.CustId
+                    LEFT JOIN NewCustomerInvoiceInternetCounter nciic ON nciic.AI = nci.AI
+                WHERE cit.RInvoiceNum = 0
+                    AND (ncib.batchNo IS NULL OR nci2.Type = 'RA02')
+                    AND ncib.batchNo IS NOT NULL
+                    AND (
+                        IFNULL(c.DisplayBranchId, c.BranchId) IN ('020','062','025','027','029')
+                        OR (
+                            IFNULL(c.DisplayBranchId, c.BranchId) IN ('028')
+                            AND nciic.new_subscription > 110000
+                            AND cs.SalesId NOT IN ('0208801')
+                        )
+                    )
+                    AND s.ServiceCategory = 'access_home'
+                    AND nciic.is_upgrade = 0
+                    AND nciic.is_prorata = 0
+                    AND nciic.new_subscription > 0
+                    AND (
+                        (DATE(nci.InsertDate) BETWEEN ? AND ?)
+                        OR (nci2.TransDate IS NOT NULL AND nci2.TransDate BETWEEN ? AND ?)
+                    )
+                    AND cs.CustServId IS NOT NULL
+                    AND cs.SalesId IN (?)
+                GROUP BY nci.AI
+            ) x
+            WHERE x.paid_date IS NOT NULL
+                AND DATE(x.paid_date) BETWEEN ? AND ?
+            GROUP BY x.sales_id, DAY(x.paid_date)`,
+            [startDate, endDate, startDate, endDate, employeeIds, startDate, endDate]
         )
 
         return rows.map((row: any) => ({
@@ -161,31 +203,76 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
      * @param {string} date - Date string 'YYYY-MM-DD'.
      * @returns {Promise<Array<{ custServId: string; accountNumber: string; customerName: string; serviceId: string; date: string }>>}
      */
-    async getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ custServId: string; customerId: string; customerName: string; accountName: string; serviceType: string; date: string }>> {
+    async getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ customerId: string; customerName: string; accountName: string; serviceId: string; serviceName: string; weight: number; date: string }>> {
+        // Same source as the Home achievement metric: paid invoices whose paid date
+        // (MAX paying-batch TransDate) falls on `date`, one row per invoice (nci.AI),
+        // so the rows and their summed weights match the cell value.
+        const [yy, mm] = date.split('-')
+        const startDate = `${yy}-${mm}-01`
+        const endDate = `${yy}-${mm}-${new Date(Number(yy), Number(mm), 0).getDate()}`
+
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT
-                cs.CustServId AS custServId,
-                c.CustId AS customerId,
-                c.CustName AS customerName,
-                cs.CustAccName AS accountName,
-                s.ServiceType AS serviceType,
-                cs.CustRegDate AS regDate
-            FROM CustomerServices cs
-            INNER JOIN Services s ON s.ServiceId = cs.ServiceId
-                AND s.ServiceCategory = 'access_home'
-            LEFT JOIN Customer c ON c.CustId = cs.CustId
-            WHERE cs.SalesId = ?
-                AND DATE(cs.CustRegDate) = ?
-            ORDER BY cs.CustRegDate ASC`,
-            [employeeId, date]
+            `SELECT customerId, customerName, accountName, serviceId, serviceName, weight, paid_date
+            FROM (
+                SELECT
+                    nci.AI AS ai,
+                    c.CustId AS customerId,
+                    c.CustName AS customerName,
+                    cs.CustAccName AS accountName,
+                    s.ServiceId AS serviceId,
+                    s.ServiceType AS serviceName,
+                    MAX(nci2.TransDate) AS paid_date,
+                    CASE
+                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 0.3
+                        WHEN s.ServiceId = 'NFSP200' THEN 0.5
+                        ELSE 1
+                    END AS weight
+                FROM CustomerInvoiceTemp cit
+                    LEFT JOIN InvoiceTypeMonth itm ON itm.InvoiceType = cit.InvoiceType
+                    LEFT JOIN NewCustomerInvoice nci ON cit.InvoiceNum = nci.Id AND nci.No = cit.Urut AND nci.Type = 'internet'
+                    LEFT JOIN NewCustomerInvoiceBatch ncib ON nci.AI = ncib.AI
+                    LEFT JOIN NewCustomerInvoiceBatch ncib2 ON ncib.batchNo = ncib2.batchNo AND ncib2.AI != ncib.AI AND ncib2.total > 0
+                    LEFT JOIN NewCustomerInvoice nci2 ON ncib2.AI = nci2.AI
+                    LEFT JOIN CustomerServices cs ON cit.CustServId = cs.CustServId
+                    LEFT JOIN Services s ON s.ServiceId = cs.ServiceId
+                    LEFT JOIN Customer c ON c.CustId = cs.CustId
+                    LEFT JOIN NewCustomerInvoiceInternetCounter nciic ON nciic.AI = nci.AI
+                WHERE cit.RInvoiceNum = 0
+                    AND (ncib.batchNo IS NULL OR nci2.Type = 'RA02')
+                    AND ncib.batchNo IS NOT NULL
+                    AND (
+                        IFNULL(c.DisplayBranchId, c.BranchId) IN ('020','062','025','027','029')
+                        OR (
+                            IFNULL(c.DisplayBranchId, c.BranchId) IN ('028')
+                            AND nciic.new_subscription > 110000
+                            AND cs.SalesId NOT IN ('0208801')
+                        )
+                    )
+                    AND s.ServiceCategory = 'access_home'
+                    AND nciic.is_upgrade = 0
+                    AND nciic.is_prorata = 0
+                    AND nciic.new_subscription > 0
+                    AND (
+                        (DATE(nci.InsertDate) BETWEEN ? AND ?)
+                        OR (nci2.TransDate IS NOT NULL AND nci2.TransDate BETWEEN ? AND ?)
+                    )
+                    AND cs.CustServId IS NOT NULL
+                    AND cs.SalesId = ?
+                GROUP BY nci.AI
+            ) x
+            WHERE x.paid_date IS NOT NULL
+                AND DATE(x.paid_date) = ?
+            ORDER BY x.paid_date ASC`,
+            [startDate, endDate, startDate, endDate, employeeId, date]
         )
         return rows.map((row: any) => ({
-            custServId: String(row.custServId),
             customerId: row.customerId != null ? String(row.customerId) : '',
             customerName: row.customerName || '',
             accountName: row.accountName || '',
-            serviceType: row.serviceType || '',
-            date: row.regDate
+            serviceId: row.serviceId || '',
+            serviceName: row.serviceName || '',
+            weight: Number(row.weight) || 0,
+            date: row.paid_date
         }))
     }
 

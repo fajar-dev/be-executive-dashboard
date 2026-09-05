@@ -40,7 +40,7 @@ export interface ISalesPerformanceRepository {
     /**
      * Detail of access_home registrations for a sales employee on a specific date (NIS).
      */
-    getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ custServId: string; customerId: string; customerName: string; accountName: string; serviceType: string; date: string }>>
+    getHomeRegistrationDetail(employeeId: string, date: string): Promise<Array<{ customerId: string; customerName: string; accountName: string; serviceId: string; serviceName: string; weight: number; date: string }>>
 
     /**
      * Detail of access_business activity for a sales email on a specific date (NusaProspect).
