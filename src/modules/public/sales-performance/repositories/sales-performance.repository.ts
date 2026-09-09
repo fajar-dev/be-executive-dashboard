@@ -75,14 +75,14 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         // row per nci.AI) contributes a weight by ServiceId; bucketed by paid date
         // (MAX NewCustomerInvoice.TransDate of the paying batch).
         const [rows] = await this.nisDb.query<any[]>(
-            `SELECT sales_id, DAY(paid_date) AS day_num, ROUND(SUM(weight), 1) AS total
+            `SELECT sales_id, DAY(paid_date) AS day_num, ROUND(SUM(weight), 2) AS total
             FROM (
                 SELECT
                     nci.AI AS ai,
                     cs.SalesId AS sales_id,
                     MAX(nci2.TransDate) AS paid_date,
                     CASE
-                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 0.3
+                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 1/3
                         WHEN s.ServiceId = 'NFSP200' THEN 0.5
                         ELSE 1
                     END AS weight
@@ -223,7 +223,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                     s.ServiceType AS serviceName,
                     MAX(nci2.TransDate) AS paid_date,
                     CASE
-                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 0.3
+                        WHEN s.ServiceId IN ('NFSM030','NFST030','NFSP030','NFSP300','NFSF030','NFSF001','NFSP100') THEN 1/3
                         WHEN s.ServiceId = 'NFSP200' THEN 0.5
                         ELSE 1
                     END AS weight
