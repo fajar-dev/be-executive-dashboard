@@ -32,4 +32,15 @@ export interface ISalesPerformanceService {
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
     getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
+
+    /**
+     * Retrieve the weekly BDE performance summary for access_business sales.
+     * One row per BDE with activity (this/last week), new MRC this month,
+     * activity effectivity %, target achievement %, and next-month forecast MRC.
+     *
+     * @param {number} [managerId] - Optional manager ID to filter staff.
+     * @param {string} [branchId] - Optional branch ID to filter staff.
+     * @returns {Promise<{ week: { label: string; start: string; end: string }; month: string; rows: any[] }>}
+     */
+    getBusinessWeekly(managerId?: number, branchId?: string): Promise<{ week: { label: string; start: string; end: string }; month: string; rows: any[] }>
 }

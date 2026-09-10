@@ -111,4 +111,101 @@ export class SalesPerformanceService implements ISalesPerformanceService {
     async getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
         return this.repository.getManagers(type)
     }
+
+    /**
+     * Retrieve the weekly BDE performance summary for access_business sales.
+     * Weeks are Monday-based: "this week" runs Monday of the current week through
+     * today; "last week" is the previous full Monday–Sunday. New MRC / achievement
+     * use the current calendar month; forecast uses next month's close dates.
+     *
+     * @param {number} [managerId] - Optional manager ID to filter staff.
+     * @param {string} [branchId] - Optional branch ID to filter staff.
+     * @returns {Promise<{ week: { label: string; start: string; end: string }; month: string; rows: any[] }>}
+     */
+    async getBusinessWeekly(managerId?: number, branchId?: string): Promise<{ week: { label: string; start: string; end: string }; month: string; rows: any[] }> {
+        const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        const monthName = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long' })
+        const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        // Monday-based offset (0 = Monday .. 6 = Sunday)
+        const offset = (today.getDay() + 6) % 7
+        const thisWeekStart = addDays(today, -offset)
+        const thisWeekEnd = today
+        const lastWeekEnd = addDays(thisWeekStart, -1)
+        const lastWeekStart = addDays(thisWeekStart, -7)
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+        const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+
+        const staffList = (await this.repository.getStaffList(managerId, branchId, 'access_business'))
+            .filter(s => s.type === 'access_business')
+
+        const week = {
+            label: `${monthName(thisWeekStart)} Minggu ${Math.ceil(thisWeekStart.getDate() / 7)}`,
+            start: fmt(thisWeekStart),
+            end: fmt(thisWeekEnd)
+        }
+        const month = monthName(monthStart)
+
+        if (!staffList.length) return { week, month, rows: [] }
+
+        const emails = staffList.map(s => s.email).filter(Boolean)
+        const [mrc, activity, forecast] = await Promise.all([
+            this.repository.getBusinessWeeklyMrc(
+                fmt(lastWeekStart), fmt(monthEnd),
+                fmt(thisWeekStart), fmt(thisWeekEnd),
+                fmt(lastWeekStart), fmt(lastWeekEnd),
+                fmt(monthStart), fmt(monthEnd)
+            ),
+            this.repository.getBusinessWeeklyActivity(
+                emails, fmt(thisWeekStart), fmt(thisWeekEnd), fmt(lastWeekStart), fmt(lastWeekEnd)
+            ),
+            this.repository.getBusinessForecastByOwner(emails, fmt(nextMonthStart), fmt(nextMonthEnd))
+        ])
+
+        const mrcMap = new Map(mrc.map(m => [m.salesId, m]))
+        const actMap = new Map(activity.map(a => [a.email, a]))
+        const fcMap = new Map(forecast.map(f => [f.email, f.forecast]))
+
+        const rows = staffList.map(staff => {
+            const m = mrcMap.get(staff.employeeId)
+            const a = actMap.get(staff.email)
+            const mrcThisMonth = m?.mrcMonth || 0
+            const mrcThisWeek = m?.mrcThisWeek || 0
+            const mrcLastWeek = m?.mrcLastWeek || 0
+            const activityThisWeek = a?.actThisWeek || 0
+            const activityLastWeek = a?.actLastWeek || 0
+
+            // Monthly target per BDE: Medan branches 8.5M, all others 6.5M.
+            const target = /medan/i.test(staff.organizationName) ? 8_500_000 : 6_500_000
+            const achievementPct = target > 0 ? (mrcThisMonth / target) * 100 : null
+
+            // Effectivity: week-over-week % change of (New MRC / activity).
+            const ratioThis = activityThisWeek > 0 ? mrcThisWeek / activityThisWeek : 0
+            const ratioLast = activityLastWeek > 0 ? mrcLastWeek / activityLastWeek : 0
+            const effectivity = ratioLast > 0 ? (ratioThis / ratioLast - 1) * 100 : null
+
+            return {
+                id: staff.id,
+                employeeId: staff.employeeId,
+                name: staff.name,
+                photoProfile: staff.photoProfile,
+                organizationName: staff.organizationName,
+                activityThisWeek,
+                activityLastWeek,
+                mrcThisMonth,
+                effectivity,
+                target,
+                achievementPct,
+                forecastNextMonth: fcMap.get(staff.email) || 0
+            }
+        })
+
+        rows.sort((x, y) => y.mrcThisMonth - x.mrcThisMonth)
+
+        return { week, month, rows }
+    }
 }
