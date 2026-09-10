@@ -377,6 +377,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                     FROM NewCustomerInvoice nci
                     LEFT JOIN NewCustomerInvoiceBatch ncib ON ncib.AI = nci.AI
                     WHERE nci.Type LIKE 'RA%'
+                        AND nci.Date >= DATE_SUB(?, INTERVAL 3 MONTH)
                 ) nci2 ON nci2.batchNo = ncib.batchNo AND nci2.RowNum = 1
                 LEFT JOIN Services s ON s.ServiceId = cit.ServiceId
                 LEFT JOIN Customer c ON c.CustId = cit.CustId
@@ -402,7 +403,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
             FROM mrc_data
             WHERE sales_id IS NOT NULL
             GROUP BY sales_id`,
-            [winStart, winEnd, monthStart, monthEnd, thisWeekStart, thisWeekEnd, lastWeekStart, lastWeekEnd]
+            [winStart, winStart, winEnd, monthStart, monthEnd, thisWeekStart, thisWeekEnd, lastWeekStart, lastWeekEnd]
         )
 
         return rows.map((row: any) => ({
