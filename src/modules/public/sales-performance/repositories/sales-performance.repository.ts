@@ -362,6 +362,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         const [rows] = await this.nisDb.query<any[]>(
             `WITH invoice_data AS (
                 SELECT
+                    nci.AI AS ai,
                     cs.SalesId AS sales_id,
                     nci.Credit AS credit,
                     IF(cit.InvoiceType != 8, itm.Month, 1) AS inv_period,
@@ -388,10 +389,22 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                     AND s.ServiceCategory = 'access_business'
                     AND nci.AccCode LIKE '400%'
             ),
+            discount_data AS (
+                SELECT nci.AI AS ai, ncid.Debet AS discount
+                FROM CustomerInvoiceDiscount cid
+                LEFT JOIN NewCustomerInvoice ncid
+                    ON ncid.Id = cid.Id AND ncid.Type = 'discount'
+                LEFT JOIN CustomerInvoiceTemp cit
+                    ON cit.InvoiceNum = cid.InvoiceNum AND cit.Urut = cid.Urut
+                LEFT JOIN NewCustomerInvoice nci
+                    ON nci.Id = cid.InvoiceNum AND nci.No = cid.Urut
+                WHERE cit.RInvoiceNum = 0
+            ),
             mrc_data AS (
                 SELECT t.sales_id, DATE(t.paid_date) AS paid_day,
-                    (t.credit / 1.11) / NULLIF(t.inv_period, 0) AS amount
+                    ((t.credit - IFNULL(d.discount, 0)) / 1.11) / NULLIF(t.inv_period, 0) AS amount
                 FROM invoice_data t
+                LEFT JOIN discount_data d ON d.ai = t.ai
                 WHERE t.rn = 1 AND t.paid_date IS NOT NULL
                     AND DATE(t.paid_date) BETWEEN ? AND ?
             )
