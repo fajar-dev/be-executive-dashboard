@@ -31,4 +31,31 @@ export class SalesPerformanceSerializer {
             photoProfile: item.photoProfile
         }))
     }
+
+    /**
+     * Serialize the weekly BDE performance summary.
+     *
+     * @param {{ week: any; month: string; rows: any[] }} data - Weekly summary payload.
+     * @returns {{ week: any; month: string; rows: any[] }} Serialized payload.
+     */
+    static businessWeekly(data: { week: any; month: string; rows: any[] }) {
+        return {
+            week: data.week,
+            month: data.month,
+            rows: data.rows.map(item => ({
+                id: item.id,
+                employeeId: item.employeeId,
+                name: item.name,
+                photoProfile: item.photoProfile,
+                organizationName: item.organizationName,
+                activityThisWeek: item.activityThisWeek,
+                activityLastWeek: item.activityLastWeek,
+                mrcThisMonth: item.mrcThisMonth,
+                effectivity: item.effectivity,
+                target: item.target,
+                achievementPct: item.achievementPct,
+                forecastNextMonth: item.forecastNextMonth
+            }))
+        }
+    }
 }

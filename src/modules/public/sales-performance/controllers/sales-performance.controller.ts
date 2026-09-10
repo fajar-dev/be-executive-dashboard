@@ -56,6 +56,27 @@ export class SalesPerformanceController {
     }
 
     /**
+     * Get the weekly BDE performance summary (access_business only).
+     * Accepts optional query params: managerId, branchId.
+     *
+     * @param {Context} c - Hono context object.
+     * @returns {Promise<Response>} HTTP Response with { week, month, rows }.
+     */
+    async getBusinessWeekly(c: Context) {
+        const managerIdParam = c.req.query('managerId')
+        const managerId = managerIdParam ? Number(managerIdParam) : undefined
+        const branchIdParam = c.req.query('branchId')
+        const branchId = branchIdParam && branchIdParam !== 'all' ? branchIdParam : undefined
+
+        const data = await this.service.getBusinessWeekly(managerId, branchId)
+        return ApiResponse.success(
+            c,
+            SalesPerformanceSerializer.businessWeekly(data),
+            'Business weekly performance retrieved'
+        )
+    }
+
+    /**
      * Get list of manager-level employees.
      *
      * @param {Context} c - Hono context object.
