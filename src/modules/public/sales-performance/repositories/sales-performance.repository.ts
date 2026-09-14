@@ -312,9 +312,10 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
      * If type is provided, filters by type (access_home / access_business) as well.
      *
      * @param {string} [type] - Optional sales type to filter by.
+     * @param {string} [branchId] - Optional branch ID to filter by.
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
-    async getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
+    async getManagers(type?: string, branchId?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
         let query = `SELECT id, name, employee_id, photo_profile
              FROM sales
              WHERE job_level IN ('Manager', 'General Manager')`
@@ -323,6 +324,11 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
         if (type) {
             query += ` AND type = ?`
             params.push(type)
+        }
+
+        if (branchId) {
+            query += ` AND branch_id = ?`
+            params.push(branchId)
         }
 
         query += ` ORDER BY name ASC`

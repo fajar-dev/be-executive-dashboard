@@ -53,7 +53,7 @@ export interface ISalesPerformanceRepository {
      * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
-    getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
+    getManagers(type?: string, branchId?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
 
     /**
      * New MRC (paid) per access_business sales, bucketed into month / this-week / last-week.

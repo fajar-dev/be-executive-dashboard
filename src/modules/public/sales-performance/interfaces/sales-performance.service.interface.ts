@@ -31,7 +31,7 @@ export interface ISalesPerformanceService {
      * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
-    getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
+    getManagers(type?: string, branchId?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
 
     /**
      * Retrieve the weekly BDE performance summary for access_business sales.
