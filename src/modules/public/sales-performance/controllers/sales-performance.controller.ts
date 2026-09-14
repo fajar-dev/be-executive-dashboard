@@ -85,8 +85,10 @@ export class SalesPerformanceController {
     async getManagers(c: Context) {
         const typeParam = c.req.query('type')
         const type = typeParam && typeParam !== 'all' ? typeParam : undefined
+        const branchIdParam = c.req.query('branchId')
+        const branchId = branchIdParam && branchIdParam !== 'all' ? branchIdParam : undefined
 
-        const data = await this.service.getManagers(type)
+        const data = await this.service.getManagers(type, branchId)
         return ApiResponse.success(
             c,
             SalesPerformanceSerializer.managers(data),

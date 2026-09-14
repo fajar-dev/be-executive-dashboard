@@ -108,8 +108,8 @@ export class SalesPerformanceService implements ISalesPerformanceService {
      * @param {string} [type] - Optional sales type to filter by.
      * @returns {Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>} Manager list.
      */
-    async getManagers(type?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
-        return this.repository.getManagers(type)
+    async getManagers(type?: string, branchId?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>> {
+        return this.repository.getManagers(type, branchId)
     }
 
     /**
