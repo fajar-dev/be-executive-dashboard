@@ -114,9 +114,8 @@ export class SalesPerformanceService implements ISalesPerformanceService {
 
     /**
      * Retrieve the weekly BDE performance summary for access_business sales.
-     * Weeks are Monday-based: "this week" runs Monday of the current week through
-     * today; "last week" is the previous full Monday–Sunday. New MRC / achievement
-     * use the current calendar month; forecast uses next month's close dates.
+     * The week is Monday-based (Monday of the current week through today) and is
+     * used for the activity count; New MRC and achievement use the current month.
      *
      * @param {number} [managerId] - Optional manager ID to filter staff.
      * @param {string} [branchId] - Optional branch ID to filter staff.
@@ -133,12 +132,8 @@ export class SalesPerformanceService implements ISalesPerformanceService {
         const offset = (today.getDay() + 6) % 7
         const thisWeekStart = addDays(today, -offset)
         const thisWeekEnd = today
-        const lastWeekEnd = addDays(thisWeekStart, -1)
-        const lastWeekStart = addDays(thisWeekStart, -7)
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-        const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0)
 
         const staffList = (await this.repository.getStaffList(managerId, branchId, 'access_business'))
             .filter(s => s.type === 'access_business')
@@ -153,40 +148,23 @@ export class SalesPerformanceService implements ISalesPerformanceService {
         if (!staffList.length) return { week, month, rows: [] }
 
         const emails = staffList.map(s => s.email).filter(Boolean)
-        const [mrc, activity, forecast] = await Promise.all([
-            this.repository.getBusinessWeeklyMrc(
-                fmt(lastWeekStart), fmt(monthEnd),
-                fmt(thisWeekStart), fmt(thisWeekEnd),
-                fmt(lastWeekStart), fmt(lastWeekEnd),
-                fmt(monthStart), fmt(monthEnd)
-            ),
-            this.repository.getBusinessWeeklyActivity(
-                emails, fmt(thisWeekStart), fmt(thisWeekEnd), fmt(lastWeekStart), fmt(lastWeekEnd)
-            ),
-            this.repository.getBusinessForecastByOwner(emails, fmt(nextMonthStart), fmt(nextMonthEnd))
+        const [mrc, activity] = await Promise.all([
+            this.repository.getBusinessWeeklyMrc(fmt(monthStart), fmt(monthEnd)),
+            this.repository.getBusinessWeeklyActivity(emails, fmt(thisWeekStart), fmt(thisWeekEnd))
         ])
 
         const mrcMap = new Map(mrc.map(m => [m.salesId, m]))
         const actMap = new Map(activity.map(a => [a.email, a]))
-        const fcMap = new Map(forecast.map(f => [f.email, f.forecast]))
 
         const rows = staffList.map(staff => {
             const m = mrcMap.get(staff.employeeId)
             const a = actMap.get(staff.email)
             const mrcThisMonth = m?.mrcMonth || 0
-            const mrcThisWeek = m?.mrcThisWeek || 0
-            const mrcLastWeek = m?.mrcLastWeek || 0
             const activityThisWeek = a?.actThisWeek || 0
-            const activityLastWeek = a?.actLastWeek || 0
 
             // Monthly target per BDE: Medan branches 8.5M, all others 6.5M.
             const target = /medan/i.test(staff.organizationName) ? 8_500_000 : 6_500_000
             const achievementPct = target > 0 ? (mrcThisMonth / target) * 100 : null
-
-            // Effectivity: week-over-week % change of (New MRC / activity).
-            const ratioThis = activityThisWeek > 0 ? mrcThisWeek / activityThisWeek : 0
-            const ratioLast = activityLastWeek > 0 ? mrcLastWeek / activityLastWeek : 0
-            const effectivity = ratioLast > 0 ? (ratioThis / ratioLast - 1) * 100 : null
 
             return {
                 id: staff.id,
@@ -195,12 +173,9 @@ export class SalesPerformanceService implements ISalesPerformanceService {
                 photoProfile: staff.photoProfile,
                 organizationName: staff.organizationName,
                 activityThisWeek,
-                activityLastWeek,
                 mrcThisMonth,
-                effectivity,
                 target,
-                achievementPct,
-                forecastNextMonth: fcMap.get(staff.email) || 0
+                achievementPct
             }
         })
 

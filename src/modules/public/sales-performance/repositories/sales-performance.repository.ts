@@ -344,27 +344,18 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
     }
 
     /**
-     * New MRC (paid) per access_business sales, bucketed into month / this-week /
-     * last-week windows. Mirrors the growth module's New MRC logic (paid batch date,
-     * period-amortised amount) but attributes each invoice to a sales via
-     * CustomerServices.SalesId (= sales.employee_id). Keyed by SalesId.
+     * New MRC (paid, this month) per access_business sales. Mirrors the growth
+     * module's New MRC logic (paid batch date, discount, period-amortised amount)
+     * but attributes each invoice to a sales via CustomerServices.SalesId
+     * (= sales.employee_id). Keyed by SalesId.
      *
-     * @param {string} winStart - Outer scan window start 'YYYY-MM-DD' (earliest of the buckets).
-     * @param {string} winEnd - Outer scan window end 'YYYY-MM-DD' (latest of the buckets).
-     * @param {string} thisWeekStart - This-week bucket start 'YYYY-MM-DD'.
-     * @param {string} thisWeekEnd - This-week bucket end 'YYYY-MM-DD'.
-     * @param {string} lastWeekStart - Last-week bucket start 'YYYY-MM-DD'.
-     * @param {string} lastWeekEnd - Last-week bucket end 'YYYY-MM-DD'.
-     * @param {string} monthStart - Month bucket start 'YYYY-MM-DD'.
-     * @param {string} monthEnd - Month bucket end 'YYYY-MM-DD'.
-     * @returns {Promise<Array<{ salesId: string; mrcMonth: number; mrcThisWeek: number; mrcLastWeek: number }>>}
+     * @param {string} monthStart - Month start 'YYYY-MM-DD'.
+     * @param {string} monthEnd - Month end 'YYYY-MM-DD'.
+     * @returns {Promise<Array<{ salesId: string; mrcMonth: number }>>}
      */
     async getBusinessWeeklyMrc(
-        winStart: string, winEnd: string,
-        thisWeekStart: string, thisWeekEnd: string,
-        lastWeekStart: string, lastWeekEnd: string,
         monthStart: string, monthEnd: string
-    ): Promise<Array<{ salesId: string; mrcMonth: number; mrcThisWeek: number; mrcLastWeek: number }>> {
+    ): Promise<Array<{ salesId: string; mrcMonth: number }>> {
         const [rows] = await this.nisDb.query<any[]>(
             `WITH invoice_data AS (
                 SELECT
@@ -416,106 +407,55 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
             )
             SELECT
                 sales_id,
-                ROUND(SUM(CASE WHEN paid_day BETWEEN ? AND ? THEN amount ELSE 0 END)) AS mrc_month,
-                ROUND(SUM(CASE WHEN paid_day BETWEEN ? AND ? THEN amount ELSE 0 END)) AS mrc_this_week,
-                ROUND(SUM(CASE WHEN paid_day BETWEEN ? AND ? THEN amount ELSE 0 END)) AS mrc_last_week
+                ROUND(SUM(amount)) AS mrc_month
             FROM mrc_data
             WHERE sales_id IS NOT NULL
             GROUP BY sales_id`,
-            [winStart, winStart, winEnd, monthStart, monthEnd, thisWeekStart, thisWeekEnd, lastWeekStart, lastWeekEnd]
+            [monthStart, monthStart, monthEnd]
         )
 
         return rows.map((row: any) => ({
             salesId: String(row.sales_id),
-            mrcMonth: Number(row.mrc_month || 0),
-            mrcThisWeek: Number(row.mrc_this_week || 0),
-            mrcLastWeek: Number(row.mrc_last_week || 0)
+            mrcMonth: Number(row.mrc_month || 0)
         }))
     }
 
     /**
-     * Access_business activity counts per sales email, split into this-week and
-     * last-week buckets. Activity = customer_log_calls + prospect_tasks +
-     * prospect_check_ins, matched via tenant_users.email -> user_uuid. Keyed by email.
+     * Access_business activity count (this week) per sales email. Activity =
+     * customer_log_calls + prospect_tasks + prospect_check_ins, matched via
+     * tenant_users.email -> user_uuid. Keyed by email.
      *
      * @param {string[]} emails - List of sales emails.
-     * @param {string} thisWeekStart - This-week bucket start 'YYYY-MM-DD'.
-     * @param {string} thisWeekEnd - This-week bucket end 'YYYY-MM-DD'.
-     * @param {string} lastWeekStart - Last-week bucket start 'YYYY-MM-DD'.
-     * @param {string} lastWeekEnd - Last-week bucket end 'YYYY-MM-DD'.
-     * @returns {Promise<Array<{ email: string; actThisWeek: number; actLastWeek: number }>>}
+     * @param {string} weekStart - Week start 'YYYY-MM-DD'.
+     * @param {string} weekEnd - Week end 'YYYY-MM-DD'.
+     * @returns {Promise<Array<{ email: string; actThisWeek: number }>>}
      */
     async getBusinessWeeklyActivity(
-        emails: string[],
-        thisWeekStart: string, thisWeekEnd: string,
-        lastWeekStart: string, lastWeekEnd: string
-    ): Promise<Array<{ email: string; actThisWeek: number; actLastWeek: number }>> {
+        emails: string[], weekStart: string, weekEnd: string
+    ): Promise<Array<{ email: string; actThisWeek: number }>> {
         if (!emails.length) return []
 
         const [rows] = await this.nusaprospectDb.query<any[]>(
-            `SELECT
-                tu.email AS email,
-                SUM(CASE WHEN DATE(a.at) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS act_this_week,
-                SUM(CASE WHEN DATE(a.at) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS act_last_week
+            `SELECT tu.email AS email, COUNT(*) AS act_this_week
             FROM tenant_users tu
             JOIN (
-                SELECT IFNULL(clc.assigned_to_id, clc.created_by) AS user_id, clc.created_at AS at
+                SELECT IFNULL(clc.assigned_to_id, clc.created_by) AS user_id
                     FROM customer_log_calls clc WHERE DATE(clc.created_at) BETWEEN ? AND ?
                 UNION ALL
-                SELECT IFNULL(pt.assigned_to_id, pt.created_by) AS user_id, pt.created_at AS at
+                SELECT IFNULL(pt.assigned_to_id, pt.created_by) AS user_id
                     FROM prospect_tasks pt WHERE DATE(pt.created_at) BETWEEN ? AND ?
                 UNION ALL
-                SELECT pci.user_uuid AS user_id, pci.created_at AS at
+                SELECT pci.user_uuid AS user_id
                     FROM prospect_check_ins pci WHERE DATE(pci.created_at) BETWEEN ? AND ?
             ) a ON a.user_id = tu.user_uuid
             WHERE tu.email IN (?)
             GROUP BY tu.email`,
-            [thisWeekStart, thisWeekEnd, lastWeekStart, lastWeekEnd, lastWeekStart, thisWeekEnd, lastWeekStart, thisWeekEnd, lastWeekStart, thisWeekEnd, emails]
+            [weekStart, weekEnd, weekStart, weekEnd, weekStart, weekEnd, emails]
         )
 
         return rows.map((row: any) => ({
             email: String(row.email),
-            actThisWeek: Number(row.act_this_week || 0),
-            actLastWeek: Number(row.act_last_week || 0)
-        }))
-    }
-
-    /**
-     * Forecast MRC (stage-5 opportunities) per access_business sales, for
-     * opportunities whose close_date falls in the given window. Attributed to a
-     * sales via prospect_opportunities.owner -> tenant_users.user_uuid. Keyed by email.
-     *
-     * @param {string[]} emails - List of sales emails.
-     * @param {string} startDate - Close-date window start 'YYYY-MM-DD'.
-     * @param {string} endDate - Close-date window end 'YYYY-MM-DD'.
-     * @returns {Promise<Array<{ email: string; forecast: number }>>}
-     */
-    async getBusinessForecastByOwner(
-        emails: string[], startDate: string, endDate: string
-    ): Promise<Array<{ email: string; forecast: number }>> {
-        if (!emails.length) return []
-
-        const [rows] = await this.nusaprospectDb.query<any[]>(
-            `SELECT tu.email AS email, SUM(poa.amount) AS value
-            FROM prospect_opportunities po
-            JOIN prospect_opportunity_amounts poa
-                ON poa.opportunity_id = po.id AND poa.amount_category_setting_id = 1
-            JOIN customer_object_product_services cops
-                ON cops.object_id = po.id AND cops.object = 'opportunity'
-                AND cops.product_service_id IN (12, 36, 34, 28)
-            JOIN tenant_users tu ON tu.user_uuid = po.owner
-            WHERE po.opportunity_stage_id = 5
-                AND po.deleted_at IS NULL
-                AND po.id IS NOT NULL
-                AND tu.email IN (?)
-                AND DATE(po.close_date) BETWEEN ? AND ?
-            GROUP BY tu.email`,
-            [emails, startDate, endDate]
-        )
-
-        return rows.map((row: any) => ({
-            email: String(row.email),
-            forecast: Number(row.value || 0)
+            actThisWeek: Number(row.act_this_week || 0)
         }))
     }
 }

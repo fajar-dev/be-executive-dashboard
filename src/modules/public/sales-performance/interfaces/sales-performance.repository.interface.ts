@@ -56,28 +56,16 @@ export interface ISalesPerformanceRepository {
     getManagers(type?: string, branchId?: string): Promise<Array<{ id: number; name: string; employeeId: string; photoProfile: string }>>
 
     /**
-     * New MRC (paid) per access_business sales, bucketed into month / this-week / last-week.
+     * New MRC (paid, this month) per access_business sales.
      */
     getBusinessWeeklyMrc(
-        winStart: string, winEnd: string,
-        thisWeekStart: string, thisWeekEnd: string,
-        lastWeekStart: string, lastWeekEnd: string,
         monthStart: string, monthEnd: string
-    ): Promise<Array<{ salesId: string; mrcMonth: number; mrcThisWeek: number; mrcLastWeek: number }>>
+    ): Promise<Array<{ salesId: string; mrcMonth: number }>>
 
     /**
-     * Access_business activity per sales email, split into this-week and last-week buckets.
+     * Access_business activity count (this week) per sales email.
      */
     getBusinessWeeklyActivity(
-        emails: string[],
-        thisWeekStart: string, thisWeekEnd: string,
-        lastWeekStart: string, lastWeekEnd: string
-    ): Promise<Array<{ email: string; actThisWeek: number; actLastWeek: number }>>
-
-    /**
-     * Forecast MRC (stage-5 opportunities) per access_business sales, by close_date window.
-     */
-    getBusinessForecastByOwner(
-        emails: string[], startDate: string, endDate: string
-    ): Promise<Array<{ email: string; forecast: number }>>
+        emails: string[], weekStart: string, weekEnd: string
+    ): Promise<Array<{ email: string; actThisWeek: number }>>
 }

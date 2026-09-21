@@ -49,12 +49,9 @@ export class SalesPerformanceSerializer {
                 photoProfile: item.photoProfile,
                 organizationName: item.organizationName,
                 activityThisWeek: item.activityThisWeek,
-                activityLastWeek: item.activityLastWeek,
                 mrcThisMonth: item.mrcThisMonth,
-                effectivity: item.effectivity,
                 target: item.target,
-                achievementPct: item.achievementPct,
-                forecastNextMonth: item.forecastNextMonth
+                achievementPct: item.achievementPct
             }))
         }
     }
