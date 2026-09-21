@@ -127,7 +127,7 @@ export class NusaworkService implements INusaworkService {
         return Array.from(relevantEmployees.values()).map((emp: any) => ({
             id: emp.user_id,
             employeeId: emp.employee_id,
-            name: emp.full_name,
+            name: emp.nickname || emp.full_name,
             email: emp.email,
             photoProfile: emp.photo_profile,
             jobPosition: emp.job_position,
@@ -185,7 +185,7 @@ export class NusaworkService implements INusaworkService {
         return Array.from(relevantEmployees.values()).map((emp: any) => ({
             id: emp.user_id,
             employeeId: emp.employee_id,
-            name: emp.full_name,
+            name: emp.nickname || emp.full_name,
             email: emp.email,
             photoProfile: emp.photo_profile,
             jobPosition: emp.job_position,
