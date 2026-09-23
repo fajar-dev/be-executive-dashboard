@@ -385,7 +385,7 @@ export class SalesPerformanceRepository implements ISalesPerformanceRepository {
                     AND c.BranchId = '020'
                     AND s.ServiceCategory = 'access_business'
                     AND nci.AccCode LIKE '400%'
-                    AND LOWER(s.ServiceName) NOT LIKE '%service on demand%'
+                    AND LOWER(s.ServiceType) NOT LIKE '%bandwidth on demand%'
             ),
             discount_data AS (
                 SELECT nci.AI AS ai, ncid.Debet AS discount
